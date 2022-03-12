@@ -178,7 +178,6 @@ class Level:
             )
             if point in targets:
                 found_paths.append(current_path + [point])
-                continue
             if (not self._is_coord_in_bounds(point) or self[point]
                     or point in current_path):
                 continue
