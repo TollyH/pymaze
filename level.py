@@ -170,11 +170,11 @@ class Level:
                 current_path[-1][0] + x_offset,
                 current_path[-1][1] + y_offset
             )
-            if point in targets:
-                found_paths.append(current_path + [point])
             if (not self._is_coord_in_bounds(point) or self[point]
                     or point in current_path):
                 continue
+            if point in targets:
+                found_paths.append(current_path + [point])
             found_paths += self._path_search(
                 current_path + [point], targets
             )
