@@ -57,6 +57,8 @@ def main():
         clock.tick(50)
         tile_width = VIEWPORT_WIDTH // levels[current_level].dimensions[0]
         tile_height = VIEWPORT_HEIGHT // levels[current_level].dimensions[1]
+        solutions = []
+        solution_coords = set()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -173,9 +175,6 @@ def main():
                     solutions = levels[current_level].find_possible_paths()
                     if levels[current_level].won:
                         is_autosolving = False
-            else:
-                solutions = []
-                solution_coords = set()
             for y, row in enumerate(levels[current_level].wall_map):
                 for x, point in enumerate(row):
                     if levels[current_level].player_coords == (x, y):
@@ -198,7 +197,10 @@ def main():
                             tile_width, tile_height
                         )
                     )
-        print(f"\r{clock.get_fps():5.2f} FPS", end="", flush=True)
+        print(
+            f"\r{clock.get_fps():5.2f} FPS - "
+            + f"Displaying {len(solutions):4d} solutions", end="", flush=True
+        )
         pygame.display.flip()
 
 
