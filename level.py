@@ -120,8 +120,6 @@ class Level:
         self.player_coords = target
         if target in self.exit_keys:
             self.exit_keys.remove(target)
-            # Targets have changed so solution cache must be reset
-            self._solution_cache = {}
         if target == self.end_point and len(self.exit_keys) == 0:
             self.won = True
 
@@ -131,14 +129,16 @@ class Level:
         current position. The returned result is sorted by path length in
         ascending order (i.e. the shortest path is first).
         """
+        targets = (
+            [self.end_point] if len(self.exit_keys) == 0 else self.exit_keys
+        )
         if self.player_coords in self._solution_cache:
-            return self._solution_cache[self.player_coords]
+            return [
+                x for x in self._solution_cache[self.player_coords]
+                if x[-1] in targets
+            ]
         result = sorted(
-            self._path_search(
-                [self.player_coords],
-                [self.end_point] if len(self.exit_keys) == 0
-                else self.exit_keys
-            ), key=len
+            self._path_search([self.player_coords], targets), key=len
         )
         self._solution_cache[self.player_coords] = result
         return result
@@ -149,8 +149,6 @@ class Level:
         """
         # Shallow copy to prevent original key list being modified
         self.exit_keys = [*self.original_exit_keys]
-        # Targets have changed so solution cache must be reset
-        self._solution_cache = {}
         self.player_coords = self.start_point
         self.won = False
 
