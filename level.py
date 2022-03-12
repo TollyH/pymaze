@@ -39,8 +39,6 @@ class Level:
             raise ValueError("Out of bounds end point coordinates")
         if self[end_point]:
             raise ValueError("End point cannot be inside wall")
-        if len(self._path_search([start_point], [end_point])) == 0:
-            raise ValueError("End point is impossible to reach")
         self.end_point = end_point
 
         for key in exit_keys:
@@ -48,8 +46,6 @@ class Level:
                 raise ValueError("Out of bounds key coordinates")
             if self[key]:
                 raise ValueError("Key cannot be inside wall")
-            if len(self._path_search([start_point], [key])) == 0:
-                raise ValueError("Key is impossible to reach")
         self.original_exit_keys = exit_keys
         # Create a shallow copy of exit keys to be manipulated on collection
         self.exit_keys = [*exit_keys]
