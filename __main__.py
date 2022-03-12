@@ -187,7 +187,7 @@ def main():
                         color = GREEN
                     elif len(solutions) >= 1 and (x, y) in solutions[0]:
                         color = PURPLE
-                    elif (len(solutions) >= 1 and (x, y) in solution_coords):
+                    elif len(solutions) >= 1 and (x, y) in solution_coords:
                         color = LILAC
                     else:
                         color = BLACK if point else WHITE
