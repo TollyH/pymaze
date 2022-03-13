@@ -97,7 +97,7 @@ class Level:
             raise ValueError("Coordinates must be between 0 and 9")
         self.wall_map[index[1]][index[0]] = value
 
-    def move_player(self, vector: Tuple[int, int], relative=True):
+    def move_player(self, vector: Tuple[int, int], relative: bool=True):
         """
         Moves the player either relative to their current position, or to an
         absolute location. Key collection and victory checking will be
