@@ -216,7 +216,7 @@ def main():
                 solutions = levels[current_level].find_possible_paths()
                 # A set of all coordinates appearing in any solution
                 solution_coords = {x for y in solutions[1:] for x in y}
-                if (is_autosolving
+                if (is_autosolving and len(solutions) >= 1
                         and frame_scores[current_level] % automove_delay == 0):
                     move_scores[current_level] += 1
                     levels[current_level].move_player(solutions[0][1], False)
