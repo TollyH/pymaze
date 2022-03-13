@@ -95,7 +95,7 @@ def main():
                         move_scores[current_level] += 1
                         has_started_level[current_level] = True
                 elif event.key in (pygame.K_LEFTBRACKET,
-                        pygame.K_RIGHTBRACKET):
+                                   pygame.K_RIGHTBRACKET):
                     if event.key == pygame.K_LEFTBRACKET and current_level > 0:
                         current_level -= 1
                     elif (event.key == pygame.K_RIGHTBRACKET
