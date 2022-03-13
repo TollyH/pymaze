@@ -133,8 +133,9 @@ def main():
                             (mouse_position[1] - 50) // tile_height
                         ), False
                     )
-                    move_scores[current_level] += 1
-                    has_started_level[current_level] = True
+                    if not levels[current_level].won:
+                        move_scores[current_level] += 1
+                        has_started_level[current_level] = True
                 elif event.button == pygame.BUTTON_WHEELUP:
                     automove_delay += 1
                 elif (event.button == pygame.BUTTON_WHEELDOWN
