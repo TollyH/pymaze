@@ -74,28 +74,28 @@ def main():
                 pygame.quit()
                 sys.exit()
             elif event.type == pygame.KEYDOWN and not is_autosolving:
-                if event.key == pygame.K_w or event.key == pygame.K_UP:
+                if event.key in (pygame.K_w, pygame.K_UP):
                     levels[current_level].move_player(UP)
                     if not levels[current_level].won:
                         move_scores[current_level] += 1
                         has_started_level[current_level] = True
-                elif event.key == pygame.K_d or event.key == pygame.K_RIGHT:
+                elif event.key in (pygame.K_d, pygame.K_RIGHT):
                     levels[current_level].move_player(RIGHT)
                     if not levels[current_level].won:
                         move_scores[current_level] += 1
                         has_started_level[current_level] = True
-                elif event.key == pygame.K_s or event.key == pygame.K_DOWN:
+                elif event.key in (pygame.K_s, pygame.K_DOWN):
                     levels[current_level].move_player(DOWN)
                     if not levels[current_level].won:
                         move_scores[current_level] += 1
                         has_started_level[current_level] = True
-                elif event.key == pygame.K_a or event.key == pygame.K_LEFT:
+                elif event.key in (pygame.K_a, pygame.K_LEFT):
                     levels[current_level].move_player(LEFT)
                     if not levels[current_level].won:
                         move_scores[current_level] += 1
                         has_started_level[current_level] = True
-                elif (event.key == pygame.K_LEFTBRACKET
-                        or event.key == pygame.K_RIGHTBRACKET):
+                elif event.key in (pygame.K_LEFTBRACKET,
+                        pygame.K_RIGHTBRACKET):
                     if event.key == pygame.K_LEFTBRACKET and current_level > 0:
                         current_level -= 1
                     elif (event.key == pygame.K_RIGHTBRACKET
