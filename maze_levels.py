@@ -84,4 +84,7 @@ if os.path.isfile("precalculated_solutions.pickle"):
             Dict[Tuple[int, int], List[List[Tuple[int, int]]]]
         ] = pickle.load(file)
     for index, solution_map in enumerate(level_solutions):
-        levels[index]._solution_cache = solution_map
+        try:
+            levels[index]._solution_cache = solution_map
+        except IndexError:
+            break

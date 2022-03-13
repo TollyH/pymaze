@@ -51,6 +51,8 @@ def main():
     if os.path.isfile("highscores.pickle"):
         with open("highscores.pickle", 'rb') as file:
             highscores: List[Tuple[int, int]] = pickle.load(file)
+            if len(highscores) < len(levels):
+                highscores += [(0, 0)] * (len(levels) - len(highscores))
     else:
         highscores: List[Tuple[int, int]] = [(0, 0)] * len(levels)
 
