@@ -4,7 +4,10 @@ PyGame Maze - Tolly Hill 2022
 The main script for the game. Creates and draws to the game window, as well as
 receiving and interpreting player input and recording time and movement scores.
 """
+import os
+import pickle
 import sys
+from typing import List, Set, Tuple
 
 import pygame
 
@@ -45,6 +48,11 @@ def main():
     frame_scores = [0] * len(levels)
     move_scores = [0] * len(levels)
     has_started_level = [False] * len(levels)
+    if os.path.isfile("highscores.pickle"):
+        with open("highscores.pickle", 'rb') as file:
+            highscores: List[Tuple[int, int]] = pickle.load(file)
+    else:
+        highscores: List[Tuple[int, int]] = [(0, 0)] * len(levels)
 
     current_level = 0
     show_solution = False
@@ -58,7 +66,7 @@ def main():
         tile_width = VIEWPORT_WIDTH // levels[current_level].dimensions[0]
         tile_height = VIEWPORT_HEIGHT // levels[current_level].dimensions[1]
         solutions = []
-        solution_coords = set()
+        solution_coords: Set[Tuple[int, int]] = set()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -134,6 +142,22 @@ def main():
                     automove_delay -= 1
 
         if levels[current_level].won:
+            highscores_updated = False
+            if (frame_scores[current_level] < highscores[current_level][0]
+                    or highscores[current_level][0] == 0):
+                highscores[current_level] = (
+                    frame_scores[current_level], highscores[current_level][1]
+                )
+                highscores_updated = True
+            if (move_scores[current_level] < highscores[current_level][1]
+                    or highscores[current_level][1] == 0):
+                highscores[current_level] = (
+                    highscores[current_level][0], move_scores[current_level]
+                )
+                highscores_updated = True
+            if highscores_updated and not os.path.isdir("highscores.pickle"):
+                with open("highscores.pickle", 'wb') as file:
+                    pickle.dump(highscores, file)
             screen.fill(GREEN)
             time_score_text = font.render(
                 f"Time Score: {frame_scores[current_level]}",
@@ -143,22 +167,46 @@ def main():
                 f"Move Score: {move_scores[current_level]}",
                 True, BLUE
             )
+            best_time_score_text = font.render(
+                f"Best Time Score: {highscores[current_level][0]}",
+                True, BLUE
+            )
+            best_move_score_text = font.render(
+                f"Best Move Score: {highscores[current_level][1]}",
+                True, BLUE
+            )
+            best_total_time_score_text = font.render(
+                f"Best Game Time Score: {sum(x[0] for x in highscores)}",
+                True, BLUE
+            )
+            best_total_move_score_text = font.render(
+                f"Best Game Move Score: {sum(x[1] for x in highscores)}",
+                True, BLUE
+            )
             lower_hint_text = font.render(
                 "(Lower scores are better)", True, BLUE
             )
             screen.blit(time_score_text, (10, 10))
             screen.blit(move_score_text, (10, 40))
-            screen.blit(lower_hint_text, (10, 70))
+            screen.blit(best_time_score_text, (10, 90))
+            screen.blit(best_move_score_text, (10, 120))
+            screen.blit(best_total_time_score_text, (10, 200))
+            screen.blit(best_total_move_score_text, (10, 230))
+            screen.blit(lower_hint_text, (10, 280))
         else:
             if has_started_level[current_level]:
                 frame_scores[current_level] += 1
             screen.fill(GREY)
             time_score_text = font.render(
-                f"Time: {frame_scores[current_level]}",
+                f"Time: {frame_scores[current_level]}"
+                if has_started_level[current_level] else
+                f"Time: {highscores[current_level][0]}",
                 True, WHITE
             )
             move_score_text = font.render(
-                f"Moves: {move_scores[current_level]}",
+                f"Moves: {move_scores[current_level]}"
+                if has_started_level[current_level] else
+                f"Moves: {highscores[current_level][1]}",
                 True, WHITE
             )
             screen.blit(time_score_text, (10, 10))
