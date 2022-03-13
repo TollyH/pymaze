@@ -218,14 +218,19 @@ def main():
                 solutions = levels[current_level].find_possible_paths()
                 # A set of all coordinates appearing in any solution
                 solution_coords = {x for y in solutions[1:] for x in y}
-                if (is_autosolving and len(solutions) >= 1
+                if (is_autosolving
                         and frame_scores[current_level] % automove_delay == 0):
-                    move_scores[current_level] += 1
-                    levels[current_level].move_player(solutions[0][1], False)
-                    # Find new solutions after move to display to player
-                    solutions = levels[current_level].find_possible_paths()
-                    if levels[current_level].won:
+                    if len(solutions) < 1:
                         is_autosolving = False
+                    else:
+                        move_scores[current_level] += 1
+                        levels[current_level].move_player(
+                            solutions[0][1], False
+                        )
+                        # Find new solutions after move to display to player
+                        solutions = levels[current_level].find_possible_paths()
+                        if levels[current_level].won:
+                            is_autosolving = False
             for y, row in enumerate(levels[current_level].wall_map):
                 for x, point in enumerate(row):
                     if levels[current_level].player_coords == (x, y):
