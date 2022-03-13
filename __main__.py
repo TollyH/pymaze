@@ -35,9 +35,9 @@ VIEWPORT_HEIGHT = 500
 def main():
     pygame.init()
 
-    # Minimum window resolution is 350x350
+    # Minimum window resolution is 400x400
     screen = pygame.display.set_mode(
-        (max(VIEWPORT_WIDTH, 350), max(VIEWPORT_HEIGHT + 50, 350))
+        (max(VIEWPORT_WIDTH, 400), max(VIEWPORT_HEIGHT + 50, 400))
     )
     pygame.display.set_caption("Maze - Level 1")
 
