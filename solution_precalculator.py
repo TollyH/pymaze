@@ -32,7 +32,7 @@ def precalculate_solutions():
         for y, row in enumerate(maze_level.wall_map):
             for x, point in enumerate(row):
                 print(
-                    f"\rCalculating point ({x:3d}, {y:3d}) "
+                    f"\rCalculating point ({x:3d},{y:3d}) "
                     + f"for level {index + 1:3d}",
                     end="", flush=True
                 )

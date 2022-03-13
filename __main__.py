@@ -250,7 +250,10 @@ def main():
                     )
         print(
             f"\r{clock.get_fps():5.2f} FPS - "
-            + f"Displaying {len(solutions):4d} solutions", end="", flush=True
+            + f"({levels[current_level].player_coords[0]:3d},"
+            + f"{levels[current_level].player_coords[1]:3d}) - "
+            + f"Displaying {len(solutions):4d} solutions",
+            end="", flush=True
         )
         pygame.display.flip()
 
