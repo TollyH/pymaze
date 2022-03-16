@@ -77,7 +77,7 @@ class Level:
         string = ""
         for y, row in enumerate(self.wall_map):
             for x, point in enumerate(row):
-                if self.player_coords == (x, y):
+                if floor_coordinates(self.player_coords) == (x, y):
                     string += "PP"
                 elif (x, y) in self.exit_keys:
                     string += "KK"
