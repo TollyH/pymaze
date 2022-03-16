@@ -2,7 +2,15 @@
 Contains the class definition for Level, which handles collision,
 player movement, victory checking, and path finding.
 """
+import math
 from typing import Dict, List, Tuple
+
+
+def floor_coordinates(coord: Tuple[float, float]):
+    """
+    Convert a precise coordinate to one representing whole tile position.
+    """
+    return (math.floor(coord[0]), math.floor(coord[1]))
 
 
 class Level:
@@ -33,7 +41,8 @@ class Level:
         if self[start_point]:
             raise ValueError("Start point cannot be inside wall")
         self.start_point = start_point
-        self.player_coords = start_point
+        # Start in centre of tile
+        self.player_coords = (start_point[0] + 0.5, start_point[1] + 0.5)
 
         if not self._is_coord_in_bounds(end_point):
             raise ValueError("Out of bounds end point coordinates")
@@ -81,15 +90,16 @@ class Level:
             string += "\n"
         return string[:-1]
 
-    def __getitem__(self, index: Tuple[int, int]):
+    def __getitem__(self, index: Tuple[float, float]):
         """
         Returns True if the specified tile is a wall.
         """
         if not self._is_coord_in_bounds(index):
             raise ValueError("Coordinates must be between 0 and 9")
-        return self.wall_map[index[1]][index[0]]
+        grid_index = floor_coordinates(index)
+        return self.wall_map[grid_index[1]][grid_index[0]]
 
-    def move_player(self, vector: Tuple[int, int], relative: bool = True):
+    def move_player(self, vector: Tuple[float, float], relative: bool = True):
         """
         Moves the player either relative to their current position, or to an
         absolute location. Key collection and victory checking will be
@@ -120,15 +130,16 @@ class Level:
         targets = (
             [self.end_point] if len(self.exit_keys) == 0 else self.exit_keys
         )
-        if self.player_coords in self._solution_cache:
+        grid_coords = floor_coordinates(self.player_coords)
+        if grid_coords in self._solution_cache:
             return [
-                x for x in self._solution_cache[self.player_coords]
+                x for x in self._solution_cache[grid_coords]
                 if x[-1] in targets
             ]
         result = sorted(
-            self._path_search([self.player_coords], targets), key=len
+            self._path_search([grid_coords], targets), key=len
         )
-        self._solution_cache[self.player_coords] = result
+        self._solution_cache[grid_coords] = result
         return result
 
     def reset(self):
@@ -140,7 +151,7 @@ class Level:
         self.player_coords = self.start_point
         self.won = False
 
-    def _is_coord_in_bounds(self, coord: Tuple[int, int]):
+    def _is_coord_in_bounds(self, coord: Tuple[float, float]):
         """
         Checks if a coordinate in within the boundaries of the maze.
         """

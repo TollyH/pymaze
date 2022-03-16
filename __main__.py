@@ -4,19 +4,17 @@ PyGame Maze - Tolly Hill 2022
 The main script for the game. Creates and draws to the game window, as well as
 receiving and interpreting player input and recording time and movement scores.
 """
+import math
 import os
 import pickle
 import sys
-from typing import List, Set, Tuple
+from typing import List, Tuple
 
 import pygame
 
+import raycasting
+from level import floor_coordinates
 from maze_levels import levels
-
-UP = (0, -1)
-RIGHT = (1, 0)
-DOWN = (0, 1)
-LEFT = (-1, 0)
 
 WHITE = (0xFF, 0xFF, 0xFF)
 BLACK = (0x00, 0x00, 0x00)
@@ -27,9 +25,18 @@ RED = (0xFF, 0x00, 0x00)
 PURPLE = (0x87, 0x23, 0xD9)
 LILAC = (0xD7, 0xA6, 0xFF)
 GREY = (0xAA, 0xAA, 0xAA)
+DARK_GREY = (0x10, 0x10, 0x10)
 
 VIEWPORT_WIDTH = 500
 VIEWPORT_HEIGHT = 500
+
+DISPLAY_COLUMNS = VIEWPORT_WIDTH
+DISPLAY_FOV = 66
+
+DRAW_MAZE_EDGE_AS_WALL = True
+
+TURN_SPEED = 2.5
+MOVE_SPEED = 4.0
 
 
 def main():
@@ -45,6 +52,9 @@ def main():
 
     font = pygame.font.SysFont('Tahoma', 24, True)
 
+    facing_directions = [(-1.0, 0.0)] * len(levels)
+    # Camera planes are always perpendicular to facing directions
+    camera_planes = [(0.0, DISPLAY_FOV / 100)] * len(levels)
     frame_scores = [0] * len(levels)
     move_scores = [0] * len(levels)
     has_started_level = [False] * len(levels)
@@ -64,38 +74,17 @@ def main():
     # Game loop
     while True:
         # Limit to 50 FPS
-        clock.tick(50)
-        tile_width = VIEWPORT_WIDTH // levels[current_level].dimensions[0]
-        tile_height = VIEWPORT_HEIGHT // levels[current_level].dimensions[1]
+        frame_time = clock.tick(50) / 1000
+        display_column_width = VIEWPORT_WIDTH // DISPLAY_COLUMNS
         solutions = []
-        solution_coords: Set[Tuple[int, int]] = set()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+            # Standard "press-once" keys
             elif event.type == pygame.KEYDOWN and not is_autosolving:
-                if event.key in (pygame.K_w, pygame.K_UP):
-                    levels[current_level].move_player(UP)
-                    if not levels[current_level].won:
-                        move_scores[current_level] += 1
-                        has_started_level[current_level] = True
-                elif event.key in (pygame.K_d, pygame.K_RIGHT):
-                    levels[current_level].move_player(RIGHT)
-                    if not levels[current_level].won:
-                        move_scores[current_level] += 1
-                        has_started_level[current_level] = True
-                elif event.key in (pygame.K_s, pygame.K_DOWN):
-                    levels[current_level].move_player(DOWN)
-                    if not levels[current_level].won:
-                        move_scores[current_level] += 1
-                        has_started_level[current_level] = True
-                elif event.key in (pygame.K_a, pygame.K_LEFT):
-                    levels[current_level].move_player(LEFT)
-                    if not levels[current_level].won:
-                        move_scores[current_level] += 1
-                        has_started_level[current_level] = True
-                elif event.key in (pygame.K_LEFTBRACKET,
-                                   pygame.K_RIGHTBRACKET):
+                if event.key in (pygame.K_LEFTBRACKET,
+                                 pygame.K_RIGHTBRACKET):
                     if event.key == pygame.K_LEFTBRACKET and current_level > 0:
                         current_level -= 1
                     elif (event.key == pygame.K_RIGHTBRACKET
@@ -105,13 +94,6 @@ def main():
                         continue
                     pygame.display.set_caption(
                         f"Maze - Level {current_level + 1}"
-                    )
-                    # Update tile dimensions to fit new level
-                    tile_width = (
-                        VIEWPORT_WIDTH // levels[current_level].dimensions[0]
-                    )
-                    tile_height = (
-                        VIEWPORT_HEIGHT // levels[current_level].dimensions[1]
                     )
                 elif event.key == pygame.K_r:
                     levels[current_level].reset()
@@ -126,23 +108,63 @@ def main():
                         has_started_level[current_level] = True
                     else:
                         show_solution = not show_solution
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == pygame.BUTTON_LEFT and not is_autosolving:
-                    mouse_position = pygame.mouse.get_pos()
-                    levels[current_level].move_player(
-                        (
-                            mouse_position[0] // tile_width,
-                            (mouse_position[1] - 50) // tile_height
-                        ), False
-                    )
-                    if not levels[current_level].won:
-                        move_scores[current_level] += 1
-                        has_started_level[current_level] = True
-                elif event.button == pygame.BUTTON_WHEELUP:
-                    automove_delay += 1
-                elif (event.button == pygame.BUTTON_WHEELDOWN
-                        and automove_delay > 1):
-                    automove_delay -= 1
+
+        old_grid_position = floor_coordinates(
+            levels[current_level].player_coords
+        )
+        # Ensure framerate does not affect speed values
+        turn_speed_mod = frame_time * TURN_SPEED
+        move_speed_mod = frame_time * MOVE_SPEED
+        # Held down keys
+        pressed_keys = pygame.key.get_pressed()
+        if pressed_keys[pygame.K_w] or pressed_keys[pygame.K_UP]:
+            if not levels[current_level].won:
+                levels[current_level].move_player((
+                    facing_directions[current_level][0] * move_speed_mod,
+                    facing_directions[current_level][1] * move_speed_mod
+                ))
+                has_started_level[current_level] = True
+        if pressed_keys[pygame.K_s] or pressed_keys[pygame.K_DOWN]:
+            if not levels[current_level].won:
+                levels[current_level].move_player((
+                    -facing_directions[current_level][0] * move_speed_mod,
+                    -facing_directions[current_level][1] * move_speed_mod
+                ))
+                has_started_level[current_level] = True
+        if pressed_keys[pygame.K_a] or pressed_keys[pygame.K_LEFT]:
+            old_direction = facing_directions[current_level]
+            facing_directions[current_level] = (
+                old_direction[0] * math.cos(turn_speed_mod)
+                - old_direction[1] * math.sin(turn_speed_mod),
+                old_direction[0] * math.sin(turn_speed_mod)
+                + old_direction[1] * math.cos(turn_speed_mod)
+            )
+            old_camera_plane = camera_planes[current_level]
+            camera_planes[current_level] = (
+                old_camera_plane[0] * math.cos(turn_speed_mod)
+                - old_camera_plane[1] * math.sin(turn_speed_mod),
+                old_camera_plane[0] * math.sin(turn_speed_mod)
+                + old_camera_plane[1] * math.cos(turn_speed_mod)
+            )
+        if pressed_keys[pygame.K_d] or pressed_keys[pygame.K_RIGHT]:
+            old_direction = facing_directions[current_level]
+            facing_directions[current_level] = (
+                old_direction[0] * math.cos(-turn_speed_mod)
+                - old_direction[1] * math.sin(-turn_speed_mod),
+                old_direction[0] * math.sin(-turn_speed_mod)
+                + old_direction[1] * math.cos(-turn_speed_mod)
+            )
+            old_camera_plane = camera_planes[current_level]
+            camera_planes[current_level] = (
+                old_camera_plane[0] * math.cos(-turn_speed_mod)
+                - old_camera_plane[1] * math.sin(-turn_speed_mod),
+                old_camera_plane[0] * math.sin(-turn_speed_mod)
+                + old_camera_plane[1] * math.cos(-turn_speed_mod)
+            )
+
+        if floor_coordinates(
+                levels[current_level].player_coords) != old_grid_position:
+            move_scores[current_level] += 1
 
         if levels[current_level].won:
             highscores_updated = False
@@ -214,10 +236,21 @@ def main():
             )
             screen.blit(time_score_text, (10, 10))
             screen.blit(move_score_text, (200, 10))
+            # Ceiling
+            pygame.draw.rect(
+                screen, BLUE,
+                (0, 50, VIEWPORT_WIDTH, VIEWPORT_HEIGHT // 2)
+            )
+            # Floor
+            pygame.draw.rect(
+                screen, GREEN,
+                (
+                    0, VIEWPORT_HEIGHT // 2 + 50,
+                    VIEWPORT_WIDTH, VIEWPORT_HEIGHT // 2
+                )
+            )
             if show_solution or is_autosolving:
                 solutions = levels[current_level].find_possible_paths()
-                # A set of all coordinates appearing in any solution
-                solution_coords = {x for y in solutions[1:] for x in y}
                 if (is_autosolving
                         and frame_scores[current_level] % automove_delay == 0):
                     if len(solutions) < 1:
@@ -231,32 +264,34 @@ def main():
                         solutions = levels[current_level].find_possible_paths()
                         if levels[current_level].won:
                             is_autosolving = False
-            for y, row in enumerate(levels[current_level].wall_map):
-                for x, point in enumerate(row):
-                    if levels[current_level].player_coords == (x, y):
-                        color = BLUE
-                    elif (x, y) in levels[current_level].exit_keys:
-                        color = GOLD
-                    elif levels[current_level].start_point == (x, y):
-                        color = RED
-                    elif levels[current_level].end_point == (x, y):
-                        color = GREEN
-                    elif len(solutions) >= 1 and (x, y) in solutions[0]:
-                        color = PURPLE
-                    elif len(solutions) >= 1 and (x, y) in solution_coords:
-                        color = LILAC
-                    else:
-                        color = BLACK if point else WHITE
-                    pygame.draw.rect(
-                        screen, color, (
-                            tile_width * x, tile_height * y + 50,
-                            tile_width, tile_height
-                        )
+            for index, (column_distance, side) in enumerate(
+                    raycasting.get_column_distances(
+                        DISPLAY_COLUMNS,
+                        levels[current_level].wall_map, DRAW_MAZE_EDGE_AS_WALL,
+                        levels[current_level].player_coords,
+                        facing_directions[current_level],
+                        camera_planes[current_level])):
+                if column_distance is None:
+                    continue
+                # Prevent division by 0
+                column_distance = max(1e-30, column_distance)
+                column_height = round(VIEWPORT_HEIGHT / column_distance)
+                column_height = min(column_height, VIEWPORT_HEIGHT)
+                pygame.draw.rect(
+                    screen, DARK_GREY if side else BLACK, (
+                        display_column_width * index,
+                        max(
+                            0, -column_height // 2 + VIEWPORT_HEIGHT // 2
+                        ) + 50,
+                        display_column_width, column_height
                     )
+                )
         print(
             f"\r{clock.get_fps():5.2f} FPS - "
-            + f"({levels[current_level].player_coords[0]:3d},"
-            + f"{levels[current_level].player_coords[1]:3d}) - "
+            + f"Position ({levels[current_level].player_coords[0]:5.2f},"
+            + f"{levels[current_level].player_coords[1]:5.2f}) - "
+            + f"Direction ({facing_directions[current_level][0]:5.2f},"
+            + f"{facing_directions[current_level][1]:5.2f}) - "
             + f"Displaying {len(solutions):4d} solutions",
             end="", flush=True
         )
