@@ -1,6 +1,6 @@
 # PyGame Maze
 
-A simple, grid-based maze game written in Python with PyGame.
+A simple, grid-based maze game written in Python with PyGame. For the "3D" version, see the ["raycasting" branch](https://github.com/TollyH/pygame_maze/tree/raycasting).
 
 ## Installation
 
