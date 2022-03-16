@@ -17,10 +17,6 @@ algorithm for raycasting.
 - `[` and `]` - Previous/Next Level Respectively
 - `R` - Reset level
 
-## Cheat Controls
-
-- `Space` - Auto complete level
-
 ## Instructions
 
 - Simply collect all of the golden keys before reaching the exit.

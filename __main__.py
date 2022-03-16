@@ -66,7 +66,6 @@ def main():
         highscores: List[Tuple[int, int]] = [(0, 0)] * len(levels)
 
     current_level = 0
-    is_autosolving = False
 
     # Game loop
     while True:
@@ -78,7 +77,7 @@ def main():
                 pygame.quit()
                 sys.exit()
             # Standard "press-once" keys
-            elif event.type == pygame.KEYDOWN and not is_autosolving:
+            elif event.type == pygame.KEYDOWN:
                 if event.key in (pygame.K_LEFTBRACKET,
                                  pygame.K_RIGHTBRACKET):
                     if event.key == pygame.K_LEFTBRACKET and current_level > 0:
@@ -98,9 +97,6 @@ def main():
                     frame_scores[current_level] = 0
                     move_scores[current_level] = 0
                     has_started_level[current_level] = False
-                elif event.key == pygame.K_SPACE:
-                    is_autosolving = True
-                    has_started_level[current_level] = True
 
         old_grid_position = floor_coordinates(
             levels[current_level].player_coords
@@ -256,21 +252,7 @@ def main():
                     VIEWPORT_WIDTH, VIEWPORT_HEIGHT // 2
                 )
             )
-            # TODO: Either make work nicely in 3D or remove
-            if is_autosolving:
-                solutions = levels[current_level].find_possible_paths()
-                if is_autosolving:
-                    if len(solutions) < 1:
-                        is_autosolving = False
-                    else:
-                        move_scores[current_level] += 1
-                        levels[current_level].move_player(
-                            solutions[0][1], False
-                        )
-                        # Find new solutions after move to display to player
-                        solutions = levels[current_level].find_possible_paths()
-                        if levels[current_level].won:
-                            is_autosolving = False
+
             for index, (column_distance, side_was_ns, hit_type) in enumerate(
                     raycasting.get_column_distances(
                         DISPLAY_COLUMNS, levels[current_level],

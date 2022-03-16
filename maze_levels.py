@@ -1,13 +1,8 @@
 """
 Contains the definitions of each instance of Level. Also provides the constants
 T and F as shorthands for True and False respectively, T corresponding to where
-a wall is and F corresponding to a occupyable space. If a pre-calculated
-solutions file exists, it will be loaded here.
+a wall is and F corresponding to a occupyable space.
 """
-import os
-import pickle
-from typing import Dict, List, Tuple
-
 from level import Level
 
 F = False
@@ -110,14 +105,3 @@ levels = [
         ]
     )
 ]
-
-if os.path.isfile("precalculated_solutions.pickle"):
-    with open("precalculated_solutions.pickle", 'rb') as file:
-        level_solutions: List[
-            Dict[Tuple[int, int], List[List[Tuple[int, int]]]]
-        ] = pickle.load(file)
-    for index, solution_map in enumerate(level_solutions):
-        try:
-            levels[index]._solution_cache = solution_map
-        except IndexError:
-            break

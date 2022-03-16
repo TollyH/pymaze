@@ -1,9 +1,9 @@
 """
 Contains the class definition for Level, which handles collision,
-player movement, victory checking, and path finding.
+player movement and victory checking.
 """
 import math
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 
 def floor_coordinates(coord: Tuple[float, float]):
@@ -18,7 +18,7 @@ class Level:
     A class representing a single maze level. Contains a wall map
     as a 2D array, with True representing the maze walls, and False
     represting occupyable space. Also keeps track of the current player
-    coordinates within the level and can calculate possible solutions.
+    coordinates within the level.
     """
     def __init__(self, dimensions: Tuple[int, int],
                  wall_map: List[List[bool]], start_point: Tuple[int, int],
@@ -58,13 +58,6 @@ class Level:
         self.original_exit_keys = exit_keys
         # Create a shallow copy of exit keys to be manipulated on collection
         self.exit_keys = [*exit_keys]
-
-        # Maps coordinates to a list of lists of coordinates represting
-        # possible paths from a previous player position. Saves on unnecessary
-        # repeated calculations.
-        self._solution_cache: Dict[
-            Tuple[int, int], List[List[Tuple[int, int]]]
-        ] = {}
 
         self.won = False
 
@@ -122,27 +115,6 @@ class Level:
                 and len(self.exit_keys) == 0):
             self.won = True
 
-    def find_possible_paths(self):
-        """
-        Finds all possible paths to the current target(s) from the player's
-        current position. The returned result is sorted by path length in
-        ascending order (i.e. the shortest path is first).
-        """
-        targets = (
-            [self.end_point] if len(self.exit_keys) == 0 else self.exit_keys
-        )
-        grid_coords = floor_coordinates(self.player_coords)
-        if grid_coords in self._solution_cache:
-            return [
-                x for x in self._solution_cache[grid_coords]
-                if x[-1] in targets
-            ]
-        result = sorted(
-            self._path_search([grid_coords], targets), key=len
-        )
-        self._solution_cache[grid_coords] = result
-        return result
-
     def reset(self):
         """
         Reset this level to its original state
@@ -162,26 +134,3 @@ class Level:
             coord[0] >= 0 and coord[0] < self.dimensions[0]
             and coord[1] >= 0 and coord[1] < self.dimensions[1]
         )
-
-    def _path_search(self, current_path: List[Tuple[int, int]],
-                     targets: List[Tuple[int, int]]):
-        """
-        Recursively find all possible paths to a list of targets. Use the
-        find_possible_paths method instead of this one for finding paths
-        to the player's target(s).
-        """
-        found_paths: List[List[Tuple[int, int]]] = []
-        for x_offset, y_offset in ((0, -1), (1, 0), (0, 1), (-1, 0)):
-            point = (
-                current_path[-1][0] + x_offset,
-                current_path[-1][1] + y_offset
-            )
-            if (not self.is_coord_in_bounds(point) or self[point]
-                    or point in current_path):
-                continue
-            if point in targets:
-                found_paths.append(current_path + [point])
-            found_paths += self._path_search(
-                current_path + [point], targets
-            )
-        return found_paths
