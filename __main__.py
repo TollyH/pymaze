@@ -135,14 +135,14 @@ def main():
             if not levels[current_level].won:
                 levels[current_level].move_player((
                     facing_directions[current_level][1] * move_speed_mod,
-                    facing_directions[current_level][0] * move_speed_mod
+                    -facing_directions[current_level][0] * move_speed_mod
                 ))
                 has_started_level[current_level] = True
         if pressed_keys[pygame.K_a]:
             if not levels[current_level].won:
                 levels[current_level].move_player((
                     -facing_directions[current_level][1] * move_speed_mod,
-                    -facing_directions[current_level][0] * move_speed_mod
+                    facing_directions[current_level][0] * move_speed_mod
                 ))
                 has_started_level[current_level] = True
         if pressed_keys[pygame.K_LEFT]:
