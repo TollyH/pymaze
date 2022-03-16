@@ -304,8 +304,7 @@ def main():
             + f"Position ({levels[current_level].player_coords[0]:5.2f},"
             + f"{levels[current_level].player_coords[1]:5.2f}) - "
             + f"Direction ({facing_directions[current_level][0]:5.2f},"
-            + f"{facing_directions[current_level][1]:5.2f}) - "
-            + f"Displaying {len(solutions):4d} solutions",
+            + f"{facing_directions[current_level][1]:5.2f})",
             end="", flush=True
         )
         pygame.display.flip()
