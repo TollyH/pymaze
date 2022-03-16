@@ -52,9 +52,9 @@ def main():
 
     font = pygame.font.SysFont('Tahoma', 24, True)
 
-    facing_directions = [(-1.0, 0.0)] * len(levels)
+    facing_directions = [(0.0, 1.0)] * len(levels)
     # Camera planes are always perpendicular to facing directions
-    camera_planes = [(0.0, DISPLAY_FOV / 100)] * len(levels)
+    camera_planes = [(DISPLAY_FOV / 100, 0.0)] * len(levels)
     frame_scores = [0] * len(levels)
     move_scores = [0] * len(levels)
     has_started_level = [False] * len(levels)
