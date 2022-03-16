@@ -12,8 +12,8 @@ algorithm for raycasting.
 
 ## Controls
 
-- `Up` and `Down` or `W` and `S` - Move around
-- `Left` and `Right` or `A` and `D` - Turn camera
+- `WASD` or `Up` and `Down` - Move around
+- `Left` and `Right` - Turn camera
 - `[` and `]` - Previous/Next Level Respectively
 - `R` - Reset level
 
