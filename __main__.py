@@ -20,10 +20,9 @@ WHITE = (0xFF, 0xFF, 0xFF)
 BLACK = (0x00, 0x00, 0x00)
 BLUE = (0x00, 0x30, 0xFF)
 GOLD = (0xE1, 0xBB, 0x12)
+DARK_GOLD = (0x70, 0x5E, 0x09)
 GREEN = (0x00, 0xFF, 0x10)
-RED = (0xFF, 0x00, 0x00)
-PURPLE = (0x87, 0x23, 0xD9)
-LILAC = (0xD7, 0xA6, 0xFF)
+DARK_GREEN = (0x00, 0x80, 0x00)
 GREY = (0xAA, 0xAA, 0xAA)
 DARK_GREY = (0x10, 0x10, 0x10)
 
@@ -256,7 +255,7 @@ def main():
             )
             # Floor
             pygame.draw.rect(
-                screen, GREEN,
+                screen, WHITE,
                 (
                     0, VIEWPORT_HEIGHT // 2 + 50,
                     VIEWPORT_WIDTH, VIEWPORT_HEIGHT // 2
@@ -277,21 +276,29 @@ def main():
                         solutions = levels[current_level].find_possible_paths()
                         if levels[current_level].won:
                             is_autosolving = False
-            for index, (column_distance, side) in enumerate(
+            for index, (column_distance, side_was_ns, hit_type) in enumerate(
                     raycasting.get_column_distances(
-                        DISPLAY_COLUMNS,
-                        levels[current_level].wall_map, DRAW_MAZE_EDGE_AS_WALL,
-                        levels[current_level].player_coords,
+                        DISPLAY_COLUMNS, levels[current_level],
+                        DRAW_MAZE_EDGE_AS_WALL,
                         facing_directions[current_level],
                         camera_planes[current_level])):
-                if column_distance is None:
+                # Edge of maze when drawing maze edges as walls is disabled
+                if column_distance == float('inf'):
                     continue
                 # Prevent division by 0
                 column_distance = max(1e-30, column_distance)
                 column_height = round(VIEWPORT_HEIGHT / column_distance)
                 column_height = min(column_height, VIEWPORT_HEIGHT)
+                if hit_type == raycasting.WALL:
+                    colour = DARK_GREY if side_was_ns else BLACK
+                elif hit_type == raycasting.END_POINT:
+                    colour = GREEN if side_was_ns else DARK_GREEN
+                elif hit_type == raycasting.KEY:
+                    colour = GOLD if side_was_ns else DARK_GOLD
+                else:
+                    continue
                 pygame.draw.rect(
-                    screen, DARK_GREY if side else BLACK, (
+                    screen, colour, (
                         display_column_width * index,
                         max(
                             0, -column_height // 2 + VIEWPORT_HEIGHT // 2

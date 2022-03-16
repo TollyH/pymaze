@@ -2,20 +2,25 @@
 Contains functions related to the raycast rendering used to generate pseudo-3D
 graphics.
 """
-import math
-from typing import List, Optional, Tuple
+from typing import List, Literal, Tuple
+
+import level
+
+WALL = 0
+END_POINT = 1
+KEY = 2
 
 
-def get_first_collision(wall_map: List[List[bool]],
-                        origin: Tuple[float, float],
+def get_first_collision(current_level: level.Level,
                         direction: Tuple[float, float],
                         edge_is_wall: bool):
     """
     Find the distance of the first intersection of a wall tile by a ray
     travelling at the specified direction from a particular origin. Returns
     None if no collision occurs before the edge of the wall map, or a tuple
-    (distance, side) if a collision did occur. Side is False if a North/South
-    wall was hit, or True if an East/West wall was.
+    (distance, side, type) if a collision did occur. Side is False if a
+    North/South wall was hit, or True if an East/West wall was. Type is either
+    WALL, START_POINT, END_POINT, or KEY.
     """
     # Prevent divide by 0
     if direction[0] == 0:
@@ -25,7 +30,7 @@ def get_first_collision(wall_map: List[List[bool]],
     # When traversing one unit in a direction, what will the coordinate of the
     # other direction increase by?
     step_size = (abs(1 / direction[0]), abs(1 / direction[1]))
-    current_tile = [math.floor(origin[0]), math.floor(origin[1])]
+    current_tile = list(level.floor_coordinates(current_level.player_coords))
     # The current length of the X and Y rays respectively
     dimension_ray_length = [0.0, 0.0]
     step = [0, 0]
@@ -35,30 +40,35 @@ def get_first_collision(wall_map: List[List[bool]],
     if direction[0] < 0:
         step[0] = -1
         # X distance from the corner of the origin
-        dimension_ray_length[0] = (origin[0] - current_tile[0]) * step_size[0]
+        dimension_ray_length[0] = (
+            current_level.player_coords[0] - current_tile[0]
+        ) * step_size[0]
     # Going positive X (right)
     else:
         step[0] = 1
         # X distance until origin tile is exited
         dimension_ray_length[0] = (
-            current_tile[0] + 1 - origin[0]
+            current_tile[0] + 1 - current_level.player_coords[0]
         ) * step_size[0]
     # Going negative Y (up)
     if direction[1] < 0:
         step[1] = -1
         # Y distance from the corner of the origin
-        dimension_ray_length[1] = (origin[1] - current_tile[1]) * step_size[1]
+        dimension_ray_length[1] = (
+            current_level.player_coords[1] - current_tile[1]
+        ) * step_size[1]
     # Going positive Y (down)
     else:
         step[1] = 1
         # Y distance until origin tile is exited
         dimension_ray_length[1] = (
-            current_tile[1] + 1 - origin[1]
+            current_tile[1] + 1 - current_level.player_coords[1]
         ) * step_size[1]
 
     # Stores whether a North/South or East/West wall was hit
     side_was_ns = False
     tile_found = False
+    hit_type = 0
     while not tile_found:
         # Move along ray
         if dimension_ray_length[0] < dimension_ray_length[1]:
@@ -70,33 +80,39 @@ def get_first_collision(wall_map: List[List[bool]],
             dimension_ray_length[1] += step_size[1]
             side_was_ns = True
 
-        if (current_tile[1] < 0 or current_tile[0] < 0
-                or current_tile[1] >= len(wall_map)
-                or current_tile[0] >= len(wall_map[current_tile[1]])):
+        if not current_level.is_coord_in_bounds(tuple(current_tile)):
             # Edge of wall map has been reached, yet no wall in sight
             if edge_is_wall:
                 tile_found = True
             else:
                 return None
         else:
+            check_coords = tuple(current_tile)
             # Collision check
-            if wall_map[current_tile[1]][current_tile[0]]:
+            if current_level[check_coords]:
                 tile_found = True
+                hit_type = WALL
+            elif (check_coords == current_level.end_point
+                    and len(current_level.exit_keys) == 0):
+                tile_found = True
+                hit_type = END_POINT
+            elif check_coords in current_level.exit_keys:
+                tile_found = True
+                hit_type = KEY
     # If this point is reached, a wall tile has been found
     if not side_was_ns:
-        return (dimension_ray_length[0] - step_size[0], side_was_ns)
-    return (dimension_ray_length[1] - step_size[1], side_was_ns)
+        return (dimension_ray_length[0] - step_size[0], side_was_ns, hit_type)
+    return (dimension_ray_length[1] - step_size[1], side_was_ns, hit_type)
 
 
-def get_column_distances(display_columns: int, wall_map: List[List[bool]],
-                         edge_is_wall: bool, origin: Tuple[float, float],
-                         direction: Tuple[float, float],
+def get_column_distances(display_columns: int, current_level: level.Level,
+                         edge_is_wall: bool, direction: Tuple[float, float],
                          camera_plane: Tuple[float, float]):
     """
     Get a list of the distances of each column's ray for a particular wall map
     by utilising raycasting.
     """
-    columns: List[Tuple[Optional[float], bool]] = []
+    columns: List[Tuple[float, bool, Literal[0, 1, 2]]] = []
     for index in range(display_columns):
         camera_x = 2 * index / display_columns - 1
         cast_direction = (
@@ -104,10 +120,10 @@ def get_column_distances(display_columns: int, wall_map: List[List[bool]],
             direction[1] + camera_plane[1] * camera_x,
         )
         result = get_first_collision(
-            wall_map, origin, cast_direction, edge_is_wall
+            current_level, cast_direction, edge_is_wall
         )
         if result is None:
-            columns.append((None, False))
+            columns.append((float('inf'), False, 0))
         else:
             columns.append(result)
     return columns

@@ -36,7 +36,7 @@ class Level:
             )
         self.wall_map = wall_map
 
-        if not self._is_coord_in_bounds(start_point):
+        if not self.is_coord_in_bounds(start_point):
             raise ValueError("Out of bounds start point coordinates")
         if self[start_point]:
             raise ValueError("Start point cannot be inside wall")
@@ -44,14 +44,14 @@ class Level:
         # Start in centre of tile
         self.player_coords = (start_point[0] + 0.5, start_point[1] + 0.5)
 
-        if not self._is_coord_in_bounds(end_point):
+        if not self.is_coord_in_bounds(end_point):
             raise ValueError("Out of bounds end point coordinates")
         if self[end_point]:
             raise ValueError("End point cannot be inside wall")
         self.end_point = end_point
 
         for key in exit_keys:
-            if not self._is_coord_in_bounds(key):
+            if not self.is_coord_in_bounds(key):
                 raise ValueError("Out of bounds key coordinates")
             if self[key]:
                 raise ValueError("Key cannot be inside wall")
@@ -94,7 +94,7 @@ class Level:
         """
         Returns True if the specified tile is a wall.
         """
-        if not self._is_coord_in_bounds(index):
+        if not self.is_coord_in_bounds(index):
             raise ValueError("Coordinates must be between 0 and 9")
         grid_index = floor_coordinates(index)
         return self.wall_map[grid_index[1]][grid_index[0]]
@@ -113,7 +113,7 @@ class Level:
             )
         else:
             target = vector
-        if not self._is_coord_in_bounds(target) or self[target] or self.won:
+        if not self.is_coord_in_bounds(target) or self[target] or self.won:
             return
         self.player_coords = target
         if floor_coordinates(target) in self.exit_keys:
@@ -152,7 +152,7 @@ class Level:
         self.player_coords = self.start_point
         self.won = False
 
-    def _is_coord_in_bounds(self, coord: Tuple[float, float]):
+    def is_coord_in_bounds(self, coord: Tuple[float, float]):
         """
         Checks if a coordinate in within the boundaries of the maze.
         """
@@ -174,7 +174,7 @@ class Level:
                 current_path[-1][0] + x_offset,
                 current_path[-1][1] + y_offset
             )
-            if (not self._is_coord_in_bounds(point) or self[point]
+            if (not self.is_coord_in_bounds(point) or self[point]
                     or point in current_path):
                 continue
             if point in targets:
