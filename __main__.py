@@ -66,16 +66,13 @@ def main():
         highscores: List[Tuple[int, int]] = [(0, 0)] * len(levels)
 
     current_level = 0
-    show_solution = False
     is_autosolving = False
-    automove_delay = 1
 
     # Game loop
     while True:
         # Limit to 50 FPS
         frame_time = clock.tick(50) / 1000
         display_column_width = VIEWPORT_WIDTH // DISPLAY_COLUMNS
-        solutions = []
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -96,17 +93,14 @@ def main():
                     )
                 elif event.key == pygame.K_r:
                     levels[current_level].reset()
+                    facing_directions[current_level] = (0.0, 1.0)
+                    camera_planes[current_level] = (-DISPLAY_FOV / 100, 0.0)
                     frame_scores[current_level] = 0
                     move_scores[current_level] = 0
                     has_started_level[current_level] = False
                 elif event.key == pygame.K_SPACE:
-                    key_states = pygame.key.get_pressed()
-                    if (key_states[pygame.K_LCTRL]
-                            or key_states[pygame.K_RCTRL]):
-                        is_autosolving = True
-                        has_started_level[current_level] = True
-                    else:
-                        show_solution = not show_solution
+                    is_autosolving = True
+                    has_started_level[current_level] = True
 
         old_grid_position = floor_coordinates(
             levels[current_level].player_coords
@@ -174,6 +168,7 @@ def main():
                 old_camera_plane[0] * math.sin(-turn_speed_mod)
                 + old_camera_plane[1] * math.cos(-turn_speed_mod)
             )
+        # Only count up one move score if player crossed a gridline
         if floor_coordinates(
                 levels[current_level].player_coords) != old_grid_position:
             move_scores[current_level] += 1
@@ -261,10 +256,10 @@ def main():
                     VIEWPORT_WIDTH, VIEWPORT_HEIGHT // 2
                 )
             )
-            if show_solution or is_autosolving:
+            # TODO: Either make work nicely in 3D or remove
+            if is_autosolving:
                 solutions = levels[current_level].find_possible_paths()
-                if (is_autosolving
-                        and frame_scores[current_level] % automove_delay == 0):
+                if is_autosolving:
                     if len(solutions) < 1:
                         is_autosolving = False
                     else:

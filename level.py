@@ -149,7 +149,9 @@ class Level:
         """
         # Shallow copy to prevent original key list being modified
         self.exit_keys = [*self.original_exit_keys]
-        self.player_coords = self.start_point
+        self.player_coords = (
+            self.start_point[0] + 0.5, self.start_point[1] + 0.5
+        )
         self.won = False
 
     def is_coord_in_bounds(self, coord: Tuple[float, float]):
