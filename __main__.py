@@ -54,7 +54,7 @@ def main():
 
     facing_directions = [(0.0, 1.0)] * len(levels)
     # Camera planes are always perpendicular to facing directions
-    camera_planes = [(DISPLAY_FOV / 100, 0.0)] * len(levels)
+    camera_planes = [(-DISPLAY_FOV / 100, 0.0)] * len(levels)
     frame_scores = [0] * len(levels)
     move_scores = [0] * len(levels)
     has_started_level = [False] * len(levels)
@@ -131,21 +131,21 @@ def main():
                     -facing_directions[current_level][1] * move_speed_mod
                 ))
                 has_started_level[current_level] = True
-        if pressed_keys[pygame.K_d]:
+        if pressed_keys[pygame.K_a]:
             if not levels[current_level].won:
                 levels[current_level].move_player((
                     facing_directions[current_level][1] * move_speed_mod,
                     -facing_directions[current_level][0] * move_speed_mod
                 ))
                 has_started_level[current_level] = True
-        if pressed_keys[pygame.K_a]:
+        if pressed_keys[pygame.K_d]:
             if not levels[current_level].won:
                 levels[current_level].move_player((
                     -facing_directions[current_level][1] * move_speed_mod,
                     facing_directions[current_level][0] * move_speed_mod
                 ))
                 has_started_level[current_level] = True
-        if pressed_keys[pygame.K_LEFT]:
+        if pressed_keys[pygame.K_RIGHT]:
             old_direction = facing_directions[current_level]
             facing_directions[current_level] = (
                 old_direction[0] * math.cos(turn_speed_mod)
@@ -160,7 +160,7 @@ def main():
                 old_camera_plane[0] * math.sin(turn_speed_mod)
                 + old_camera_plane[1] * math.cos(turn_speed_mod)
             )
-        if pressed_keys[pygame.K_RIGHT]:
+        if pressed_keys[pygame.K_LEFT]:
             old_direction = facing_directions[current_level]
             facing_directions[current_level] = (
                 old_direction[0] * math.cos(-turn_speed_mod)
