@@ -19,8 +19,7 @@ algorithm for raycasting.
 
 ## Cheat Controls
 
-- `Space` - Reveal shortest path to exit/keys
-- `CTRL` + `Space` - Auto complete level
+- `Space` - Auto complete level
 
 ## Instructions
 
