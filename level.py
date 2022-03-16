@@ -116,9 +116,10 @@ class Level:
         if not self._is_coord_in_bounds(target) or self[target] or self.won:
             return
         self.player_coords = target
-        if target in self.exit_keys:
-            self.exit_keys.remove(target)
-        if target == self.end_point and len(self.exit_keys) == 0:
+        if floor_coordinates(target) in self.exit_keys:
+            self.exit_keys.remove(floor_coordinates(target))
+        if (floor_coordinates(target) == self.end_point
+                and len(self.exit_keys) == 0):
             self.won = True
 
     def find_possible_paths(self):
