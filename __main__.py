@@ -41,9 +41,9 @@ MOVE_SPEED = 4.0
 def main():
     pygame.init()
 
-    # Minimum window resolution is 400x400
+    # Minimum window resolution is 500x500
     screen = pygame.display.set_mode(
-        (max(VIEWPORT_WIDTH, 400), max(VIEWPORT_HEIGHT + 50, 400))
+        (max(VIEWPORT_WIDTH, 500), max(VIEWPORT_HEIGHT + 50, 500))
     )
     pygame.display.set_caption("Maze - Level 1")
 
@@ -237,8 +237,16 @@ def main():
                 f"Moves: {highscores[current_level][1]}",
                 True, WHITE
             )
+            starting_keys = len(levels[current_level].original_exit_keys)
+            remaining_keys = (
+                starting_keys - len(levels[current_level].exit_keys)
+            )
+            keys_text = font.render(
+                f"Keys: {remaining_keys}/{starting_keys}", True, WHITE
+            )
             screen.blit(time_score_text, (10, 10))
-            screen.blit(move_score_text, (200, 10))
+            screen.blit(move_score_text, (180, 10))
+            screen.blit(keys_text, (340, 10))
             # Ceiling
             pygame.draw.rect(
                 screen, BLUE,
