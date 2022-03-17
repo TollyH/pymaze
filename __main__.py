@@ -104,15 +104,15 @@ def main():
                     display_map = not display_map
 
         if (display_map
-                and screen.get_size()[0] < max(VIEWPORT_WIDTH * 2, 1000)):
+                and screen.get_size()[0] < VIEWPORT_WIDTH * 2):
             screen = pygame.display.set_mode(
                 (
-                    max(VIEWPORT_WIDTH * 2, 1000),
+                    max(VIEWPORT_WIDTH * 2, 500),
                     max(VIEWPORT_HEIGHT + 50, 500)
                 )
             )
         elif (not display_map
-                and screen.get_size()[0] > max(VIEWPORT_WIDTH, 500)):
+                and screen.get_size()[0] > VIEWPORT_WIDTH):
             screen = pygame.display.set_mode(
                 (
                     max(VIEWPORT_WIDTH, 500),
@@ -339,6 +339,33 @@ def main():
                                 tile_height * y + 50, tile_width, tile_height
                             )
                         )
+                # Player direction
+                pygame.draw.line(
+                    screen, RED, (
+                        levels[current_level].player_coords[0] * tile_width
+                        + VIEWPORT_WIDTH,
+                        levels[current_level].player_coords[1] * tile_height
+                        + 50
+                    ),
+                    (
+                        levels[current_level].player_coords[0] * tile_width
+                        + VIEWPORT_WIDTH
+                        + facing_directions[current_level][0] * tile_width
+                        // 2,
+                        levels[current_level].player_coords[1] * tile_height
+                        + 50 + facing_directions[current_level][1] * tile_width
+                        // 2
+                    ), 3
+                )
+                # Exact player position
+                pygame.draw.circle(
+                    screen, DARK_GREEN, (
+                        levels[current_level].player_coords[0] * tile_width
+                        + VIEWPORT_WIDTH,
+                        levels[current_level].player_coords[1] * tile_height
+                        + 50
+                    ), tile_width // 8
+                )
         print(
             f"\r{clock.get_fps():5.2f} FPS - "
             + f"Position ({levels[current_level].player_coords[0]:5.2f},"
