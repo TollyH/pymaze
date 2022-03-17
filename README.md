@@ -16,7 +16,17 @@ algorithm for raycasting.
 - `Left` and `Right` - Turn camera
 - `[` and `]` - Previous/Next Level Respectively
 - `R` - Reset level
+- `Space` - Toggle map display
 
 ## Instructions
 
 - Simply collect all of the golden keys before reaching the exit.
+
+## Map Colours
+
+- Black - Walls
+- White - Floor
+- Blue - Player tile
+- Green - End point
+- Gold - Keys
+- Red - Start point

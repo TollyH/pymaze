@@ -23,6 +23,7 @@ GOLD = (0xE1, 0xBB, 0x12)
 DARK_GOLD = (0x70, 0x5E, 0x09)
 GREEN = (0x00, 0xFF, 0x10)
 DARK_GREEN = (0x00, 0x80, 0x00)
+RED = (0xFF, 0x00, 0x00)
 GREY = (0xAA, 0xAA, 0xAA)
 DARK_GREY = (0x20, 0x20, 0x20)
 
@@ -65,6 +66,8 @@ def main():
     else:
         highscores: List[Tuple[int, int]] = [(0, 0)] * len(levels)
 
+    display_map = False
+
     current_level = 0
 
     # Game loop
@@ -97,6 +100,25 @@ def main():
                     frame_scores[current_level] = 0
                     move_scores[current_level] = 0
                     has_started_level[current_level] = False
+                elif event.key == pygame.K_SPACE:
+                    display_map = not display_map
+
+        if (display_map
+                and screen.get_size()[0] < max(VIEWPORT_WIDTH * 2, 1000)):
+            screen = pygame.display.set_mode(
+                (
+                    max(VIEWPORT_WIDTH * 2, 1000),
+                    max(VIEWPORT_HEIGHT + 50, 500)
+                )
+            )
+        elif (not display_map
+                and screen.get_size()[0] > max(VIEWPORT_WIDTH, 500)):
+            screen = pygame.display.set_mode(
+                (
+                    max(VIEWPORT_WIDTH, 500),
+                    max(VIEWPORT_HEIGHT + 50, 500)
+                )
+            )
 
         old_grid_position = floor_coordinates(
             levels[current_level].player_coords
@@ -291,6 +313,32 @@ def main():
                         display_column_width, column_height
                     )
                 )
+            if display_map:
+                tile_width = (
+                    VIEWPORT_WIDTH // levels[current_level].dimensions[0]
+                )
+                tile_height = (
+                    VIEWPORT_HEIGHT // levels[current_level].dimensions[1]
+                )
+                for y, row in enumerate(levels[current_level].wall_map):
+                    for x, point in enumerate(row):
+                        if floor_coordinates(
+                                levels[current_level].player_coords) == (x, y):
+                            color = BLUE
+                        elif (x, y) in levels[current_level].exit_keys:
+                            color = GOLD
+                        elif levels[current_level].start_point == (x, y):
+                            color = RED
+                        elif levels[current_level].end_point == (x, y):
+                            color = GREEN
+                        else:
+                            color = BLACK if point else WHITE
+                        pygame.draw.rect(
+                            screen, color, (
+                                tile_width * x + VIEWPORT_WIDTH,
+                                tile_height * y + 50, tile_width, tile_height
+                            )
+                        )
         print(
             f"\r{clock.get_fps():5.2f} FPS - "
             + f"Position ({levels[current_level].player_coords[0]:5.2f},"
