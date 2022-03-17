@@ -92,6 +92,14 @@ class Level:
         grid_index = floor_coordinates(index)
         return self.wall_map[grid_index[1]][grid_index[0]]
 
+    def __setitem__(self, index: Tuple[int, int], value: bool):
+        """
+        Change whether a particular tile is considered a wall.
+        """
+        if not self.is_coord_in_bounds(index):
+            raise ValueError("Coordinates must be between 0 and 9")
+        self.wall_map[index[1]][index[0]] = value
+
     def move_player(self, vector: Tuple[float, float], relative: bool = True):
         """
         Moves the player either relative to their current position, or to an
