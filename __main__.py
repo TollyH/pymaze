@@ -8,7 +8,7 @@ import math
 import os
 import pickle
 import sys
-from typing import List, Tuple
+from typing import List, Set, Tuple
 
 import pygame
 
@@ -25,6 +25,8 @@ GREEN = (0x00, 0xFF, 0x10)
 DARK_GREEN = (0x00, 0x80, 0x00)
 RED = (0xFF, 0x00, 0x00)
 DARK_RED = (0x80, 0x00, 0x00)
+PURPLE = (0x87, 0x23, 0xD9)
+LILAC = (0xD7, 0xA6, 0xFF)
 GREY = (0xAA, 0xAA, 0xAA)
 DARK_GREY = (0x20, 0x20, 0x20)
 
@@ -69,6 +71,7 @@ def main():
 
     display_map = False
     display_rays = False
+    display_solutions = False
 
     current_level = 0
 
@@ -106,6 +109,8 @@ def main():
                     pressed = pygame.key.get_pressed()
                     if pressed[pygame.K_RCTRL] or pressed[pygame.K_LCTRL]:
                         display_rays = not display_rays
+                    elif pressed[pygame.K_RALT] or pressed[pygame.K_LALT]:
+                        display_solutions = not display_solutions
                     else:
                         display_map = not display_map
 
@@ -328,6 +333,12 @@ def main():
                 tile_height = (
                     VIEWPORT_HEIGHT // levels[current_level].dimensions[1]
                 )
+                solutions: List[List[Tuple[int, int]]] = []
+                # A set of all coordinates appearing in any solution
+                solution_coords: Set[Tuple[int, int]] = set()
+                if display_solutions:
+                    solutions = levels[current_level].find_possible_paths()
+                    solution_coords = {x for y in solutions[1:] for x in y}
                 for y, row in enumerate(levels[current_level].wall_map):
                     for x, point in enumerate(row):
                         if floor_coordinates(
@@ -339,6 +350,10 @@ def main():
                             color = RED
                         elif levels[current_level].end_point == (x, y):
                             color = GREEN
+                        elif len(solutions) >= 1 and (x, y) in solutions[0]:
+                            color = PURPLE
+                        elif len(solutions) >= 1 and (x, y) in solution_coords:
+                            color = LILAC
                         else:
                             color = BLACK if point else WHITE
                         pygame.draw.rect(

@@ -18,6 +18,7 @@ algorithm for raycasting.
 - `R` - Reset level
 - `Space` - Toggle map display
 - `CTRL` + `Space` - Toggle displaying of field of view on map
+- `Alt` + `Space` - Toggle displaying of shortest path to exit/keys on map
 
 ## Instructions
 
@@ -31,3 +32,5 @@ algorithm for raycasting.
 - Green - End point
 - Gold - Keys
 - Red - Start point
+- Purple - Shortest path
+- Lilac - Possible path
