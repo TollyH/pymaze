@@ -41,6 +41,8 @@ DRAW_MAZE_EDGE_AS_WALL = True
 TURN_SPEED = 2.5
 MOVE_SPEED = 4.0
 
+ALLOW_REALTIME_EDITING = False
+
 
 def main():
     pygame.init()
@@ -80,6 +82,8 @@ def main():
         # Limit to 50 FPS
         frame_time = clock.tick(50) / 1000
         display_column_width = VIEWPORT_WIDTH // DISPLAY_COLUMNS
+        tile_width = VIEWPORT_WIDTH // levels[current_level].dimensions[0]
+        tile_height = VIEWPORT_HEIGHT // levels[current_level].dimensions[1]
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -113,6 +117,18 @@ def main():
                         display_solutions = not display_solutions
                     else:
                         display_map = not display_map
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_coords = pygame.mouse.get_pos()
+                if (ALLOW_REALTIME_EDITING
+                        and event.button == pygame.BUTTON_LEFT
+                        and mouse_coords[0] > VIEWPORT_WIDTH):
+                    clicked_tile = (
+                        (mouse_coords[0] - VIEWPORT_WIDTH) // tile_width,
+                        (mouse_coords[1] - 50) // tile_height
+                    )
+                    levels[current_level][clicked_tile] = (
+                        not levels[current_level][clicked_tile]
+                    )
 
         if (display_map
                 and screen.get_size()[0] < VIEWPORT_WIDTH * 2):
@@ -327,16 +343,10 @@ def main():
                     )
                 )
             if display_map:
-                tile_width = (
-                    VIEWPORT_WIDTH // levels[current_level].dimensions[0]
-                )
-                tile_height = (
-                    VIEWPORT_HEIGHT // levels[current_level].dimensions[1]
-                )
                 solutions: List[List[Tuple[int, int]]] = []
                 # A set of all coordinates appearing in any solution
                 solution_coords: Set[Tuple[int, int]] = set()
-                if display_solutions:
+                if display_solutions and not ALLOW_REALTIME_EDITING:
                     solutions = levels[current_level].find_possible_paths()
                     solution_coords = {x for y in solutions[1:] for x in y}
                 for y, row in enumerate(levels[current_level].wall_map):
