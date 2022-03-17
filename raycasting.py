@@ -15,12 +15,12 @@ def get_first_collision(current_level: level.Level,
                         direction: Tuple[float, float],
                         edge_is_wall: bool):
     """
-    Find the distance of the first intersection of a wall tile by a ray
-    travelling at the specified direction from a particular origin. Returns
-    None if no collision occurs before the edge of the wall map, or a tuple
-    (distance, side, type) if a collision did occur. Side is False if a
-    North/South wall was hit, or True if an East/West wall was. Type is either
-    WALL, START_POINT, END_POINT, or KEY.
+    Find the first intersection of a wall tile by a ray travelling at the
+    specified direction from a particular origin. Returns None if no collision
+    occurs before the edge of the wall map, or a tuple
+    (coordinate, distance, side_was_ns, type) if a collision did occur.
+    Side is False if a North/South wall was hit, or True if an East/West wall
+    was. Type is either WALL, START_POINT, END_POINT, or KEY.
     """
     # Prevent divide by 0
     if direction[0] == 0:
@@ -65,6 +65,7 @@ def get_first_collision(current_level: level.Level,
             current_tile[1] + 1 - current_level.player_coords[1]
         ) * step_size[1]
 
+    distance = 0.0
     # Stores whether a North/South or East/West wall was hit
     side_was_ns = False
     tile_found = False
@@ -73,10 +74,12 @@ def get_first_collision(current_level: level.Level,
         # Move along ray
         if dimension_ray_length[0] < dimension_ray_length[1]:
             current_tile[0] += step[0]
+            distance = dimension_ray_length[0]
             dimension_ray_length[0] += step_size[0]
             side_was_ns = False
         else:
             current_tile[1] += step[1]
+            distance = dimension_ray_length[1]
             dimension_ray_length[1] += step_size[1]
             side_was_ns = True
 
@@ -101,18 +104,33 @@ def get_first_collision(current_level: level.Level,
                 hit_type = KEY
     # If this point is reached, a wall tile has been found
     if not side_was_ns:
-        return (dimension_ray_length[0] - step_size[0], side_was_ns, hit_type)
-    return (dimension_ray_length[1] - step_size[1], side_was_ns, hit_type)
+        return (
+            (
+                current_level.player_coords[0] + direction[0] * distance,
+                current_level.player_coords[1] + direction[1] * distance
+            ),
+            dimension_ray_length[0] - step_size[0], side_was_ns, hit_type
+        )
+    return (
+        (
+            current_level.player_coords[0] + direction[0] * distance,
+            current_level.player_coords[1] + direction[1] * distance
+        ),
+        dimension_ray_length[1] - step_size[1], side_was_ns, hit_type
+    )
 
 
-def get_column_distances(display_columns: int, current_level: level.Level,
-                         edge_is_wall: bool, direction: Tuple[float, float],
-                         camera_plane: Tuple[float, float]):
+def get_columns(display_columns: int, current_level: level.Level,
+                edge_is_wall: bool, direction: Tuple[float, float],
+                camera_plane: Tuple[float, float]):
     """
-    Get a list of the distances of each column's ray for a particular wall map
-    by utilising raycasting.
+    Get a list of the intersection positions and distances of each column's ray
+    for a particular wall map by utilising raycasting. Tuples are in format
+    (coordinate, distance, side_was_ns, type).
     """
-    columns: List[Tuple[float, bool, Literal[0, 1, 2]]] = []
+    columns: List[
+        Tuple[Tuple[float, float], float, bool, Literal[0, 1, 2]]
+    ] = []
     for index in range(display_columns):
         camera_x = 2 * index / display_columns - 1
         cast_direction = (
@@ -123,7 +141,7 @@ def get_column_distances(display_columns: int, current_level: level.Level,
             current_level, cast_direction, edge_is_wall
         )
         if result is None:
-            columns.append((float('inf'), False, 0))
+            columns.append(((0.0, 0.0), float('inf'), False, 0))
         else:
             columns.append(result)
     return columns

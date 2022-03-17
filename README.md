@@ -17,6 +17,7 @@ algorithm for raycasting.
 - `[` and `]` - Previous/Next Level Respectively
 - `R` - Reset level
 - `Space` - Toggle map display
+- `CTRL` + `Space` - Toggle displaying of field of view on map
 
 ## Instructions
 

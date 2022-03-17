@@ -24,6 +24,7 @@ DARK_GOLD = (0x70, 0x5E, 0x09)
 GREEN = (0x00, 0xFF, 0x10)
 DARK_GREEN = (0x00, 0x80, 0x00)
 RED = (0xFF, 0x00, 0x00)
+DARK_RED = (0x80, 0x00, 0x00)
 GREY = (0xAA, 0xAA, 0xAA)
 DARK_GREY = (0x20, 0x20, 0x20)
 
@@ -67,6 +68,7 @@ def main():
         highscores: List[Tuple[int, int]] = [(0, 0)] * len(levels)
 
     display_map = False
+    display_rays = False
 
     current_level = 0
 
@@ -101,7 +103,11 @@ def main():
                     move_scores[current_level] = 0
                     has_started_level[current_level] = False
                 elif event.key == pygame.K_SPACE:
-                    display_map = not display_map
+                    pressed = pygame.key.get_pressed()
+                    if pressed[pygame.K_RCTRL] or pressed[pygame.K_LCTRL]:
+                        display_rays = not display_rays
+                    else:
+                        display_map = not display_map
 
         if (display_map
                 and screen.get_size()[0] < VIEWPORT_WIDTH * 2):
@@ -283,18 +289,20 @@ def main():
                 )
             )
 
-            for index, (column_distance, side_was_ns, hit_type) in enumerate(
-                    raycasting.get_column_distances(
+            ray_end_coords: List[Tuple[float, float]] = []
+            for index, (coord, distance, side_was_ns, hit_type) in enumerate(
+                    raycasting.get_columns(
                         DISPLAY_COLUMNS, levels[current_level],
                         DRAW_MAZE_EDGE_AS_WALL,
                         facing_directions[current_level],
                         camera_planes[current_level])):
                 # Edge of maze when drawing maze edges as walls is disabled
-                if column_distance == float('inf'):
+                if distance == float('inf'):
                     continue
+                ray_end_coords.append(coord)
                 # Prevent division by 0
-                column_distance = max(1e-30, column_distance)
-                column_height = round(VIEWPORT_HEIGHT / column_distance)
+                distance = max(1e-30, distance)
+                column_height = round(VIEWPORT_HEIGHT / distance)
                 column_height = min(column_height, VIEWPORT_HEIGHT)
                 if hit_type == raycasting.WALL:
                     colour = DARK_GREY if side_was_ns else BLACK
@@ -339,9 +347,24 @@ def main():
                                 tile_height * y + 50, tile_width, tile_height
                             )
                         )
+                # Raycast rays
+                if display_rays:
+                    for point in ray_end_coords:
+                        pygame.draw.line(
+                            screen, DARK_GOLD, (
+                                levels[current_level].player_coords[0]
+                                * tile_width + VIEWPORT_WIDTH,
+                                levels[current_level].player_coords[1]
+                                * tile_height + 50
+                            ),
+                            (
+                                point[0] * tile_width + VIEWPORT_WIDTH,
+                                point[1] * tile_height + 50
+                            ), 1
+                        )
                 # Player direction
                 pygame.draw.line(
-                    screen, RED, (
+                    screen, DARK_RED, (
                         levels[current_level].player_coords[0] * tile_width
                         + VIEWPORT_WIDTH,
                         levels[current_level].player_coords[1] * tile_height
