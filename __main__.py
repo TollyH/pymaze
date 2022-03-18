@@ -8,6 +8,7 @@ import math
 import os
 import pickle
 import sys
+from glob import glob
 from typing import List, Set, Tuple
 
 import pygame
@@ -33,8 +34,11 @@ DARK_GREY = (0x20, 0x20, 0x20)
 VIEWPORT_WIDTH = 500
 VIEWPORT_HEIGHT = 500
 
+TEXTURE_WIDTH = 64
+TEXTURE_HEIGHT = 64
+
 DISPLAY_COLUMNS = VIEWPORT_WIDTH
-DISPLAY_FOV = 75
+DISPLAY_FOV = 66
 
 DRAW_MAZE_EDGE_AS_WALL = True
 
@@ -70,6 +74,20 @@ def main():
                 highscores += [(0, 0)] * (len(levels) - len(highscores))
     else:
         highscores: List[Tuple[int, int]] = [(0, 0)] * len(levels)
+
+    # Used to create the darker versions of each texture
+    darkener = pygame.Surface((TEXTURE_WIDTH, TEXTURE_HEIGHT))
+    darkener.fill(BLACK)
+    darkener.set_alpha(127)
+    # {(level_indices, ...): (light_texture, dark_texture)}
+    wall_textures = {
+        # Parse wall texture names to tuples of integers
+        tuple(int(y) for y in os.path.split(x)[-1].split(".")[0].split("-")):
+        (pygame.image.load(x).convert(), pygame.image.load(x).convert())
+        for x in glob(os.path.join("textures", "wall", "*.png"))
+    }
+    for _, (_, surface_to_dark) in wall_textures.items():
+        surface_to_dark.blit(darkener, (0, 0))
 
     display_map = False
     display_rays = False
@@ -331,24 +349,60 @@ def main():
                 # Prevent division by 0
                 distance = max(1e-30, distance)
                 column_height = round(VIEWPORT_HEIGHT / distance)
-                column_height = min(column_height, VIEWPORT_HEIGHT)
+                texture_draw_successful = False
                 if hit_type == raycasting.WALL:
-                    colour = DARK_GREY if side_was_ns else BLACK
-                elif hit_type == raycasting.END_POINT:
-                    colour = GREEN if side_was_ns else DARK_GREEN
-                elif hit_type == raycasting.KEY:
-                    colour = GOLD if side_was_ns else DARK_GOLD
-                else:
-                    continue
-                pygame.draw.rect(
-                    screen, colour, (
-                        display_column_width * index,
-                        max(
+                    both_textures = None
+                    for indices, images in wall_textures.items():
+                        if current_level in indices:
+                            both_textures = images
+                    if both_textures is not None:
+                        # Select either light or dark texture depending on side
+                        texture = both_textures[int(side_was_ns)]
+                        position_along_wall = coord[int(not side_was_ns)] % 1
+                        texture_x = math.floor(
+                            position_along_wall * TEXTURE_WIDTH
+                        )
+                        if (not side_was_ns
+                                and facing_directions[current_level][0] > 0):
+                            texture_x = TEXTURE_WIDTH - texture_x - 1
+                        elif (side_was_ns
+                                and facing_directions[current_level][1] < 0):
+                            texture_x = TEXTURE_WIDTH - texture_x - 1
+                        draw_x = display_column_width * index
+                        draw_y = max(
                             0, -column_height // 2 + VIEWPORT_HEIGHT // 2
-                        ) + 50,
-                        display_column_width, column_height
+                        ) + 50
+                        # Get a single column of pixels
+                        pixel_column = texture.subsurface(
+                            texture_x, 0, 1, TEXTURE_HEIGHT
+                        )
+                        pixel_column = pygame.transform.scale(
+                            pixel_column, (display_column_width, column_height)
+                        )
+                        if column_height > VIEWPORT_HEIGHT:
+                            overlap = (column_height - VIEWPORT_HEIGHT) // 2
+                            pixel_column = pixel_column.subsurface(
+                                0, overlap,
+                                display_column_width, VIEWPORT_HEIGHT
+                            )
+                        screen.blit(pixel_column, (draw_x, draw_y))
+                if not texture_draw_successful:
+                    column_height = min(column_height, VIEWPORT_HEIGHT)
+                    if hit_type == raycasting.END_POINT:
+                        colour = GREEN if side_was_ns else DARK_GREEN
+                    elif hit_type == raycasting.KEY:
+                        colour = GOLD if side_was_ns else DARK_GOLD
+                    else:
+                        continue
+                    pygame.draw.rect(
+                        screen, colour, (
+                            display_column_width * index,
+                            max(
+                                0, -column_height // 2 + VIEWPORT_HEIGHT // 2
+                            ) + 50,
+                            display_column_width, column_height
+                        )
                     )
-                )
             if display_map:
                 solutions: List[List[Tuple[int, int]]] = []
                 # A set of all coordinates appearing in any solution
