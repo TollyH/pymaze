@@ -96,6 +96,8 @@ class Level:
         performed automatically. Silently fails if the player cannot move by
         the specified vector or to the specified position.
         """
+        if self.won:
+            return
         if relative:
             target = (
                 self.player_coords[0] + vector[0],
@@ -103,7 +105,7 @@ class Level:
             )
         else:
             target = vector
-        if not self._is_coord_in_bounds(target) or self[target] or self.won:
+        if not self._is_coord_in_bounds(target) or self[target]:
             return
         self.player_coords = target
         if target in self.exit_keys:
