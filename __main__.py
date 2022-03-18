@@ -23,6 +23,11 @@ from maze_levels import levels
 VIEWPORT_WIDTH = 500
 VIEWPORT_HEIGHT = 500
 
+# Whether walls will be rendered with the image textures associated with each
+# level. Setting this to False will cause all walls to appear in solid colour,
+# which may also provide some performance boosts.
+TEXTURES_ENABLED = True
+
 # The dimensions of all the PNGs found in the textures folder.
 TEXTURE_WIDTH = 64
 TEXTURE_HEIGHT = 64
@@ -374,7 +379,7 @@ def main():
                 distance = max(1e-30, distance)
                 column_height = round(VIEWPORT_HEIGHT / distance)
                 texture_draw_successful = False
-                if hit_type == raycasting.WALL:
+                if hit_type == raycasting.WALL and TEXTURES_ENABLED:
                     both_textures = None
                     for indices, images in wall_textures.items():
                         if current_level in indices:
