@@ -386,9 +386,12 @@ def main():
                                 display_column_width, VIEWPORT_HEIGHT
                             )
                         screen.blit(pixel_column, (draw_x, draw_y))
+                        texture_draw_successful = True
                 if not texture_draw_successful:
                     column_height = min(column_height, VIEWPORT_HEIGHT)
-                    if hit_type == raycasting.END_POINT:
+                    if hit_type == raycasting.WALL:
+                        colour = DARK_GREY if side_was_ns else BLACK
+                    elif hit_type == raycasting.END_POINT:
                         colour = GREEN if side_was_ns else DARK_GREEN
                     elif hit_type == raycasting.KEY:
                         colour = GOLD if side_was_ns else DARK_GOLD
