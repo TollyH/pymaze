@@ -37,6 +37,8 @@ VIEWPORT_HEIGHT = 500
 TEXTURE_WIDTH = 64
 TEXTURE_HEIGHT = 64
 
+TEXTURE_SCALE_LIMIT = VIEWPORT_HEIGHT * 20
+
 DISPLAY_COLUMNS = VIEWPORT_WIDTH
 DISPLAY_FOV = 66
 
@@ -376,10 +378,32 @@ def main():
                         pixel_column = texture.subsurface(
                             texture_x, 0, 1, TEXTURE_HEIGHT
                         )
+                        if (column_height > VIEWPORT_HEIGHT
+                                and column_height > TEXTURE_SCALE_LIMIT):
+                            overlap = math.floor(
+                                (column_height - VIEWPORT_HEIGHT)
+                                / (
+                                    (column_height - TEXTURE_HEIGHT)
+                                    / TEXTURE_HEIGHT
+                                )
+                            )
+                            # Crop column so we are only scaling pixels that we
+                            # will use to boost performance, at the cost of
+                            # making textures uneven
+                            pixel_column = pixel_column.subsurface(
+                                0, overlap // 2, 1, TEXTURE_HEIGHT - overlap
+                            )
                         pixel_column = pygame.transform.scale(
-                            pixel_column, (display_column_width, column_height)
+                            pixel_column,
+                            (
+                                display_column_width,
+                                min(column_height, VIEWPORT_HEIGHT)
+                                if column_height > TEXTURE_SCALE_LIMIT else
+                                column_height
+                            )
                         )
-                        if column_height > VIEWPORT_HEIGHT:
+                        if (column_height > VIEWPORT_HEIGHT
+                                and column_height <= TEXTURE_SCALE_LIMIT):
                             overlap = (column_height - VIEWPORT_HEIGHT) // 2
                             pixel_column = pixel_column.subsurface(
                                 0, overlap,
@@ -488,7 +512,7 @@ def main():
             + f"{camera_planes[current_level][1]:5.2f})",
             end="", flush=True
         )
-        pygame.display.flip()
+        pygame.display.update()
 
 
 if __name__ == "__main__":
