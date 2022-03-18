@@ -148,7 +148,8 @@ def main():
                 mouse_coords = pygame.mouse.get_pos()
                 if (ALLOW_REALTIME_EDITING
                         and event.button == pygame.BUTTON_LEFT
-                        and mouse_coords[0] > VIEWPORT_WIDTH):
+                        and mouse_coords[0] > VIEWPORT_WIDTH
+                        and mouse_coords[1] >= 50):
                     clicked_tile = (
                         (mouse_coords[0] - VIEWPORT_WIDTH) // tile_width,
                         (mouse_coords[1] - 50) // tile_height
