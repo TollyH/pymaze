@@ -99,6 +99,13 @@ def main():
                         current_level += 1
                     else:
                         continue
+                    # Adjust tile width and height for new level
+                    tile_width = (
+                        VIEWPORT_WIDTH // levels[current_level].dimensions[0]
+                    )
+                    tile_height = (
+                        VIEWPORT_HEIGHT // levels[current_level].dimensions[1]
+                    )
                     pygame.display.set_caption(
                         f"Maze - Level {current_level + 1}"
                     )
