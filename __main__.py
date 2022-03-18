@@ -17,6 +17,45 @@ import raycasting
 from level import floor_coordinates
 from maze_levels import levels
 
+# ADVANCED OPTIONS ============================================================
+
+# The dimensions used for the 3D view and the map (not including the HUD).
+VIEWPORT_WIDTH = 500
+VIEWPORT_HEIGHT = 500
+
+# The dimensions of all the PNGs found in the textures folder.
+TEXTURE_WIDTH = 64
+TEXTURE_HEIGHT = 64
+
+# The maximum height that textures will be stretched to internally before they
+# start getting cropped to save on resources. Decreasing this will improve
+# performance, at the cost of nearby textures looking jagged.
+TEXTURE_SCALE_LIMIT = 10000
+
+# The number of rays that will be cast to determine the height of walls.
+# Decreasing this will improve performance, but will decrease visual clarity.
+DISPLAY_COLUMNS = VIEWPORT_WIDTH
+# Your field of vision corresponds to how spread out the rays being cast are.
+# Smaller values result in a narrower field of vision, causing the walls to
+# appear wider. A value of 50 will make each grid square appear in the same
+# aspect ratio as the 3D frame itself.
+DISPLAY_FOV = 50
+
+# Whether maze edges will appear as walls in the 3D view. Disabling this will
+# cause the horizon to be visible, slightly ruining the ceiling/floor effect.
+DRAW_MAZE_EDGE_AS_WALL = True
+
+# Larger values will result in faster speeds. Move speed is measured in grid
+# squares per second, and turn speed in radians per second.
+TURN_SPEED = 2.5
+MOVE_SPEED = 4.0
+
+# Allow the presence of walls to be toggled by clicking on the map. Enabling
+# this will disable the ability to view solutions.
+ALLOW_REALTIME_EDITING = False
+
+# =============================================================================
+
 WHITE = (0xFF, 0xFF, 0xFF)
 BLACK = (0x00, 0x00, 0x00)
 BLUE = (0x00, 0x30, 0xFF)
@@ -30,24 +69,6 @@ PURPLE = (0x87, 0x23, 0xD9)
 LILAC = (0xD7, 0xA6, 0xFF)
 GREY = (0xAA, 0xAA, 0xAA)
 DARK_GREY = (0x20, 0x20, 0x20)
-
-VIEWPORT_WIDTH = 500
-VIEWPORT_HEIGHT = 500
-
-TEXTURE_WIDTH = 64
-TEXTURE_HEIGHT = 64
-
-TEXTURE_SCALE_LIMIT = VIEWPORT_HEIGHT * 20
-
-DISPLAY_COLUMNS = VIEWPORT_WIDTH
-DISPLAY_FOV = 66
-
-DRAW_MAZE_EDGE_AS_WALL = True
-
-TURN_SPEED = 2.5
-MOVE_SPEED = 4.0
-
-ALLOW_REALTIME_EDITING = False
 
 
 def main():
