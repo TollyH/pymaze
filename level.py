@@ -95,7 +95,7 @@ class Level:
         Returns True if the specified tile is a wall.
         """
         if not self.is_coord_in_bounds(index):
-            raise ValueError("Coordinates must be between 0 and 9")
+            raise ValueError("Target coordinates out of bounds")
         grid_index = floor_coordinates(index)
         return self.wall_map[grid_index[1]][grid_index[0]]
 
@@ -104,7 +104,7 @@ class Level:
         Change whether a particular tile is considered a wall.
         """
         if not self.is_coord_in_bounds(index):
-            raise ValueError("Coordinates must be between 0 and 9")
+            raise ValueError("Target coordinates out of bounds")
         self.wall_map[index[1]][index[0]] = value
 
     def move_player(self, vector: Tuple[float, float], relative: bool = True):
