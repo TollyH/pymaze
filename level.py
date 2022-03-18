@@ -121,10 +121,23 @@ class Level:
                 self.player_coords[0] + vector[0],
                 self.player_coords[1] + vector[1]
             )
+            # Try moving just in X or Y if primary target cannot be moved to
+            alternate_targets = [
+                (self.player_coords[0] + vector[0], self.player_coords[1]),
+                (self.player_coords[0], self.player_coords[1] + vector[1])
+            ]
         else:
             target = vector
+            # There are no alternate movements if we aren't moving relatively
+            alternate_targets = []
         if not self.is_coord_in_bounds(target) or self[target]:
-            return
+            found_valid = False
+            for alt_move in alternate_targets:
+                if self.is_coord_in_bounds(alt_move) and not self[alt_move]:
+                    target = alt_move
+                    found_valid = True
+            if not found_valid:
+                return
         self.player_coords = target
         if floor_coordinates(target) in self.exit_keys:
             self.exit_keys.remove(floor_coordinates(target))
