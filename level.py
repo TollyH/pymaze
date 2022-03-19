@@ -91,8 +91,7 @@ class Level:
             for x, point in enumerate(row):
                 if self.player_coords == (x, y):
                     string += "PP"
-                elif (self.monster_coords is not None
-                        and self.monster_coords == (x, y)):
+                elif self.monster_coords == (x, y):
                     string += "MM"
                 elif (x, y) in self.exit_keys:
                     string += "KK"
