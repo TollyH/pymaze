@@ -13,6 +13,18 @@ import pygame
 
 from maze_levels import levels
 
+# ADVANCED OPTIONS ============================================================
+
+# The dimensions used for the maze view (not including the HUD).
+VIEWPORT_WIDTH = 500
+VIEWPORT_HEIGHT = 500
+
+# The maximum frames per second that the game will render at. Low values may
+# cause the game window to become unresponsive.
+FRAME_RATE_LIMIT = 75
+
+# =============================================================================
+
 UP = (0, -1)
 RIGHT = (1, 0)
 DOWN = (0, 1)
@@ -27,11 +39,6 @@ RED = (0xFF, 0x00, 0x00)
 PURPLE = (0x87, 0x23, 0xD9)
 LILAC = (0xD7, 0xA6, 0xFF)
 GREY = (0xAA, 0xAA, 0xAA)
-
-VIEWPORT_WIDTH = 500
-VIEWPORT_HEIGHT = 500
-
-FRAME_RATE_LIMIT = 75
 
 
 def main():
