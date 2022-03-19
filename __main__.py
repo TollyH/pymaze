@@ -31,6 +31,8 @@ GREY = (0xAA, 0xAA, 0xAA)
 VIEWPORT_WIDTH = 500
 VIEWPORT_HEIGHT = 500
 
+FRAME_RATE_LIMIT = 75
+
 
 def main():
     pygame.init()
@@ -65,8 +67,8 @@ def main():
 
     # Game loop
     while True:
-        # Limit to 50 FPS
-        frame_time = clock.tick(50) / 1000
+        # Limit FPS and record time last frame took to render
+        frame_time = clock.tick(FRAME_RATE_LIMIT) / 1000
         tile_width = VIEWPORT_WIDTH // levels[current_level].dimensions[0]
         tile_height = VIEWPORT_HEIGHT // levels[current_level].dimensions[1]
         solutions = []
