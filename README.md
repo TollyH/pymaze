@@ -25,7 +25,6 @@ A simple, grid-based maze game written in Python with PyGame. For the "3D" versi
 ## Instructions
 
 - White tiles can be moved on, black tiles cannot.
-- You (the blue tile) need to collect all of the keys (the gold tiles)
-before reaching the exit (the green tile).
-- When showing the solution, all possible paths are highlighted in lilac, with
-the shortest one being highlighted in purple.
+- You (the blue tile) need to collect all of the keys (the gold tiles) before reaching the exit (the green tile).
+- In many levels, after a specific amount of time has passed, a monster may spawn (a dark red tile). Getting hit by the monster will result in you losing the level immediately.
+- When showing the solution, all possible paths are highlighted in lilac, with the shortest one being highlighted in purple.

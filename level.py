@@ -2,7 +2,8 @@
 Contains the class definition for Level, which handles collision,
 player movement, victory checking, and path finding.
 """
-from typing import Dict, List, Tuple
+import random
+from typing import Dict, List, Optional, Tuple
 
 
 class Level:
@@ -11,10 +12,15 @@ class Level:
     as a 2D array, with True representing the maze walls, and False
     represting occupyable space. Also keeps track of the current player
     coordinates within the level and can calculate possible solutions.
+    Monster start and wait can be set to None if you do not wish the level
+    to have a monster. This class will not automatically move or spawn
+    the monster by itself, however does provide the method required to do so.
     """
     def __init__(self, dimensions: Tuple[int, int],
                  wall_map: List[List[bool]], start_point: Tuple[int, int],
-                 end_point: Tuple[int, int], exit_keys: List[Tuple[int, int]]):
+                 end_point: Tuple[int, int], exit_keys: List[Tuple[int, int]],
+                 monster_start: Optional[Tuple[int, int]],
+                 monster_wait: Optional[float]):
         """
         Create a level with a wall map, start and end points, and
         collectable keys required to exit the level.
@@ -50,6 +56,20 @@ class Level:
         # Create a shallow copy of exit keys to be manipulated on collection
         self.exit_keys = [*exit_keys]
 
+        self.monster_coords: Optional[Tuple[int, int]] = None
+        if monster_start is not None:
+            if not self._is_coord_in_bounds(monster_start):
+                raise ValueError("Out of bounds monster start coordinates")
+            if self[monster_start]:
+                raise ValueError("Monster start cannot be inside wall")
+            self.monster_start = monster_start
+            self.monster_wait = monster_wait
+        else:
+            self.monster_start = None
+            self.monster_wait = None
+
+        self._last_monster_position = (-1, -1)
+
         # Maps coordinates to a list of lists of coordinates represting
         # possible paths from a previous player position. Saves on unnecessary
         # repeated calculations.
@@ -58,18 +78,22 @@ class Level:
         ] = {}
 
         self.won = False
+        self.killed = False
 
     def __str__(self):
         """
         Returns a string representation of the maze. '██' is a wall,
         '  ' is empty space, 'PP' is the player, 'KK' are keys, 'SS' is the
-        start point, and 'EE' is the end point.
+        start point, 'EE' is the end point, and 'MM' is the monster.
         """
         string = ""
         for y, row in enumerate(self.wall_map):
             for x, point in enumerate(row):
                 if self.player_coords == (x, y):
                     string += "PP"
+                elif (self.monster_coords is not None
+                        and self.monster_coords == (x, y)):
+                    string += "MM"
                 elif (x, y) in self.exit_keys:
                     string += "KK"
                 elif self.start_point == (x, y):
@@ -96,7 +120,7 @@ class Level:
         performed automatically. Silently fails if the player cannot move by
         the specified vector or to the specified position.
         """
-        if self.won:
+        if self.won or self.killed:
             return
         if relative:
             target = (
@@ -110,8 +134,90 @@ class Level:
         self.player_coords = target
         if target in self.exit_keys:
             self.exit_keys.remove(target)
-        if target == self.end_point and len(self.exit_keys) == 0:
+        if target == self.monster_coords:
+            self.killed = True
+        elif target == self.end_point and len(self.exit_keys) == 0:
             self.won = True
+
+    def move_monster(self):
+        """
+        Moves the monster one space in a random available direction, unless
+        the player is in the unobstructed view of one of the cardinal
+        directions, in which case move toward the player instead. If the
+        monster and the player occupy the same grid square, self.killed will
+        be set to True.
+        """
+        last_monster_position = self.monster_coords
+        if self.monster_start is None:
+            return
+        if self.monster_coords is None:
+            self.monster_coords = self.monster_start
+        else:
+            # 0 - Not in line of sight
+            # 1 - Line of sight on Y axis
+            # 2 - Line of sight on X axis
+            line_of_sight = 0
+            if self.player_coords[0] == self.monster_coords[0]:
+                min_y_coord = min(
+                    self.player_coords[1], self.monster_coords[1]
+                )
+                max_y_coord = max(
+                    self.player_coords[1], self.monster_coords[1]
+                )
+                collided = False
+                for y_coord in range(min_y_coord, max_y_coord + 1):
+                    if self[self.player_coords[0], y_coord]:
+                        collided = True
+                        break
+                if not collided:
+                    line_of_sight = 1
+            elif self.player_coords[1] == self.monster_coords[1]:
+                min_x_coord = min(
+                    self.player_coords[0], self.monster_coords[0]
+                )
+                max_x_coord = max(
+                    self.player_coords[0], self.monster_coords[0]
+                )
+                collided = False
+                for x_coord in range(min_x_coord, max_x_coord + 1):
+                    if self[x_coord, self.player_coords[1]]:
+                        collided = True
+                        break
+                if not collided:
+                    line_of_sight = 2
+            if line_of_sight == 1:
+                if self.player_coords[1] > self.monster_coords[1]:
+                    self.monster_coords = (
+                        self.monster_coords[0], self.monster_coords[1] + 1
+                    )
+                else:
+                    self.monster_coords = (
+                        self.monster_coords[0], self.monster_coords[1] - 1
+                    )
+            elif line_of_sight == 2:
+                if self.player_coords[0] > self.monster_coords[0]:
+                    self.monster_coords = (
+                        self.monster_coords[0] + 1, self.monster_coords[1]
+                    )
+                else:
+                    self.monster_coords = (
+                        self.monster_coords[0] - 1, self.monster_coords[1]
+                    )
+            else:
+                shuffled_vectors = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+                random.shuffle(shuffled_vectors)
+                for vector in shuffled_vectors:
+                    target = (
+                        self.monster_coords[0] + vector[0],
+                        self.monster_coords[1] + vector[1]
+                    )
+                    if (self._is_coord_in_bounds(target) and not self[target]
+                            and self._last_monster_position != target):
+                        self.monster_coords = target
+                        break
+        self._last_monster_position = last_monster_position
+        if self.monster_coords == self.player_coords:
+            self.killed = True
 
     def find_possible_paths(self):
         """
@@ -140,7 +246,9 @@ class Level:
         # Shallow copy to prevent original key list being modified
         self.exit_keys = [*self.original_exit_keys]
         self.player_coords = self.start_point
+        self.monster_coords = None
         self.won = False
+        self.killed = False
 
     def _is_coord_in_bounds(self, coord: Tuple[int, int]):
         """
