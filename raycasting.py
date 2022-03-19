@@ -9,6 +9,7 @@ import level
 WALL = 0
 END_POINT = 1
 KEY = 2
+MONSTER = 3
 
 
 def get_first_collision(current_level: level.Level,
@@ -20,7 +21,7 @@ def get_first_collision(current_level: level.Level,
     occurs before the edge of the wall map, or a tuple
     (coordinate, distance, side_was_ns, type) if a collision did occur.
     Side is False if a North/South wall was hit, or True if an East/West wall
-    was. Type is either WALL, START_POINT, END_POINT, or KEY.
+    was. Type is either WALL, END_POINT, KEY, or MONSTER.
     """
     # Prevent divide by 0
     if direction[0] == 0:
@@ -95,6 +96,9 @@ def get_first_collision(current_level: level.Level,
             if current_level[check_coords]:
                 tile_found = True
                 hit_type = WALL
+            elif check_coords == current_level.monster_coords:
+                tile_found = True
+                hit_type = MONSTER
             elif (check_coords == current_level.end_point
                     and len(current_level.exit_keys) == 0):
                 tile_found = True
@@ -129,7 +133,7 @@ def get_columns(display_columns: int, current_level: level.Level,
     (coordinate, distance, side_was_ns, type).
     """
     columns: List[
-        Tuple[Tuple[float, float], float, bool, Literal[0, 1, 2]]
+        Tuple[Tuple[float, float], float, bool, Literal[0, 1, 2, 3]]
     ] = []
     for index in range(display_columns):
         camera_x = 2 * index / display_columns - 1

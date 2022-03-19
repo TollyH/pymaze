@@ -3,6 +3,7 @@ PyGame Maze - Tolly Hill 2022
 
 The main script for the game. Creates and draws to the game window, as well as
 receiving and interpreting player input and recording time and movement scores.
+Also handles time-based events such as monster movement and spawning.
 """
 import math
 import os
@@ -22,6 +23,14 @@ from maze_levels import levels
 # The dimensions used for the 3D view and the map (not including the HUD).
 VIEWPORT_WIDTH = 500
 VIEWPORT_HEIGHT = 500
+
+# Whether the monster should be spawned at all.
+MONSTER_ENABLED = True
+# If this is not None, it will be used as the time to spawn the monster,
+# overriding the times specific to each level.
+MONSTER_START_OVERRIDE = None
+# How many seconds the monster will wait between each movement.
+MONSTER_MOVEMENT_WAIT = 0.5
 
 # The maximum frames per second that the game will render at. Low values may
 # cause the game window to become unresponsive.
@@ -126,6 +135,7 @@ def main():
     display_solutions = False
 
     current_level = 0
+    monster_timeouts = [0.0] * len(levels)
 
     # Game loop
     while True:
@@ -328,9 +338,23 @@ def main():
             screen.blit(best_total_time_score_text, (10, 200))
             screen.blit(best_total_move_score_text, (10, 230))
             screen.blit(lower_hint_text, (10, 280))
+        elif levels[current_level].killed:
+            screen.fill(RED)
         else:
             if has_started_level[current_level]:
                 time_scores[current_level] += frame_time
+                monster_timeouts[current_level] += frame_time
+                if (MONSTER_ENABLED and levels[current_level].monster_wait
+                        is not None and time_scores[current_level]
+                        > (
+                            levels[current_level].monster_wait  # type: ignore
+                            if MONSTER_START_OVERRIDE is None else
+                            MONSTER_START_OVERRIDE
+                        )
+                        and monster_timeouts[current_level]
+                        > MONSTER_MOVEMENT_WAIT):
+                    levels[current_level].move_monster()
+                    monster_timeouts[current_level] = 0
             screen.fill(GREY)
             time_score_text = font.render(
                 f"Time: {time_scores[current_level]:.1f}"
@@ -451,6 +475,8 @@ def main():
                         colour = GREEN if side_was_ns else DARK_GREEN
                     elif hit_type == raycasting.KEY:
                         colour = GOLD if side_was_ns else DARK_GOLD
+                    elif hit_type == raycasting.MONSTER:
+                        colour = RED if side_was_ns else DARK_RED
                     else:
                         continue
                     pygame.draw.rect(
@@ -474,6 +500,8 @@ def main():
                         if floor_coordinates(
                                 levels[current_level].player_coords) == (x, y):
                             color = BLUE
+                        elif levels[current_level].monster_coords == (x, y):
+                            color = DARK_RED
                         elif (x, y) in levels[current_level].exit_keys:
                             color = GOLD
                         elif levels[current_level].start_point == (x, y):
