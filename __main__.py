@@ -430,8 +430,8 @@ def main():
                                 column_height
                             )
                         )
-                        if (column_height > VIEWPORT_HEIGHT
-                                and column_height <= TEXTURE_SCALE_LIMIT):
+                        if (VIEWPORT_HEIGHT < column_height
+                                <= TEXTURE_SCALE_LIMIT):
                             overlap = (column_height - VIEWPORT_HEIGHT) // 2
                             pixel_column = pixel_column.subsurface(
                                 0, overlap,
