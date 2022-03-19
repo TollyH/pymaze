@@ -23,6 +23,10 @@ from maze_levels import levels
 VIEWPORT_WIDTH = 500
 VIEWPORT_HEIGHT = 500
 
+# The maximum frames per second that the game will render at. Low values may
+# cause the game window to become unresponsive.
+FRAME_RATE_LIMIT = 75
+
 # Whether walls will be rendered with the image textures associated with each
 # level. Setting this to False will cause all walls to appear in solid colour,
 # which may also provide some performance boosts.
@@ -125,8 +129,8 @@ def main():
 
     # Game loop
     while True:
-        # Limit to 50 FPS
-        frame_time = clock.tick(50) / 1000
+        # Limit FPS and record time last frame took to render
+        frame_time = clock.tick(FRAME_RATE_LIMIT) / 1000
         display_column_width = VIEWPORT_WIDTH // DISPLAY_COLUMNS
         tile_width = VIEWPORT_WIDTH // levels[current_level].dimensions[0]
         tile_height = VIEWPORT_HEIGHT // levels[current_level].dimensions[1]
