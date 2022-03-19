@@ -384,6 +384,7 @@ def main():
                     for indices, images in wall_textures.items():
                         if current_level in indices:
                             both_textures = images
+                            break
                     if both_textures is not None:
                         # Select either light or dark texture depending on side
                         texture = both_textures[int(side_was_ns)]
