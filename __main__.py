@@ -45,26 +45,28 @@ def main():
 
     font = pygame.font.SysFont('Tahoma', 24, True)
 
-    frame_scores = [0] * len(levels)
+    time_scores = [0.0] * len(levels)
     move_scores = [0] * len(levels)
     has_started_level = [False] * len(levels)
     if os.path.isfile("highscores.pickle"):
         with open("highscores.pickle", 'rb') as file:
-            highscores: List[Tuple[int, int]] = pickle.load(file)
+            highscores: List[Tuple[float, int]] = pickle.load(file)
             if len(highscores) < len(levels):
                 highscores += [(0, 0)] * (len(levels) - len(highscores))
     else:
-        highscores: List[Tuple[int, int]] = [(0, 0)] * len(levels)
+        highscores: List[Tuple[float, int]] = [(0, 0)] * len(levels)
 
     current_level = 0
     show_solution = False
     is_autosolving = False
     automove_delay = 1
 
+    frame_counters = [0] * len(levels)
+
     # Game loop
     while True:
         # Limit to 50 FPS
-        clock.tick(50)
+        frame_time = clock.tick(50) / 1000
         tile_width = VIEWPORT_WIDTH // levels[current_level].dimensions[0]
         tile_height = VIEWPORT_HEIGHT // levels[current_level].dimensions[1]
         solutions = []
@@ -115,7 +117,7 @@ def main():
                     )
                 elif event.key == pygame.K_r:
                     levels[current_level].reset()
-                    frame_scores[current_level] = 0
+                    time_scores[current_level] = 0
                     move_scores[current_level] = 0
                     has_started_level[current_level] = False
                 elif event.key == pygame.K_SPACE:
@@ -146,10 +148,10 @@ def main():
 
         if levels[current_level].won:
             highscores_updated = False
-            if (frame_scores[current_level] < highscores[current_level][0]
+            if (time_scores[current_level] < highscores[current_level][0]
                     or highscores[current_level][0] == 0):
                 highscores[current_level] = (
-                    frame_scores[current_level], highscores[current_level][1]
+                    time_scores[current_level], highscores[current_level][1]
                 )
                 highscores_updated = True
             if (move_scores[current_level] < highscores[current_level][1]
@@ -163,7 +165,7 @@ def main():
                     pickle.dump(highscores, file)
             screen.fill(GREEN)
             time_score_text = font.render(
-                f"Time Score: {frame_scores[current_level]}",
+                f"Time Score: {time_scores[current_level]:.1f}",
                 True, BLUE
             )
             move_score_text = font.render(
@@ -171,7 +173,7 @@ def main():
                 True, BLUE
             )
             best_time_score_text = font.render(
-                f"Best Time Score: {highscores[current_level][0]}",
+                f"Best Time Score: {highscores[current_level][0]:.1f}",
                 True, BLUE
             )
             best_move_score_text = font.render(
@@ -179,7 +181,7 @@ def main():
                 True, BLUE
             )
             best_total_time_score_text = font.render(
-                f"Best Game Time Score: {sum(x[0] for x in highscores)}",
+                f"Best Game Time Score: {sum(x[0] for x in highscores):.1f}",
                 True, BLUE
             )
             best_total_move_score_text = font.render(
@@ -198,12 +200,13 @@ def main():
             screen.blit(lower_hint_text, (10, 280))
         else:
             if has_started_level[current_level]:
-                frame_scores[current_level] += 1
+                time_scores[current_level] += frame_time
+                frame_counters[current_level] += 1
             screen.fill(GREY)
             time_score_text = font.render(
-                f"Time: {frame_scores[current_level]}"
+                f"Time: {time_scores[current_level]:.1f}"
                 if has_started_level[current_level] else
-                f"Time: {highscores[current_level][0]}",
+                f"Time: {highscores[current_level][0]:.1f}",
                 True, WHITE
             )
             move_score_text = font.render(
@@ -219,7 +222,8 @@ def main():
                 # A set of all coordinates appearing in any solution
                 solution_coords = {x for y in solutions[1:] for x in y}
                 if (is_autosolving
-                        and frame_scores[current_level] % automove_delay == 0):
+                        and frame_counters[current_level] % automove_delay == 0
+                        ):
                     if len(solutions) < 1:
                         is_autosolving = False
                     else:
