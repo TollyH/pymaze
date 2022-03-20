@@ -87,6 +87,7 @@ PURPLE = (0x87, 0x23, 0xD9)
 LILAC = (0xD7, 0xA6, 0xFF)
 GREY = (0xAA, 0xAA, 0xAA)
 DARK_GREY = (0x20, 0x20, 0x20)
+LIGHT_GREY = (0xCD, 0xCD, 0xCD)
 
 
 def main():
@@ -385,7 +386,7 @@ def main():
             )
             # Floor
             pygame.draw.rect(
-                screen, WHITE,
+                screen, LIGHT_GREY,
                 (
                     0, VIEWPORT_HEIGHT // 2 + 50,
                     VIEWPORT_WIDTH, VIEWPORT_HEIGHT // 2
