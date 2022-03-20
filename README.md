@@ -16,6 +16,8 @@ algorithm for raycasting.
 - `Left` and `Right` - Turn camera
 - `[` and `]` - Previous/Next Level Respectively
 - `R` - Reset level
+- `Shift` - Run while held
+- `CTRL` - Crawl while held
 
 ## Cheat Controls
 
