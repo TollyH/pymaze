@@ -1,7 +1,7 @@
 # PyGame Maze
 
 A pseudo-3D, grid-based maze game written in Python with PyGame using a DDA
-algorithm for raycasting.
+algorithm for raycasting. For the fully 2D version without raycasting, see the ["flat" branch](https://github.com/TollyH/pygame_maze/tree/flat).
 
 ## Installation
 
