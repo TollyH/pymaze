@@ -27,6 +27,10 @@ MONSTER_ENABLED = True
 MONSTER_START_OVERRIDE = None
 # How many seconds the monster will wait between each movement.
 MONSTER_MOVEMENT_WAIT = 0.5
+# Whether the scream sound should be played when the player is killed
+MONSTER_SOUND_ON_KILL = True
+# Whether the monster should be displayed fullscreen when the player is killed
+MONSTER_DISPLAY_ON_KILL = True
 
 # The maximum frames per second that the game will render at. Low values may
 # cause the game window to become unresponsive.
@@ -83,6 +87,13 @@ def main():
     frame_counters = [0] * len(levels)
     monster_timeouts = [0.0] * len(levels)
 
+    monster_texture = pygame.transform.scale(pygame.image.load(
+        os.path.join("textures", "sprite", "monster.png")
+    ).convert_alpha(), (VIEWPORT_WIDTH, VIEWPORT_HEIGHT))
+    monster_jumpscare_sound = pygame.mixer.Sound(
+        os.path.join("sounds", "monster_jumpscare.wav")
+    )
+
     # Game loop
     while True:
         # Limit FPS and record time last frame took to render
@@ -98,22 +109,26 @@ def main():
             elif event.type == pygame.KEYDOWN and not is_autosolving:
                 if event.key in (pygame.K_w, pygame.K_UP):
                     levels[current_level].move_player(UP)
-                    if not levels[current_level].won:
+                    if (not levels[current_level].won
+                            and not levels[current_level].killed):
                         move_scores[current_level] += 1
                         has_started_level[current_level] = True
                 elif event.key in (pygame.K_d, pygame.K_RIGHT):
                     levels[current_level].move_player(RIGHT)
-                    if not levels[current_level].won:
+                    if (not levels[current_level].won
+                            and not levels[current_level].killed):
                         move_scores[current_level] += 1
                         has_started_level[current_level] = True
                 elif event.key in (pygame.K_s, pygame.K_DOWN):
                     levels[current_level].move_player(DOWN)
-                    if not levels[current_level].won:
+                    if (not levels[current_level].won
+                            and not levels[current_level].killed):
                         move_scores[current_level] += 1
                         has_started_level[current_level] = True
                 elif event.key in (pygame.K_a, pygame.K_LEFT):
                     levels[current_level].move_player(LEFT)
-                    if not levels[current_level].won:
+                    if (not levels[current_level].won
+                            and not levels[current_level].killed):
                         move_scores[current_level] += 1
                         has_started_level[current_level] = True
                 elif event.key in (pygame.K_LEFTBRACKET,
@@ -220,6 +235,13 @@ def main():
             screen.blit(lower_hint_text, (10, 280))
         elif levels[current_level].killed:
             screen.fill(RED)
+            if MONSTER_SOUND_ON_KILL and has_started_level[current_level]:
+                monster_jumpscare_sound.play()
+                has_started_level[current_level] = False
+            if MONSTER_DISPLAY_ON_KILL:
+                screen.blit(monster_texture, (
+                    0, 50, VIEWPORT_WIDTH, VIEWPORT_HEIGHT
+                ))
         else:
             if has_started_level[current_level]:
                 time_scores[current_level] += frame_time
