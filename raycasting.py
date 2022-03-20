@@ -2,8 +2,7 @@
 Contains functions related to the raycast rendering used to generate pseudo-3D
 graphics.
 """
-import math
-from typing import Dict, List, Literal, Tuple
+from typing import List, Literal, Tuple
 
 import level
 
@@ -96,21 +95,24 @@ def get_first_collision(current_level: level.Level,
         else:
             check_coords = tuple(current_tile)
             if check_coords in current_level.exit_keys:
-                sprites.append(((check_coords[0] + 0.5, check_coords[1] + 0.5),
+                sprites.append((
+                    (check_coords[0] + 0.5, check_coords[1] + 0.5),
                     KEY, no_sqrt_coord_distance(
                         current_level.player_coords,
                         (check_coords[0] + 0.5, check_coords[1] + 0.5)
                     )
                 ))
             if current_level.end_point == check_coords:
-                sprites.append(((check_coords[0] + 0.5, check_coords[1] + 0.5),
+                sprites.append((
+                    (check_coords[0] + 0.5, check_coords[1] + 0.5),
                     END_POINT, no_sqrt_coord_distance(
                         current_level.player_coords,
                         (check_coords[0] + 0.5, check_coords[1] + 0.5)
                     )
                 ))
             if current_level.monster_coords == check_coords:
-                sprites.append(((check_coords[0] + 0.5, check_coords[1] + 0.5),
+                sprites.append((
+                    (check_coords[0] + 0.5, check_coords[1] + 0.5),
                     MONSTER, no_sqrt_coord_distance(
                         current_level.player_coords,
                         (check_coords[0] + 0.5, check_coords[1] + 0.5)
@@ -127,9 +129,9 @@ def get_first_collision(current_level: level.Level,
     if not side_was_ns:
         return (
             collision_point, dimension_ray_length[0] - step_size[0],
-        no_sqrt_coord_distance(
-            current_level.player_coords, collision_point
-        ), side_was_ns
+            no_sqrt_coord_distance(
+                current_level.player_coords, collision_point
+            ), side_was_ns
         ), sprites
     return (
         collision_point, dimension_ray_length[1] - step_size[1],
@@ -173,7 +175,7 @@ def get_columns_sprites(display_columns: int, current_level: level.Level,
 
 
 def no_sqrt_coord_distance(coord_a: Tuple[float, float],
-        coord_b: Tuple[float, float]):
+                           coord_b: Tuple[float, float]):
     """
     Calculate the euclidean distance squared between two grid coordinates.
     """
