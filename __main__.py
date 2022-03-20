@@ -64,9 +64,12 @@ DISPLAY_FOV = 50
 DRAW_MAZE_EDGE_AS_WALL = True
 
 # Larger values will result in faster speeds. Move speed is measured in grid
-# squares per second, and turn speed in radians per second.
+# squares per second, and turn speed in radians per second. Run and crawl
+# multipliers are applied when holding Shift or CTRL respectively.
 TURN_SPEED = 2.5
 MOVE_SPEED = 4.0
+RUN_MULTIPLIER = 2.0
+CRAWL_MULTIPLIER = 0.5
 
 # Allow the presence of walls to be toggled by clicking on the map. Enabling
 # this will disable the ability to view solutions.
@@ -219,37 +222,50 @@ def main():
         old_grid_position = floor_coordinates(
             levels[current_level].player_coords
         )
+        # Held down keys
+        pressed_keys = pygame.key.get_pressed()
+        move_multiplier = 1
+        if pressed_keys[pygame.K_RCTRL] or pressed_keys[pygame.K_LCTRL]:
+            move_multiplier *= CRAWL_MULTIPLIER
+        if pressed_keys[pygame.K_RSHIFT] or pressed_keys[pygame.K_LSHIFT]:
+            move_multiplier *= RUN_MULTIPLIER
         # Ensure framerate does not affect speed values
         turn_speed_mod = frame_time * TURN_SPEED
         move_speed_mod = frame_time * MOVE_SPEED
-        # Held down keys
-        pressed_keys = pygame.key.get_pressed()
         if pressed_keys[pygame.K_w] or pressed_keys[pygame.K_UP]:
             if not levels[current_level].won:
                 levels[current_level].move_player((
-                    facing_directions[current_level][0] * move_speed_mod,
+                    facing_directions[current_level][0] * move_speed_mod
+                    * move_multiplier,
                     facing_directions[current_level][1] * move_speed_mod
+                    * move_multiplier
                 ))
                 has_started_level[current_level] = True
         if pressed_keys[pygame.K_s] or pressed_keys[pygame.K_DOWN]:
             if not levels[current_level].won:
                 levels[current_level].move_player((
-                    -facing_directions[current_level][0] * move_speed_mod,
+                    -facing_directions[current_level][0] * move_speed_mod
+                    * move_multiplier,
                     -facing_directions[current_level][1] * move_speed_mod
+                    * move_multiplier
                 ))
                 has_started_level[current_level] = True
         if pressed_keys[pygame.K_a]:
             if not levels[current_level].won:
                 levels[current_level].move_player((
-                    facing_directions[current_level][1] * move_speed_mod,
+                    facing_directions[current_level][1] * move_speed_mod
+                    * move_multiplier,
                     -facing_directions[current_level][0] * move_speed_mod
+                    * move_multiplier
                 ))
                 has_started_level[current_level] = True
         if pressed_keys[pygame.K_d]:
             if not levels[current_level].won:
                 levels[current_level].move_player((
-                    -facing_directions[current_level][1] * move_speed_mod,
+                    -facing_directions[current_level][1] * move_speed_mod
+                    * move_multiplier,
                     facing_directions[current_level][0] * move_speed_mod
+                    * move_multiplier
                 ))
                 has_started_level[current_level] = True
         if pressed_keys[pygame.K_RIGHT]:
