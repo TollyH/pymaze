@@ -2,14 +2,14 @@
 Contains functions related to the raycast rendering used to generate pseudo-3D
 graphics.
 """
-from typing import List, Literal, Tuple
+import math
+from typing import Dict, List, Literal, Tuple
 
 import level
 
-WALL = 0
-END_POINT = 1
-KEY = 2
-MONSTER = 3
+END_POINT = 0
+KEY = 1
+MONSTER = 2
 
 
 def get_first_collision(current_level: level.Level,
@@ -17,11 +17,14 @@ def get_first_collision(current_level: level.Level,
                         edge_is_wall: bool):
     """
     Find the first intersection of a wall tile by a ray travelling at the
-    specified direction from a particular origin. Returns None if no collision
-    occurs before the edge of the wall map, or a tuple
-    (coordinate, distance, side_was_ns, type) if a collision did occur.
-    Side is False if a North/South wall was hit, or True if an East/West wall
-    was. Type is either WALL, END_POINT, KEY, or MONSTER.
+    specified direction from a particular origin. The result will always be a
+    tuple, of which the first item will be None if no collision occurs before
+    the edge of the wall map, or a tuple
+    (coordinate, distance, euclidean_squared, side_was_ns) if a collision did
+    occur. Side is False if a North/South wall was hit, or True if an East/West
+    wall was. The second tuple item is a list of tuples of sprite tile
+    coordinates, their associated type, being either END_POINT, KEY, or MONSTER
+    - and the euclidean distance to the sprite.
     """
     # Prevent divide by 0
     if direction[0] == 0:
@@ -70,7 +73,7 @@ def get_first_collision(current_level: level.Level,
     # Stores whether a North/South or East/West wall was hit
     side_was_ns = False
     tile_found = False
-    hit_type = 0
+    sprites: List[Tuple[Tuple[float, float], Literal[0, 1, 2], float]] = []
     while not tile_found:
         # Move along ray
         if dimension_ray_length[0] < dimension_ray_length[1]:
@@ -89,63 +92,92 @@ def get_first_collision(current_level: level.Level,
             if edge_is_wall:
                 tile_found = True
             else:
-                return None
+                return None, sprites
         else:
             check_coords = tuple(current_tile)
+            if check_coords in current_level.exit_keys:
+                sprites.append(((check_coords[0] + 0.5, check_coords[1] + 0.5),
+                    KEY, no_sqrt_coord_distance(
+                        current_level.player_coords,
+                        (check_coords[0] + 0.5, check_coords[1] + 0.5)
+                    )
+                ))
+            if current_level.end_point == check_coords:
+                sprites.append(((check_coords[0] + 0.5, check_coords[1] + 0.5),
+                    END_POINT, no_sqrt_coord_distance(
+                        current_level.player_coords,
+                        (check_coords[0] + 0.5, check_coords[1] + 0.5)
+                    )
+                ))
+            if current_level.monster_coords == check_coords:
+                sprites.append(((check_coords[0] + 0.5, check_coords[1] + 0.5),
+                    MONSTER, no_sqrt_coord_distance(
+                        current_level.player_coords,
+                        (check_coords[0] + 0.5, check_coords[1] + 0.5)
+                    )
+                ))
             # Collision check
             if current_level[check_coords]:
                 tile_found = True
-                hit_type = WALL
-            elif check_coords == current_level.monster_coords:
-                tile_found = True
-                hit_type = MONSTER
-            elif (check_coords == current_level.end_point
-                    and len(current_level.exit_keys) == 0):
-                tile_found = True
-                hit_type = END_POINT
-            elif check_coords in current_level.exit_keys:
-                tile_found = True
-                hit_type = KEY
     # If this point is reached, a wall tile has been found
+    collision_point = (
+        current_level.player_coords[0] + direction[0] * distance,
+        current_level.player_coords[1] + direction[1] * distance
+    )
     if not side_was_ns:
         return (
-            (
-                current_level.player_coords[0] + direction[0] * distance,
-                current_level.player_coords[1] + direction[1] * distance
-            ),
-            dimension_ray_length[0] - step_size[0], side_was_ns, hit_type
-        )
+            collision_point, dimension_ray_length[0] - step_size[0],
+        no_sqrt_coord_distance(
+            current_level.player_coords, collision_point
+        ), side_was_ns
+        ), sprites
     return (
-        (
-            current_level.player_coords[0] + direction[0] * distance,
-            current_level.player_coords[1] + direction[1] * distance
-        ),
-        dimension_ray_length[1] - step_size[1], side_was_ns, hit_type
-    )
+        collision_point, dimension_ray_length[1] - step_size[1],
+        no_sqrt_coord_distance(
+            current_level.player_coords, collision_point
+        ), side_was_ns
+    ), sprites
 
 
-def get_columns(display_columns: int, current_level: level.Level,
-                edge_is_wall: bool, direction: Tuple[float, float],
-                camera_plane: Tuple[float, float]):
+def get_columns_sprites(display_columns: int, current_level: level.Level,
+                        edge_is_wall: bool, direction: Tuple[float, float],
+                        camera_plane: Tuple[float, float]):
     """
     Get a list of the intersection positions and distances of each column's ray
     for a particular wall map by utilising raycasting. Tuples are in format
-    (coordinate, distance, side_was_ns, type).
+    (coordinate, distance, euclidean_squared, side_was_ns). Also gets a list of
+    visible sprites as tuples (coordinate, type, distance) where type is either
+    END_POINT, KEY, or MONSTER.
     """
     columns: List[
-        Tuple[Tuple[float, float], float, bool, Literal[0, 1, 2, 3]]
+        Tuple[Tuple[float, float], float, float, bool]
     ] = []
+    sprites: List[Tuple[Tuple[float, float], Literal[0, 1, 2], float]] = []
     for index in range(display_columns):
         camera_x = 2 * index / display_columns - 1
         cast_direction = (
             direction[0] + camera_plane[0] * camera_x,
             direction[1] + camera_plane[1] * camera_x,
         )
-        result = get_first_collision(
+        result, new_sprites = get_first_collision(
             current_level, cast_direction, edge_is_wall
         )
         if result is None:
-            columns.append(((0.0, 0.0), float('inf'), False, 0))
+            columns.append(((0.0, 0.0), float('inf'), float('inf'), False))
         else:
             columns.append(result)
-    return columns
+        for new in new_sprites:
+            if new[0:2] not in (x[0:2] for x in sprites):
+                sprites.append(new)
+    return columns, sprites
+
+
+def no_sqrt_coord_distance(coord_a: Tuple[float, float],
+        coord_b: Tuple[float, float]):
+    """
+    Calculate the euclidean distance squared between two grid coordinates.
+    """
+    # Square root isn't performed because it's unnecessary for simply sorting
+    # (euclidean distance is never used for actual render distance - that would
+    # cause fisheye)
+    return (coord_b[0] - coord_a[0]) ** 2 + (coord_b[1] - coord_a[1]) ** 2

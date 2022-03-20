@@ -10,7 +10,7 @@ import os
 import pickle
 import sys
 from glob import glob
-from typing import List, Set, Tuple
+from typing import List, Literal, Set, Tuple
 
 import pygame
 
@@ -42,8 +42,8 @@ FRAME_RATE_LIMIT = 75
 TEXTURES_ENABLED = True
 
 # The dimensions of all the PNGs found in the textures folder.
-TEXTURE_WIDTH = 64
-TEXTURE_HEIGHT = 64
+TEXTURE_WIDTH = 128
+TEXTURE_HEIGHT = 128
 
 # The maximum height that textures will be stretched to internally before they
 # start getting cropped to save on resources. Decreasing this will improve
@@ -133,6 +133,18 @@ def main():
     }
     for _, (_, surface_to_dark) in wall_textures.items():
         surface_to_dark.blit(darkener, (0, 0))
+
+    sprite_textures = {
+        raycasting.KEY: pygame.image.load(
+            os.path.join("textures", "sprite", "key.png")
+        ).convert_alpha(),
+        raycasting.END_POINT: pygame.image.load(
+            os.path.join("textures", "sprite", "end_point.png")
+        ).convert_alpha(),
+        raycasting.MONSTER: pygame.image.load(
+            os.path.join("textures", "sprite", "monster.png")
+        ).convert_alpha()
+    }
 
     display_map = False
     display_rays = False
@@ -373,28 +385,6 @@ def main():
                     levels[current_level].move_monster()
                     monster_timeouts[current_level] = 0
             screen.fill(GREY)
-            time_score_text = font.render(
-                f"Time: {time_scores[current_level]:.1f}"
-                if has_started_level[current_level] else
-                f"Time: {highscores[current_level][0]:.1f}",
-                True, WHITE
-            )
-            move_score_text = font.render(
-                f"Moves: {move_scores[current_level]}"
-                if has_started_level[current_level] else
-                f"Moves: {highscores[current_level][1]}",
-                True, WHITE
-            )
-            starting_keys = len(levels[current_level].original_exit_keys)
-            remaining_keys = (
-                starting_keys - len(levels[current_level].exit_keys)
-            )
-            keys_text = font.render(
-                f"Keys: {remaining_keys}/{starting_keys}", True, WHITE
-            )
-            screen.blit(time_score_text, (10, 10))
-            screen.blit(move_score_text, (180, 10))
-            screen.blit(keys_text, (340, 10))
             # Ceiling
             pygame.draw.rect(
                 screen, BLUE,
@@ -409,103 +399,163 @@ def main():
                 )
             )
 
+            columns, sprites = raycasting.get_columns_sprites(
+                DISPLAY_COLUMNS, levels[current_level], DRAW_MAZE_EDGE_AS_WALL,
+                facing_directions[current_level], camera_planes[current_level]
+            )
+            type_column = 0
+            type_sprite = 1
+            # A combination of both wall columns and sprites
+            # [(index, type, euclidean_squared), ...]
+            objects: List[Tuple[int, Literal[0, 1], float]] = [
+                (i, type_column, x[2]) for i, x in enumerate(columns)
+            ]
+            objects += [
+                (i, type_sprite, x[2]) for i, x in enumerate(sprites)
+            ]
+            # Draw further away objects first so that closer walls obstruct
+            # sprites behind them
+            objects.sort(key=lambda x: x[2], reverse=True)
             ray_end_coords: List[Tuple[float, float]] = []
-            for index, (coord, distance, side_was_ns, hit_type) in enumerate(
-                    raycasting.get_columns(
-                        DISPLAY_COLUMNS, levels[current_level],
-                        DRAW_MAZE_EDGE_AS_WALL,
-                        facing_directions[current_level],
-                        camera_planes[current_level])):
-                # Edge of maze when drawing maze edges as walls is disabled
-                if distance == float('inf'):
-                    continue
-                if display_rays:
-                    ray_end_coords.append(coord)
-                # Prevent division by 0
-                distance = max(1e-30, distance)
-                column_height = round(VIEWPORT_HEIGHT / distance)
-                texture_draw_successful = False
-                if hit_type == raycasting.WALL and TEXTURES_ENABLED:
-                    both_textures = None
-                    for indices, images in wall_textures.items():
-                        if current_level in indices:
-                            both_textures = images
-                            break
-                    if both_textures is not None:
-                        # Select either light or dark texture depending on side
-                        texture = both_textures[int(side_was_ns)]
-                        position_along_wall = coord[int(not side_was_ns)] % 1
-                        texture_x = math.floor(
-                            position_along_wall * TEXTURE_WIDTH
-                        )
-                        if (not side_was_ns
-                                and facing_directions[current_level][0] > 0):
-                            texture_x = TEXTURE_WIDTH - texture_x - 1
-                        elif (side_was_ns
-                                and facing_directions[current_level][1] < 0):
-                            texture_x = TEXTURE_WIDTH - texture_x - 1
-                        draw_x = display_column_width * index
-                        draw_y = max(
-                            0, -column_height // 2 + VIEWPORT_HEIGHT // 2
-                        ) + 50
-                        # Get a single column of pixels
-                        pixel_column = texture.subsurface(
-                            texture_x, 0, 1, TEXTURE_HEIGHT
-                        )
-                        if (column_height > VIEWPORT_HEIGHT
-                                and column_height > TEXTURE_SCALE_LIMIT):
-                            overlap = math.floor(
-                                (column_height - VIEWPORT_HEIGHT)
-                                / (
-                                    (column_height - TEXTURE_HEIGHT)
-                                    / TEXTURE_HEIGHT
-                                )
-                            )
-                            # Crop column so we are only scaling pixels that we
-                            # will use to boost performance, at the cost of
-                            # making textures uneven
-                            pixel_column = pixel_column.subsurface(
-                                0, overlap // 2, 1, TEXTURE_HEIGHT - overlap
-                            )
-                        pixel_column = pygame.transform.scale(
-                            pixel_column,
-                            (
-                                display_column_width,
-                                min(column_height, VIEWPORT_HEIGHT)
-                                if column_height > TEXTURE_SCALE_LIMIT else
-                                column_height
-                            )
-                        )
-                        if (VIEWPORT_HEIGHT < column_height
-                                <= TEXTURE_SCALE_LIMIT):
-                            overlap = (column_height - VIEWPORT_HEIGHT) // 2
-                            pixel_column = pixel_column.subsurface(
-                                0, overlap,
-                                display_column_width, VIEWPORT_HEIGHT
-                            )
-                        screen.blit(pixel_column, (draw_x, draw_y))
-                        texture_draw_successful = True
-                if not texture_draw_successful:
-                    column_height = min(column_height, VIEWPORT_HEIGHT)
-                    if hit_type == raycasting.WALL:
-                        colour = DARK_GREY if side_was_ns else BLACK
-                    elif hit_type == raycasting.END_POINT:
-                        colour = GREEN if side_was_ns else DARK_GREEN
-                    elif hit_type == raycasting.KEY:
-                        colour = GOLD if side_was_ns else DARK_GOLD
-                    elif hit_type == raycasting.MONSTER:
-                        colour = RED if side_was_ns else DARK_RED
-                    else:
-                        continue
-                    pygame.draw.rect(
-                        screen, colour, (
-                            display_column_width * index,
-                            max(
-                                0, -column_height // 2 + VIEWPORT_HEIGHT // 2
-                            ) + 50,
-                            display_column_width, column_height
+            for index, object_type, _ in objects:
+                if object_type == type_sprite:
+                    coord, sprite_type, _ = sprites[index]
+                    relative_pos = (
+                        coord[0] - levels[current_level].player_coords[0],
+                        coord[1] - levels[current_level].player_coords[1]
+                    )
+                    inverse_camera = (
+                        1 / (
+                            camera_planes[current_level][0]
+                            * facing_directions[current_level][1]
+                            - facing_directions[current_level][0]
+                            * camera_planes[current_level][1]
                         )
                     )
+                    transformation = (
+                        inverse_camera * (
+                            facing_directions[current_level][1]
+                            * relative_pos[0]
+                            - facing_directions[current_level][0]
+                            * relative_pos[1]
+                        ),
+                        inverse_camera * (
+                            -camera_planes[current_level][1] * relative_pos[0]
+                            + camera_planes[current_level][0] * relative_pos[1]
+                        )
+                    )
+                    screen_x_pos = math.floor(
+                        (VIEWPORT_WIDTH / 2)
+                        * (1 + transformation[0] / transformation[1])
+                    )
+                    sprite_size = (
+                        min(TEXTURE_SCALE_LIMIT, abs(
+                            VIEWPORT_WIDTH // transformation[1]
+                        )),
+                        min(TEXTURE_SCALE_LIMIT, abs(
+                            VIEWPORT_HEIGHT // transformation[1]
+                        ))
+                    )
+                    scaled_texture = pygame.transform.scale(
+                        sprite_textures[sprite_type], sprite_size
+                    )
+                    screen.blit(
+                        scaled_texture,
+                        (
+                            screen_x_pos - sprite_size[0] // 2,
+                            VIEWPORT_HEIGHT // 2 - sprite_size[1] // 2 + 50
+                        )
+                    )
+                elif object_type == type_column:
+                    coord, distance, _, side_was_ns = columns[index]
+                    # Edge of maze when drawing maze edges as walls is disabled
+                    if distance == float('inf'):
+                        continue
+                    if display_rays:
+                        ray_end_coords.append(coord)
+                    # Prevent division by 0
+                    distance = max(1e-5, distance)
+                    column_height = round(VIEWPORT_HEIGHT / distance)
+                    texture_draw_successful = False
+                    if TEXTURES_ENABLED:
+                        both_textures = None
+                        for indices, images in wall_textures.items():
+                            if current_level in indices:
+                                both_textures = images
+                                break
+                        if both_textures is not None:
+                            # Select either light or dark texture
+                            # depending on side
+                            texture = both_textures[int(side_was_ns)]
+                            position_along_wall = coord[
+                                int(not side_was_ns)
+                            ] % 1
+                            texture_x = math.floor(
+                                position_along_wall * TEXTURE_WIDTH
+                            )
+                            if (not side_was_ns and
+                                    facing_directions[current_level][0] > 0):
+                                texture_x = TEXTURE_WIDTH - texture_x - 1
+                            elif (side_was_ns and
+                                    facing_directions[current_level][1] < 0):
+                                texture_x = TEXTURE_WIDTH - texture_x - 1
+                            draw_x = display_column_width * index
+                            draw_y = max(
+                                0, -column_height // 2 + VIEWPORT_HEIGHT // 2
+                            ) + 50
+                            # Get a single column of pixels
+                            pixel_column = texture.subsurface(
+                                texture_x, 0, 1, TEXTURE_HEIGHT
+                            )
+                            if (column_height > VIEWPORT_HEIGHT
+                                    and column_height > TEXTURE_SCALE_LIMIT):
+                                overlap = math.floor(
+                                    (column_height - VIEWPORT_HEIGHT)
+                                    / (
+                                        (column_height - TEXTURE_HEIGHT)
+                                        / TEXTURE_HEIGHT
+                                    )
+                                )
+                                # Crop column so we are only scaling pixels
+                                # that we will use to boost performance, at the
+                                # cost of making textures uneven
+                                pixel_column = pixel_column.subsurface(
+                                    0, overlap // 2,
+                                    1, TEXTURE_HEIGHT - overlap
+                                )
+                            pixel_column = pygame.transform.scale(
+                                pixel_column,
+                                (
+                                    display_column_width,
+                                    min(column_height, VIEWPORT_HEIGHT)
+                                    if column_height > TEXTURE_SCALE_LIMIT else
+                                    column_height
+                                )
+                            )
+                            if (VIEWPORT_HEIGHT < column_height
+                                    <= TEXTURE_SCALE_LIMIT):
+                                overlap = (
+                                    column_height - VIEWPORT_HEIGHT
+                                ) // 2
+                                pixel_column = pixel_column.subsurface(
+                                    0, overlap,
+                                    display_column_width, VIEWPORT_HEIGHT
+                                )
+                            screen.blit(pixel_column, (draw_x, draw_y))
+                            texture_draw_successful = True
+                    if not texture_draw_successful:
+                        column_height = min(column_height, VIEWPORT_HEIGHT)
+                        colour = DARK_GREY if side_was_ns else BLACK
+                        pygame.draw.rect(
+                            screen, colour, (
+                                display_column_width * index,
+                                max(
+                                    0,
+                                    -column_height // 2 + VIEWPORT_HEIGHT // 2
+                                ) + 50,
+                                display_column_width, column_height
+                            )
+                        )
             if display_map:
                 solutions: List[List[Tuple[int, int]]] = []
                 # A set of all coordinates appearing in any solution
@@ -580,6 +630,30 @@ def main():
                         + 50
                     ), tile_width // 8
                 )
+            # HUD is drawn last to prevent it being obstructed
+            pygame.draw.rect(screen, GREY, (0, 0, VIEWPORT_WIDTH, 50))
+            time_score_text = font.render(
+                f"Time: {time_scores[current_level]:.1f}"
+                if has_started_level[current_level] else
+                f"Time: {highscores[current_level][0]:.1f}",
+                True, WHITE
+            )
+            move_score_text = font.render(
+                f"Moves: {move_scores[current_level]}"
+                if has_started_level[current_level] else
+                f"Moves: {highscores[current_level][1]}",
+                True, WHITE
+            )
+            starting_keys = len(levels[current_level].original_exit_keys)
+            remaining_keys = (
+                starting_keys - len(levels[current_level].exit_keys)
+            )
+            keys_text = font.render(
+                f"Keys: {remaining_keys}/{starting_keys}", True, WHITE
+            )
+            screen.blit(time_score_text, (10, 10))
+            screen.blit(move_score_text, (180, 10))
+            screen.blit(keys_text, (340, 10))
         print(
             f"\r{clock.get_fps():5.2f} FPS - "
             + f"Position ({levels[current_level].player_coords[0]:5.2f},"
