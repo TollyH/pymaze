@@ -402,7 +402,8 @@ def main():
                 # Edge of maze when drawing maze edges as walls is disabled
                 if distance == float('inf'):
                     continue
-                ray_end_coords.append(coord)
+                if display_rays:
+                    ray_end_coords.append(coord)
                 # Prevent division by 0
                 distance = max(1e-30, distance)
                 column_height = round(VIEWPORT_HEIGHT / distance)
