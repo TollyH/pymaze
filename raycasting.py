@@ -10,6 +10,7 @@ END_POINT = 0
 KEY = 1
 MONSTER = 2
 START_POINT = 3
+FLAG = 4
 
 
 def get_first_collision(current_level: level.Level,
@@ -24,7 +25,7 @@ def get_first_collision(current_level: level.Level,
     occur. Side is False if a North/South wall was hit, or True if an East/West
     wall was. The second tuple item is a list of tuples of sprite tile
     coordinates, their associated type, being either END_POINT, KEY, MONSTER,
-    or START_POINT - and the euclidean distance to the sprite.
+    START_POINT, or FLAG - and the euclidean distance to the sprite.
     """
     # Prevent divide by 0
     if direction[0] == 0:
@@ -73,7 +74,9 @@ def get_first_collision(current_level: level.Level,
     # Stores whether a North/South or East/West wall was hit
     side_was_ns = False
     tile_found = False
-    sprites: List[Tuple[Tuple[float, float], Literal[0, 1, 2, 3], float]] = []
+    sprites: List[
+        Tuple[Tuple[float, float], Literal[0, 1, 2, 3, 4], float]
+    ] = []
     while not tile_found:
         # Move along ray
         if dimension_ray_length[0] < dimension_ray_length[1]:
@@ -127,6 +130,14 @@ def get_first_collision(current_level: level.Level,
                         (check_coords[0] + 0.5, check_coords[1] + 0.5)
                     )
                 ))
+            if check_coords in current_level.player_flags:
+                sprites.append((
+                    (check_coords[0] + 0.5, check_coords[1] + 0.5),
+                    FLAG, no_sqrt_coord_distance(
+                        current_level.player_coords,
+                        (check_coords[0] + 0.5, check_coords[1] + 0.5)
+                    )
+                ))
             # Collision check
             if current_level[check_coords]:
                 tile_found = True
@@ -163,7 +174,9 @@ def get_columns_sprites(display_columns: int, current_level: level.Level,
     columns: List[
         Tuple[Tuple[float, float], float, float, bool]
     ] = []
-    sprites: List[Tuple[Tuple[float, float], Literal[0, 1, 2, 3], float]] = []
+    sprites: List[
+        Tuple[Tuple[float, float], Literal[0, 1, 2, 3, 4], float]
+    ] = []
     for index in range(display_columns):
         camera_x = 2 * index / display_columns - 1
         cast_direction = (

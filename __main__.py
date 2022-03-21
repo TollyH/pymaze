@@ -150,6 +150,9 @@ def main():
         ).convert_alpha(),
         raycasting.START_POINT: pygame.image.load(
             os.path.join("textures", "sprite", "start_point.png")
+        ).convert_alpha(),
+        raycasting.FLAG: pygame.image.load(
+            os.path.join("textures", "sprite", "flag.png")
         ).convert_alpha()
     }
 
@@ -180,7 +183,15 @@ def main():
                 sys.exit()
             # Standard "press-once" keys
             elif event.type == pygame.KEYDOWN:
-                if event.key in (pygame.K_LEFTBRACKET,
+                if event.key == pygame.K_f:
+                    grid_coords = floor_coordinates(
+                        levels[current_level].player_coords
+                    )
+                    if grid_coords in levels[current_level].player_flags:
+                        levels[current_level].player_flags.remove(grid_coords)
+                    else:
+                        levels[current_level].player_flags.add(grid_coords)
+                elif event.key in (pygame.K_LEFTBRACKET,
                                  pygame.K_RIGHTBRACKET):
                     if event.key == pygame.K_LEFTBRACKET and current_level > 0:
                         current_level -= 1
@@ -610,6 +621,8 @@ def main():
                             color = DARK_RED
                         elif (x, y) in levels[current_level].exit_keys:
                             color = GOLD
+                        elif (x, y) in levels[current_level].player_flags:
+                            color = LIGHT_GREY
                         elif levels[current_level].start_point == (x, y):
                             color = RED
                         elif levels[current_level].end_point == (x, y):

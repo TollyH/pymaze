@@ -4,7 +4,7 @@ player movement, victory checking, and path finding.
 """
 import math
 import random
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 
 def floor_coordinates(coord: Tuple[float, float]):
@@ -76,6 +76,8 @@ class Level:
         else:
             self.monster_start = None
             self.monster_wait = None
+
+        self.player_flags: Set[Tuple[int, int]] = set()
 
         self._last_monster_position = (-1, -1)
 
@@ -248,6 +250,8 @@ class Level:
                         self.monster_coords = target
                         break
         self._last_monster_position = last_monster_position
+        if self.monster_coords in self.player_flags and random.random() < 0.25:
+            self.player_flags.remove(self.monster_coords)
         if self.monster_coords == player_grid_position:
             self.killed = True
 

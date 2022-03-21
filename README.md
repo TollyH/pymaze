@@ -15,6 +15,7 @@ algorithm for raycasting. For the fully 2D version without raycasting, see the [
 - `WASD` or `Up` and `Down` - Move around
 - `Left` and `Right` - Turn camera
 - `[` and `]` - Previous/Next Level Respectively
+- `F` - Place/pick up flag
 - `R` - Reset level
 - `Shift` - Run while held
 - `CTRL` - Crawl while held
@@ -29,6 +30,7 @@ algorithm for raycasting. For the fully 2D version without raycasting, see the [
 
 - Simply collect all of the golden keys before reaching the exit.
 - In many levels, after a specific amount of time has passed, a monster may spawn. Getting hit by the monster will result in you losing the level immediately.
+- You can place flags on the ground to help you navigate, however if the monster comes into contact with one of these flags, it may destroy it.
 
 ## Map Colours
 
@@ -39,5 +41,6 @@ algorithm for raycasting. For the fully 2D version without raycasting, see the [
 - Gold - Keys
 - Dark red - Monster
 - Red - Start point
+- Light grey - Flags
 - Purple - Shortest path
 - Lilac - Possible path
