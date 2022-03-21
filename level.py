@@ -282,7 +282,7 @@ class Level:
         """
         # Shallow copy to prevent original key list being modified
         self.exit_keys = [*self.original_exit_keys]
-        self.player_flags: Set[Tuple[int, int]] = set()
+        self.player_flags = set()
         self.player_coords = (
             self.start_point[0] + 0.5, self.start_point[1] + 0.5
         )
