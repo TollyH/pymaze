@@ -120,9 +120,9 @@ def main():
         with open("highscores.pickle", 'rb') as file:
             highscores: List[Tuple[float, int]] = pickle.load(file)
             if len(highscores) < len(levels):
-                highscores += [(0, 0)] * (len(levels) - len(highscores))
+                highscores += [(0.0, 0)] * (len(levels) - len(highscores))
     else:
-        highscores: List[Tuple[float, int]] = [(0, 0)] * len(levels)
+        highscores: List[Tuple[float, int]] = [(0.0, 0)] * len(levels)
 
     # Used to create the darker versions of each texture
     darkener = pygame.Surface((TEXTURE_WIDTH, TEXTURE_HEIGHT))
