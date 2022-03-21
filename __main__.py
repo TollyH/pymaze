@@ -415,6 +415,19 @@ def main():
                 screen, BLUE,
                 (0, 50, VIEWPORT_WIDTH, VIEWPORT_HEIGHT // 2)
             )
+            if levels[current_level].monster_coords is not None:
+                # Darken ceiling based on monster distance
+                ceiling_darkener = pygame.Surface(
+                    (VIEWPORT_WIDTH, VIEWPORT_HEIGHT // 2)
+                )
+                ceiling_darkener.fill(BLACK)
+                ceiling_darkener.set_alpha(
+                    255 // math.sqrt(raycasting.no_sqrt_coord_distance(
+                        levels[current_level].player_coords,
+                        levels[current_level].monster_coords  # type: ignore
+                    ))
+                )
+                screen.blit(ceiling_darkener, (0, 50))
             # Floor
             pygame.draw.rect(
                 screen, LIGHT_GREY,
