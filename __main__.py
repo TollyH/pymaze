@@ -147,6 +147,9 @@ def main():
         ).convert_alpha(),
         raycasting.MONSTER: pygame.image.load(
             os.path.join("textures", "sprite", "monster.png")
+        ).convert_alpha(),
+        raycasting.START_POINT: pygame.image.load(
+            os.path.join("textures", "sprite", "start_point.png")
         ).convert_alpha()
     }
 
