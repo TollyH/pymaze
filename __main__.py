@@ -681,13 +681,15 @@ def main():
                         + 50
                     ), tile_width // 8
                 )
+
             # HUD is drawn last to prevent it being obstructed
             pygame.draw.rect(screen, GREY, (0, 0, VIEWPORT_WIDTH, 50))
             time_score_text = font.render(
                 f"Time: {time_scores[current_level]:.1f}"
                 if has_started_level[current_level] else
                 f"Time: {highscores[current_level][0]:.1f}",
-                True, WHITE
+                True,
+                WHITE if levels[current_level].monster_coords is None else RED
             )
             move_score_text = font.render(
                 f"Moves: {move_scores[current_level]}"
