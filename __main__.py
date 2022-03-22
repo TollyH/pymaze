@@ -497,13 +497,11 @@ def main():
                         (VIEWPORT_WIDTH / 2)
                         * (1 + transformation[0] / transformation[1])
                     )
+                    if screen_x_pos > VIEWPORT_WIDTH or screen_x_pos < 0:
+                        continue
                     sprite_size = (
-                        min(TEXTURE_SCALE_LIMIT, abs(
-                            VIEWPORT_WIDTH // transformation[1]
-                        )),
-                        min(TEXTURE_SCALE_LIMIT, abs(
-                            VIEWPORT_HEIGHT // transformation[1]
-                        ))
+                        abs(VIEWPORT_WIDTH // transformation[1]),
+                        abs(VIEWPORT_HEIGHT // transformation[1])
                     )
                     scaled_texture = pygame.transform.scale(
                         sprite_textures[sprite_type], sprite_size
