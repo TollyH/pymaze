@@ -158,6 +158,9 @@ def main():
         ).convert_alpha(),
         raycasting.FLAG: pygame.image.load(
             os.path.join("textures", "sprite", "flag.png")
+        ).convert_alpha(),
+        raycasting.END_POINT_ACTIVE: pygame.image.load(
+            os.path.join("textures", "sprite", "end_point_active.png")
         ).convert_alpha()
     }
 

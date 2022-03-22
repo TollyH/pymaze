@@ -11,6 +11,7 @@ KEY = 1
 MONSTER = 2
 START_POINT = 3
 FLAG = 4
+END_POINT_ACTIVE = 5
 
 
 def get_first_collision(current_level: level.Level,
@@ -75,7 +76,7 @@ def get_first_collision(current_level: level.Level,
     side_was_ns = False
     tile_found = False
     sprites: List[
-        Tuple[Tuple[float, float], Literal[0, 1, 2, 3, 4], float]
+        Tuple[Tuple[float, float], Literal[0, 1, 2, 3, 4, 5], float]
     ] = []
     while not tile_found:
         # Move along ray
@@ -109,7 +110,9 @@ def get_first_collision(current_level: level.Level,
             if current_level.end_point == check_coords:
                 sprites.append((
                     (check_coords[0] + 0.5, check_coords[1] + 0.5),
-                    END_POINT, no_sqrt_coord_distance(
+                    END_POINT
+                    if len(current_level.exit_keys) != 0 else
+                    END_POINT_ACTIVE, no_sqrt_coord_distance(
                         current_level.player_coords,
                         (check_coords[0] + 0.5, check_coords[1] + 0.5)
                     )
@@ -175,7 +178,7 @@ def get_columns_sprites(display_columns: int, current_level: level.Level,
         Tuple[Tuple[float, float], float, float, bool]
     ] = []
     sprites: List[
-        Tuple[Tuple[float, float], Literal[0, 1, 2, 3, 4], float]
+        Tuple[Tuple[float, float], Literal[0, 1, 2, 3, 4, 5], float]
     ] = []
     for index in range(display_columns):
         camera_x = 2 * index / display_columns - 1
