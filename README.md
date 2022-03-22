@@ -44,6 +44,6 @@ algorithm for raycasting. For the fully 2D version without raycasting, see the [
 - Gold - Keys
 - Dark red - Monster
 - Red - Start point
-- Light grey - Flags
+- Turquoise - Flags
 - Purple - Shortest path
 - Lilac - Possible path

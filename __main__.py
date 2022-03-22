@@ -89,6 +89,7 @@ ALLOW_REALTIME_EDITING = False
 WHITE = (0xFF, 0xFF, 0xFF)
 BLACK = (0x00, 0x00, 0x00)
 BLUE = (0x00, 0x30, 0xFF)
+LIGHT_BLUE = (0x07, 0xF0, 0xF0)
 GOLD = (0xE1, 0xBB, 0x12)
 DARK_GOLD = (0x70, 0x5E, 0x09)
 GREEN = (0x00, 0xFF, 0x10)
@@ -641,7 +642,7 @@ def main():
                                 and ENABLE_CHEAT_MAP):
                             color = GOLD
                         elif (x, y) in levels[current_level].player_flags:
-                            color = LIGHT_GREY
+                            color = LIGHT_BLUE
                         elif levels[current_level].start_point == (x, y):
                             color = RED
                         elif (levels[current_level].end_point == (x, y)
