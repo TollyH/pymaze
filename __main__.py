@@ -493,6 +493,11 @@ def main():
                             + camera_planes[current_level][0] * relative_pos[1]
                         )
                     )
+                    # Prevent divisions by 0
+                    transformation = (
+                        transformation[0] if transformation[0] != 0 else 1e-5,
+                        transformation[1] if transformation[1] != 0 else 1e-5
+                    )
                     screen_x_pos = math.floor(
                         (VIEWPORT_WIDTH / 2)
                         * (1 + transformation[0] / transformation[1])
