@@ -24,6 +24,10 @@ from maze_levels import levels
 VIEWPORT_WIDTH = 500
 VIEWPORT_HEIGHT = 500
 
+# Whether a more detailed version of the map should be displayed instead of the
+# default limited one.
+ENABLE_CHEAT_MAP = False
+
 # Whether the monster should be spawned at all.
 MONSTER_ENABLED = True
 # If this is not None, it will be used as the time taken in seconds to spawn
@@ -76,7 +80,8 @@ RUN_MULTIPLIER = 2.0
 CRAWL_MULTIPLIER = 0.5
 
 # Allow the presence of walls to be toggled by clicking on the map. Enabling
-# this will disable the ability to view solutions.
+# this will disable the ability to view solutions. ENABLE_CHEAT_MAP must be
+# True for this to work.
 ALLOW_REALTIME_EDITING = False
 
 # =============================================================================
@@ -227,7 +232,7 @@ def main():
                         display_map = not display_map
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_coords = pygame.mouse.get_pos()
-                if (ALLOW_REALTIME_EDITING
+                if (ALLOW_REALTIME_EDITING and ENABLE_CHEAT_MAP
                         and event.button == pygame.BUTTON_LEFT
                         and mouse_coords[0] > VIEWPORT_WIDTH
                         and mouse_coords[1] >= 50):
@@ -239,7 +244,7 @@ def main():
                         not levels[current_level][clicked_tile]
                     )
 
-        if (display_map
+        if (display_map and ENABLE_CHEAT_MAP
                 and screen.get_size()[0] < VIEWPORT_WIDTH * 2):
             screen = pygame.display.set_mode(
                 (
@@ -247,7 +252,7 @@ def main():
                     max(VIEWPORT_HEIGHT + 50, 500)
                 )
             )
-        elif (not display_map
+        elif (not display_map and ENABLE_CHEAT_MAP
                 and screen.get_size()[0] > VIEWPORT_WIDTH):
             screen = pygame.display.set_mode(
                 (
@@ -259,90 +264,93 @@ def main():
         old_grid_position = floor_coordinates(
             levels[current_level].player_coords
         )
-        # Held down keys
-        pressed_keys = pygame.key.get_pressed()
-        move_multiplier = 1
-        if pressed_keys[pygame.K_RCTRL] or pressed_keys[pygame.K_LCTRL]:
-            move_multiplier *= CRAWL_MULTIPLIER
-        if pressed_keys[pygame.K_RSHIFT] or pressed_keys[pygame.K_LSHIFT]:
-            move_multiplier *= RUN_MULTIPLIER
-        # Ensure framerate does not affect speed values
-        turn_speed_mod = frame_time * TURN_SPEED
-        move_speed_mod = frame_time * MOVE_SPEED
-        if pressed_keys[pygame.K_w] or pressed_keys[pygame.K_UP]:
-            if (not levels[current_level].won
-                            and not levels[current_level].killed):
-                levels[current_level].move_player((
-                    facing_directions[current_level][0] * move_speed_mod
-                    * move_multiplier,
-                    facing_directions[current_level][1] * move_speed_mod
-                    * move_multiplier
-                ))
-                has_started_level[current_level] = True
-        if pressed_keys[pygame.K_s] or pressed_keys[pygame.K_DOWN]:
-            if (not levels[current_level].won
-                            and not levels[current_level].killed):
-                levels[current_level].move_player((
-                    -facing_directions[current_level][0] * move_speed_mod
-                    * move_multiplier,
-                    -facing_directions[current_level][1] * move_speed_mod
-                    * move_multiplier
-                ))
-                has_started_level[current_level] = True
-        if pressed_keys[pygame.K_a]:
-            if (not levels[current_level].won
-                            and not levels[current_level].killed):
-                levels[current_level].move_player((
-                    facing_directions[current_level][1] * move_speed_mod
-                    * move_multiplier,
-                    -facing_directions[current_level][0] * move_speed_mod
-                    * move_multiplier
-                ))
-                has_started_level[current_level] = True
-        if pressed_keys[pygame.K_d]:
-            if (not levels[current_level].won
-                            and not levels[current_level].killed):
-                levels[current_level].move_player((
-                    -facing_directions[current_level][1] * move_speed_mod
-                    * move_multiplier,
-                    facing_directions[current_level][0] * move_speed_mod
-                    * move_multiplier
-                ))
-                has_started_level[current_level] = True
-        if pressed_keys[pygame.K_RIGHT]:
-            old_direction = facing_directions[current_level]
-            facing_directions[current_level] = (
-                old_direction[0] * math.cos(turn_speed_mod)
-                - old_direction[1] * math.sin(turn_speed_mod),
-                old_direction[0] * math.sin(turn_speed_mod)
-                + old_direction[1] * math.cos(turn_speed_mod)
-            )
-            old_camera_plane = camera_planes[current_level]
-            camera_planes[current_level] = (
-                old_camera_plane[0] * math.cos(turn_speed_mod)
-                - old_camera_plane[1] * math.sin(turn_speed_mod),
-                old_camera_plane[0] * math.sin(turn_speed_mod)
-                + old_camera_plane[1] * math.cos(turn_speed_mod)
-            )
-        if pressed_keys[pygame.K_LEFT]:
-            old_direction = facing_directions[current_level]
-            facing_directions[current_level] = (
-                old_direction[0] * math.cos(-turn_speed_mod)
-                - old_direction[1] * math.sin(-turn_speed_mod),
-                old_direction[0] * math.sin(-turn_speed_mod)
-                + old_direction[1] * math.cos(-turn_speed_mod)
-            )
-            old_camera_plane = camera_planes[current_level]
-            camera_planes[current_level] = (
-                old_camera_plane[0] * math.cos(-turn_speed_mod)
-                - old_camera_plane[1] * math.sin(-turn_speed_mod),
-                old_camera_plane[0] * math.sin(-turn_speed_mod)
-                + old_camera_plane[1] * math.cos(-turn_speed_mod)
-            )
-        # Only count up one move score if player crossed a gridline
-        if floor_coordinates(
-                levels[current_level].player_coords) != old_grid_position:
-            move_scores[current_level] += 1
+        # Do not allow player to move while map is open if cheat map is not
+        # enabled
+        if ENABLE_CHEAT_MAP or not display_map:
+            # Held down keys
+            pressed_keys = pygame.key.get_pressed()
+            move_multiplier = 1
+            if pressed_keys[pygame.K_RCTRL] or pressed_keys[pygame.K_LCTRL]:
+                move_multiplier *= CRAWL_MULTIPLIER
+            if pressed_keys[pygame.K_RSHIFT] or pressed_keys[pygame.K_LSHIFT]:
+                move_multiplier *= RUN_MULTIPLIER
+            # Ensure framerate does not affect speed values
+            turn_speed_mod = frame_time * TURN_SPEED
+            move_speed_mod = frame_time * MOVE_SPEED
+            if pressed_keys[pygame.K_w] or pressed_keys[pygame.K_UP]:
+                if (not levels[current_level].won
+                                and not levels[current_level].killed):
+                    levels[current_level].move_player((
+                        facing_directions[current_level][0] * move_speed_mod
+                        * move_multiplier,
+                        facing_directions[current_level][1] * move_speed_mod
+                        * move_multiplier
+                    ))
+                    has_started_level[current_level] = True
+            if pressed_keys[pygame.K_s] or pressed_keys[pygame.K_DOWN]:
+                if (not levels[current_level].won
+                                and not levels[current_level].killed):
+                    levels[current_level].move_player((
+                        -facing_directions[current_level][0] * move_speed_mod
+                        * move_multiplier,
+                        -facing_directions[current_level][1] * move_speed_mod
+                        * move_multiplier
+                    ))
+                    has_started_level[current_level] = True
+            if pressed_keys[pygame.K_a]:
+                if (not levels[current_level].won
+                                and not levels[current_level].killed):
+                    levels[current_level].move_player((
+                        facing_directions[current_level][1] * move_speed_mod
+                        * move_multiplier,
+                        -facing_directions[current_level][0] * move_speed_mod
+                        * move_multiplier
+                    ))
+                    has_started_level[current_level] = True
+            if pressed_keys[pygame.K_d]:
+                if (not levels[current_level].won
+                                and not levels[current_level].killed):
+                    levels[current_level].move_player((
+                        -facing_directions[current_level][1] * move_speed_mod
+                        * move_multiplier,
+                        facing_directions[current_level][0] * move_speed_mod
+                        * move_multiplier
+                    ))
+                    has_started_level[current_level] = True
+            if pressed_keys[pygame.K_RIGHT]:
+                old_direction = facing_directions[current_level]
+                facing_directions[current_level] = (
+                    old_direction[0] * math.cos(turn_speed_mod)
+                    - old_direction[1] * math.sin(turn_speed_mod),
+                    old_direction[0] * math.sin(turn_speed_mod)
+                    + old_direction[1] * math.cos(turn_speed_mod)
+                )
+                old_camera_plane = camera_planes[current_level]
+                camera_planes[current_level] = (
+                    old_camera_plane[0] * math.cos(turn_speed_mod)
+                    - old_camera_plane[1] * math.sin(turn_speed_mod),
+                    old_camera_plane[0] * math.sin(turn_speed_mod)
+                    + old_camera_plane[1] * math.cos(turn_speed_mod)
+                )
+            if pressed_keys[pygame.K_LEFT]:
+                old_direction = facing_directions[current_level]
+                facing_directions[current_level] = (
+                    old_direction[0] * math.cos(-turn_speed_mod)
+                    - old_direction[1] * math.sin(-turn_speed_mod),
+                    old_direction[0] * math.sin(-turn_speed_mod)
+                    + old_direction[1] * math.cos(-turn_speed_mod)
+                )
+                old_camera_plane = camera_planes[current_level]
+                camera_planes[current_level] = (
+                    old_camera_plane[0] * math.cos(-turn_speed_mod)
+                    - old_camera_plane[1] * math.sin(-turn_speed_mod),
+                    old_camera_plane[0] * math.sin(-turn_speed_mod)
+                    + old_camera_plane[1] * math.cos(-turn_speed_mod)
+                )
+            # Only count up one move score if player crossed a gridline
+            if floor_coordinates(
+                    levels[current_level].player_coords) != old_grid_position:
+                move_scores[current_level] += 1
 
         if levels[current_level].won:
             highscores_updated = False
@@ -610,10 +618,12 @@ def main():
                             )
                         )
             if display_map:
+                x_offset = VIEWPORT_WIDTH if ENABLE_CHEAT_MAP else 0
                 solutions: List[List[Tuple[int, int]]] = []
                 # A set of all coordinates appearing in any solution
                 solution_coords: Set[Tuple[int, int]] = set()
-                if display_solutions and not ALLOW_REALTIME_EDITING:
+                if (display_solutions and not ALLOW_REALTIME_EDITING
+                        and ENABLE_CHEAT_MAP):
                     solutions = levels[current_level].find_possible_paths()
                     solution_coords = {x for y in solutions[1:] for x in y}
                 for y, row in enumerate(levels[current_level].wall_map):
@@ -621,15 +631,18 @@ def main():
                         if floor_coordinates(
                                 levels[current_level].player_coords) == (x, y):
                             color = BLUE
-                        elif levels[current_level].monster_coords == (x, y):
+                        elif (levels[current_level].monster_coords == (x, y)
+                                and ENABLE_CHEAT_MAP):
                             color = DARK_RED
-                        elif (x, y) in levels[current_level].exit_keys:
+                        elif ((x, y) in levels[current_level].exit_keys
+                                and ENABLE_CHEAT_MAP):
                             color = GOLD
                         elif (x, y) in levels[current_level].player_flags:
                             color = LIGHT_GREY
                         elif levels[current_level].start_point == (x, y):
                             color = RED
-                        elif levels[current_level].end_point == (x, y):
+                        elif (levels[current_level].end_point == (x, y)
+                                and ENABLE_CHEAT_MAP):
                             color = GREEN
                         elif len(solutions) >= 1 and (x, y) in solutions[0]:
                             color = PURPLE
@@ -639,22 +652,22 @@ def main():
                             color = BLACK if point else WHITE
                         pygame.draw.rect(
                             screen, color, (
-                                tile_width * x + VIEWPORT_WIDTH,
+                                tile_width * x + x_offset,
                                 tile_height * y + 50, tile_width, tile_height
                             )
                         )
                 # Raycast rays
-                if display_rays:
+                if display_rays and ENABLE_CHEAT_MAP:
                     for point in ray_end_coords:
                         pygame.draw.line(
                             screen, DARK_GOLD, (
                                 levels[current_level].player_coords[0]
-                                * tile_width + VIEWPORT_WIDTH,
+                                * tile_width + x_offset,
                                 levels[current_level].player_coords[1]
                                 * tile_height + 50
                             ),
                             (
-                                point[0] * tile_width + VIEWPORT_WIDTH,
+                                point[0] * tile_width + x_offset,
                                 point[1] * tile_height + 50
                             ), 1
                         )
@@ -662,13 +675,13 @@ def main():
                 pygame.draw.line(
                     screen, DARK_RED, (
                         levels[current_level].player_coords[0] * tile_width
-                        + VIEWPORT_WIDTH,
+                        + x_offset,
                         levels[current_level].player_coords[1] * tile_height
                         + 50
                     ),
                     (
                         levels[current_level].player_coords[0] * tile_width
-                        + VIEWPORT_WIDTH
+                        + x_offset
                         + facing_directions[current_level][0] * tile_width
                         // 2,
                         levels[current_level].player_coords[1] * tile_height
@@ -680,7 +693,7 @@ def main():
                 pygame.draw.circle(
                     screen, DARK_GREEN, (
                         levels[current_level].player_coords[0] * tile_width
-                        + VIEWPORT_WIDTH,
+                        + x_offset,
                         levels[current_level].player_coords[1] * tile_height
                         + 50
                     ), tile_width // 8

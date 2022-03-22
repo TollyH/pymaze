@@ -19,10 +19,13 @@ algorithm for raycasting. For the fully 2D version without raycasting, see the [
 - `R` - Reset level
 - `Shift` - Run while held
 - `CTRL` - Crawl while held
+- `Space` - Toggle map
 
-## Cheat Controls
+## Cheat Map Controls
 
-- `Space` - Toggle map display
+*Requires `ENABLE_CHEAT_MAP` in `__main__.py` to be set to `True`*
+
+- `Space` - Toggle cheat map display
 - `CTRL` + `Space` - Toggle displaying of field of view on map
 - `Alt` + `Space` - Toggle displaying of shortest path to exit/keys on map
 
