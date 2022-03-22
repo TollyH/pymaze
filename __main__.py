@@ -502,7 +502,8 @@ def main():
                         (VIEWPORT_WIDTH / 2)
                         * (1 + transformation[0] / transformation[1])
                     )
-                    if screen_x_pos > VIEWPORT_WIDTH or screen_x_pos < 0:
+                    if (screen_x_pos > VIEWPORT_WIDTH + TEXTURE_WIDTH // 2
+                            or screen_x_pos < 0 - TEXTURE_WIDTH // 2):
                         continue
                     sprite_size = (
                         abs(VIEWPORT_WIDTH // transformation[1]),
