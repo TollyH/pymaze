@@ -667,28 +667,28 @@ def main():
                     for x, point in enumerate(row):
                         if floor_coordinates(
                                 levels[current_level].player_coords) == (x, y):
-                            color = BLUE
+                            colour = BLUE
                         elif (levels[current_level].monster_coords == (x, y)
                                 and ENABLE_CHEAT_MAP):
-                            color = DARK_RED
+                            colour = DARK_RED
                         elif ((x, y) in levels[current_level].exit_keys
                                 and ENABLE_CHEAT_MAP):
-                            color = GOLD
+                            colour = GOLD
                         elif (x, y) in levels[current_level].player_flags:
-                            color = LIGHT_BLUE
+                            colour = LIGHT_BLUE
                         elif levels[current_level].start_point == (x, y):
-                            color = RED
+                            colour = RED
                         elif (levels[current_level].end_point == (x, y)
                                 and ENABLE_CHEAT_MAP):
-                            color = GREEN
+                            colour = GREEN
                         elif len(solutions) >= 1 and (x, y) in solutions[0]:
-                            color = PURPLE
+                            colour = PURPLE
                         elif len(solutions) >= 1 and (x, y) in solution_coords:
-                            color = LILAC
+                            colour = LILAC
                         else:
-                            color = BLACK if point else WHITE
+                            colour = BLACK if point else WHITE
                         pygame.draw.rect(
-                            screen, color, (
+                            screen, colour, (
                                 tile_width * x + x_offset,
                                 tile_height * y + 50, tile_width, tile_height
                             )
