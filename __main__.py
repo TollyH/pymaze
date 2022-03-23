@@ -762,14 +762,16 @@ def main():
                     ), tile_width / 8
                 )
             elif display_compass:
+                compass_centre = (
+                    VIEWPORT_WIDTH // 2, VIEWPORT_HEIGHT + 50
+                )
+                compass_outer_radius = VIEWPORT_WIDTH // 4
+                compass_inner_radius = compass_outer_radius - 10
                 pygame.draw.circle(
-                    screen, GREY, (VIEWPORT_WIDTH // 2, VIEWPORT_HEIGHT + 50),
-                    VIEWPORT_WIDTH / 4
+                    screen, GREY, compass_centre, compass_outer_radius
                 )
                 pygame.draw.circle(
-                    screen, DARK_GREY,
-                    (VIEWPORT_WIDTH // 2, VIEWPORT_HEIGHT + 50),
-                    VIEWPORT_WIDTH / 4 - 10
+                    screen, DARK_GREY, compass_centre, compass_inner_radius
                 )
                 monster_coords = levels[current_level].monster_coords
                 if (monster_coords is not None
@@ -784,26 +786,20 @@ def main():
                         math.atan2(*relative_pos)
                         - math.atan2(*facing_directions[current_level])
                     )
-                    line_length = (VIEWPORT_WIDTH / 4 - 10) * (
+                    line_length = compass_inner_radius * (
                         compass_times[current_level] / COMPASS_TIME
                     )
-                    offsets = (
-                        VIEWPORT_WIDTH // 2, VIEWPORT_HEIGHT + 50
-                    )
                     line_end_coords = floor_coordinates((
-                        line_length * math.sin(direction) + offsets[0],
-                        line_length * math.cos(direction) + offsets[1]
+                        line_length * math.sin(direction) + compass_centre[0],
+                        line_length * math.cos(direction) + compass_centre[1]
                     ))
                     pygame.draw.line(
-                        screen, RED,
-                        (VIEWPORT_WIDTH // 2, VIEWPORT_HEIGHT + 50),
-                        line_end_coords, 4
+                        screen, RED, compass_centre, line_end_coords, 4
                     )
                 elif compass_burned_out[current_level]:
                     pygame.draw.circle(
-                        screen, RED,
-                        (VIEWPORT_WIDTH // 2, VIEWPORT_HEIGHT + 50),
-                        (VIEWPORT_WIDTH // 4 - 10) * (
+                        screen, RED, compass_centre, compass_inner_radius
+                        * (
                             (COMPASS_TIME - compass_times[current_level])
                             / COMPASS_TIME
                         )
