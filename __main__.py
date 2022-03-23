@@ -32,7 +32,7 @@ ENABLE_CHEAT_MAP = False
 MONSTER_ENABLED = True
 # If this is not None, it will be used as the time taken in seconds to spawn
 # the monster, overriding the times specific to each level.
-MONSTER_START_OVERRIDE = 0
+MONSTER_START_OVERRIDE = None
 # How many seconds the monster will wait between each movement.
 MONSTER_MOVEMENT_WAIT = 0.5
 # Whether the scream sound should be played when the player is killed
