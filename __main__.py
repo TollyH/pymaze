@@ -8,6 +8,7 @@ Also handles time-based events such as monster movement and spawning.
 import math
 import os
 import pickle
+import random
 import sys
 from glob import glob
 from typing import List, Literal, Set, Tuple
@@ -33,7 +34,8 @@ MONSTER_ENABLED = True
 # If this is not None, it will be used as the time taken in seconds to spawn
 # the monster, overriding the times specific to each level.
 MONSTER_START_OVERRIDE = None
-# How many seconds the monster will wait between each movement.
+# How many seconds the monster will wait between each movement. Decreasing this
+# will increase the rate at which the lights flicker.
 MONSTER_MOVEMENT_WAIT = 0.5
 # Whether the scream sound should be played when the player is killed
 MONSTER_SOUND_ON_KILL = True
@@ -45,6 +47,8 @@ MONSTER_SOUND_ON_SPOT = True
 # The amount of time in seconds that the monster must have been outside the
 # player's field of view before the spotted sound effect will play again
 MONSTER_SPOT_TIMEOUT = 10.0
+# Whether the "lights" should flicker based on the distance of the monster
+MONSTER_FLICKER_LIGHTS = True
 
 # The length of time in seconds that the compass can be used before burning out
 COMPASS_TIME = 10.0
@@ -200,6 +204,7 @@ def main():
     monster_spotted = [MONSTER_SPOT_TIMEOUT] * len(levels)
     compass_times = [COMPASS_TIME] * len(levels)
     compass_burned_out = [False] * len(levels)
+    flicker_time_remaining = [0.0] * len(levels)
 
     # Game loop
     while True:
@@ -252,6 +257,7 @@ def main():
                     monster_spotted[current_level] = MONSTER_SPOT_TIMEOUT
                     compass_times[current_level] = COMPASS_TIME
                     compass_burned_out[current_level] = False
+                    flicker_time_remaining[current_level] = 0.0
                     time_scores[current_level] = 0
                     move_scores[current_level] = 0
                     has_started_level[current_level] = False
@@ -487,6 +493,24 @@ def main():
                         > MONSTER_MOVEMENT_WAIT):
                     levels[current_level].move_monster()
                     monster_timeouts[current_level] = 0
+                    monster_coords = levels[current_level].monster_coords
+                    if (monster_coords is not None and MONSTER_FLICKER_LIGHTS
+                            and flicker_time_remaining[current_level] <= 0):
+                        flicker_time_remaining[current_level] = 0.0
+                        distance = raycasting.no_sqrt_coord_distance(
+                            levels[current_level].player_coords,
+                            monster_coords
+                        )
+                        # Flicker on every monster movement when close.
+                        # Also don't divide by anything less than 1, it will
+                        # have no more effect than just 1.
+                        distance = max(1, distance - 10)
+                        # < 1 exponent makes probability decay less with
+                        # distance
+                        if random.random() < 1 / distance ** 0.6:
+                            flicker_time_remaining[current_level] = (
+                                random.uniform(0.0, 0.5)
+                            )
             screen.fill(GREY)
             if not display_map or ENABLE_CHEAT_MAP:
                 # Ceiling
@@ -495,21 +519,6 @@ def main():
                     (0, 50, VIEWPORT_WIDTH, VIEWPORT_HEIGHT // 2)
                 )
                 monster_coords = levels[current_level].monster_coords
-                if monster_coords is not None:
-                    # Darken ceiling based on monster distance
-                    ceiling_darkener = pygame.Surface(
-                        (VIEWPORT_WIDTH, VIEWPORT_HEIGHT // 2)
-                    )
-                    ceiling_darkener.fill(BLACK)
-                    ceiling_darkener.set_alpha(
-                        round(255 / math.sqrt(
-                            raycasting.no_sqrt_coord_distance(
-                                levels[current_level].player_coords,
-                                monster_coords
-                            )
-                        ))
-                    )
-                    screen.blit(ceiling_darkener, (0, 50))
                 # Floor
                 pygame.draw.rect(
                     screen, LIGHT_GREY,
@@ -772,7 +781,24 @@ def main():
                         + 50
                     ), tile_width / 8
                 )
-            elif display_compass:
+
+            monster_coords = levels[current_level].monster_coords
+            if (monster_coords is not None
+                    and (not display_map or ENABLE_CHEAT_MAP)):
+                # Darken viewport intermittently based on monster distance
+                if MONSTER_FLICKER_LIGHTS:
+                    if flicker_time_remaining[current_level] > 0:
+                        ceiling_darkener = pygame.Surface(
+                            (VIEWPORT_WIDTH, VIEWPORT_HEIGHT)
+                        )
+                        ceiling_darkener.fill(BLACK)
+                        ceiling_darkener.set_alpha(127)
+                        screen.blit(ceiling_darkener, (0, 50))
+                        flicker_time_remaining[current_level] -= frame_time
+                        if flicker_time_remaining[current_level] < 0:
+                            flicker_time_remaining[current_level] = 0.0
+
+            if display_compass:
                 compass_outer_radius = VIEWPORT_WIDTH // 6
                 compass_inner_radius = (
                     compass_outer_radius - VIEWPORT_WIDTH // 100
