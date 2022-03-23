@@ -39,6 +39,9 @@ MONSTER_MOVEMENT_WAIT = 0.5
 MONSTER_SOUND_ON_KILL = True
 # Whether the monster should be displayed fullscreen when the player is killed
 MONSTER_DISPLAY_ON_KILL = True
+# The amount of time in seconds that the monster must have been outside the
+# player's field of view before the spotted sound effect will play again
+MONSTER_SPOT_TIMEOUT = 10.0
 
 # The length of time in seconds that the compass can be used before burning out
 COMPASS_TIME = 10.0
@@ -180,6 +183,9 @@ def main():
     monster_jumpscare_sound = pygame.mixer.Sound(
         os.path.join("sounds", "monster_jumpscare.wav")
     )
+    monster_spotted_sound = pygame.mixer.Sound(
+        os.path.join("sounds", "monster_spotted.wav")
+    )
 
     display_map = False
     display_compass = False
@@ -188,6 +194,7 @@ def main():
 
     current_level = 0
     monster_timeouts = [0.0] * len(levels)
+    monster_spotted = [MONSTER_SPOT_TIMEOUT] * len(levels)
     compass_times = [COMPASS_TIME] * len(levels)
     compass_burned_out = [False] * len(levels)
 
@@ -438,6 +445,11 @@ def main():
             if has_started_level[current_level]:
                 time_scores[current_level] += frame_time
                 monster_timeouts[current_level] += frame_time
+                if (monster_spotted[current_level]
+                        < MONSTER_SPOT_TIMEOUT):
+                    monster_spotted[current_level] += frame_time
+                    if monster_spotted[current_level] > MONSTER_SPOT_TIMEOUT:
+                        monster_spotted[current_level] = MONSTER_SPOT_TIMEOUT
                 if (display_compass and not compass_burned_out[current_level]
                         and levels[current_level].monster_coords is not None):
                     compass_times[current_level] -= frame_time
@@ -573,6 +585,11 @@ def main():
                             VIEWPORT_HEIGHT // 2 - sprite_size[1] // 2 + 50
                         )
                     )
+                    if sprite_type == raycasting.MONSTER:
+                        if (monster_spotted[current_level]
+                                == MONSTER_SPOT_TIMEOUT):
+                            monster_spotted_sound.play()
+                        monster_spotted[current_level] = 0.0
                 elif object_type == type_column:
                     coord, distance, _, side_was_ns = columns[index]
                     # Edge of maze when drawing maze edges as walls is disabled
