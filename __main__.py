@@ -785,6 +785,9 @@ def main():
                 monster_coords = levels[current_level].monster_coords
                 if (monster_coords is not None
                         and not compass_burned_out[current_level]):
+                    monster_coords = (
+                        monster_coords[0] + 0.5, monster_coords[1] + 0.5
+                    )
                     relative_pos = (
                         levels[current_level].player_coords[0]
                         - monster_coords[0],
