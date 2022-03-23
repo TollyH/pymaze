@@ -201,7 +201,7 @@ def main():
                     else:
                         levels[current_level].player_flags.add(grid_coords)
                 elif event.key in (pygame.K_LEFTBRACKET,
-                                 pygame.K_RIGHTBRACKET):
+                                   pygame.K_RIGHTBRACKET):
                     if event.key == pygame.K_LEFTBRACKET and current_level > 0:
                         current_level -= 1
                     elif (event.key == pygame.K_RIGHTBRACKET
@@ -283,7 +283,7 @@ def main():
             move_speed_mod = frame_time * MOVE_SPEED
             if pressed_keys[pygame.K_w] or pressed_keys[pygame.K_UP]:
                 if (not levels[current_level].won
-                                and not levels[current_level].killed):
+                        and not levels[current_level].killed):
                     levels[current_level].move_player((
                         facing_directions[current_level][0] * move_speed_mod
                         * move_multiplier,
@@ -293,7 +293,7 @@ def main():
                     has_started_level[current_level] = True
             if pressed_keys[pygame.K_s] or pressed_keys[pygame.K_DOWN]:
                 if (not levels[current_level].won
-                                and not levels[current_level].killed):
+                        and not levels[current_level].killed):
                     levels[current_level].move_player((
                         -facing_directions[current_level][0] * move_speed_mod
                         * move_multiplier,
@@ -303,7 +303,7 @@ def main():
                     has_started_level[current_level] = True
             if pressed_keys[pygame.K_a]:
                 if (not levels[current_level].won
-                                and not levels[current_level].killed):
+                        and not levels[current_level].killed):
                     levels[current_level].move_player((
                         facing_directions[current_level][1] * move_speed_mod
                         * move_multiplier,
@@ -313,7 +313,7 @@ def main():
                     has_started_level[current_level] = True
             if pressed_keys[pygame.K_d]:
                 if (not levels[current_level].won
-                                and not levels[current_level].killed):
+                        and not levels[current_level].killed):
                     levels[current_level].move_player((
                         -facing_directions[current_level][1] * move_speed_mod
                         * move_multiplier,
