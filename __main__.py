@@ -39,6 +39,9 @@ MONSTER_MOVEMENT_WAIT = 0.5
 MONSTER_SOUND_ON_KILL = True
 # Whether the monster should be displayed fullscreen when the player is killed
 MONSTER_DISPLAY_ON_KILL = True
+# Whether the spotted sound should be played when the monster enters the
+# player's field of view
+MONSTER_SOUND_ON_SPOT = True
 # The amount of time in seconds that the monster must have been outside the
 # player's field of view before the spotted sound effect will play again
 MONSTER_SPOT_TIMEOUT = 10.0
@@ -586,7 +589,8 @@ def main():
                         )
                     )
                     if sprite_type == raycasting.MONSTER:
-                        if (monster_spotted[current_level]
+                        if (MONSTER_SOUND_ON_SPOT and
+                                monster_spotted[current_level]
                                 == MONSTER_SPOT_TIMEOUT):
                             monster_spotted_sound.play()
                         monster_spotted[current_level] = 0.0
