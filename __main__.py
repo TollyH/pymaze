@@ -766,11 +766,12 @@ def main():
                     ), tile_width / 8
                 )
             elif display_compass:
+                compass_outer_radius = VIEWPORT_WIDTH // 6
+                compass_inner_radius = compass_outer_radius - 6
                 compass_centre = (
-                    VIEWPORT_WIDTH // 2, VIEWPORT_HEIGHT + 50
+                    VIEWPORT_WIDTH - compass_outer_radius - 10,
+                    VIEWPORT_HEIGHT + 50 - compass_outer_radius - 10
                 )
-                compass_outer_radius = VIEWPORT_WIDTH // 4
-                compass_inner_radius = compass_outer_radius - 10
                 pygame.draw.circle(
                     screen, GREY, compass_centre, compass_outer_radius
                 )
