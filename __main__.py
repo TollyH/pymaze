@@ -767,10 +767,14 @@ def main():
                 )
             elif display_compass:
                 compass_outer_radius = VIEWPORT_WIDTH // 6
-                compass_inner_radius = compass_outer_radius - 6
+                compass_inner_radius = (
+                    compass_outer_radius - VIEWPORT_WIDTH // 100
+                )
                 compass_centre = (
-                    VIEWPORT_WIDTH - compass_outer_radius - 10,
-                    VIEWPORT_HEIGHT + 50 - compass_outer_radius - 10
+                    VIEWPORT_WIDTH - compass_outer_radius
+                    - VIEWPORT_WIDTH // 50,
+                    VIEWPORT_HEIGHT + 50 - compass_outer_radius
+                    - VIEWPORT_WIDTH // 50
                 )
                 pygame.draw.circle(
                     screen, GREY, compass_centre, compass_outer_radius
@@ -799,7 +803,9 @@ def main():
                         line_length * math.cos(direction) + compass_centre[1]
                     ))
                     pygame.draw.line(
-                        screen, RED, compass_centre, line_end_coords, 4
+                        screen, RED, compass_centre, line_end_coords,
+                        # Cannot be any thinner than 1px
+                        max(1, VIEWPORT_WIDTH // 100)
                     )
                 elif compass_burned_out[current_level]:
                     pygame.draw.circle(
