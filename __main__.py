@@ -466,37 +466,46 @@ def main():
                     levels[current_level].move_monster()
                     monster_timeouts[current_level] = 0
             screen.fill(GREY)
-            # Ceiling
-            pygame.draw.rect(
-                screen, BLUE,
-                (0, 50, VIEWPORT_WIDTH, VIEWPORT_HEIGHT // 2)
-            )
-            monster_coords = levels[current_level].monster_coords
-            if monster_coords is not None:
-                # Darken ceiling based on monster distance
-                ceiling_darkener = pygame.Surface(
-                    (VIEWPORT_WIDTH, VIEWPORT_HEIGHT // 2)
+            if not display_map or ENABLE_CHEAT_MAP:
+                # Ceiling
+                pygame.draw.rect(
+                    screen, BLUE,
+                    (0, 50, VIEWPORT_WIDTH, VIEWPORT_HEIGHT // 2)
                 )
-                ceiling_darkener.fill(BLACK)
-                ceiling_darkener.set_alpha(
-                    round(255 / math.sqrt(raycasting.no_sqrt_coord_distance(
-                        levels[current_level].player_coords, monster_coords
-                    )))
+                monster_coords = levels[current_level].monster_coords
+                if monster_coords is not None:
+                    # Darken ceiling based on monster distance
+                    ceiling_darkener = pygame.Surface(
+                        (VIEWPORT_WIDTH, VIEWPORT_HEIGHT // 2)
+                    )
+                    ceiling_darkener.fill(BLACK)
+                    ceiling_darkener.set_alpha(
+                        round(255 / math.sqrt(
+                            raycasting.no_sqrt_coord_distance(
+                                levels[current_level].player_coords,
+                                monster_coords
+                            )
+                        ))
+                    )
+                    screen.blit(ceiling_darkener, (0, 50))
+                # Floor
+                pygame.draw.rect(
+                    screen, LIGHT_GREY,
+                    (
+                        0, VIEWPORT_HEIGHT // 2 + 50,
+                        VIEWPORT_WIDTH, VIEWPORT_HEIGHT // 2
+                    )
                 )
-                screen.blit(ceiling_darkener, (0, 50))
-            # Floor
-            pygame.draw.rect(
-                screen, LIGHT_GREY,
-                (
-                    0, VIEWPORT_HEIGHT // 2 + 50,
-                    VIEWPORT_WIDTH, VIEWPORT_HEIGHT // 2
-                )
-            )
 
-            columns, sprites = raycasting.get_columns_sprites(
-                DISPLAY_COLUMNS, levels[current_level], DRAW_MAZE_EDGE_AS_WALL,
-                facing_directions[current_level], camera_planes[current_level]
-            )
+            if not display_map or ENABLE_CHEAT_MAP:
+                columns, sprites = raycasting.get_columns_sprites(
+                    DISPLAY_COLUMNS, levels[current_level],
+                    DRAW_MAZE_EDGE_AS_WALL, facing_directions[current_level],
+                    camera_planes[current_level]
+                )
+            else:
+                columns = []
+                sprites = []
             type_column = 0
             type_sprite = 1
             # A combination of both wall columns and sprites
