@@ -248,9 +248,16 @@ def main():
                     levels[current_level].reset()
                     facing_directions[current_level] = (0.0, 1.0)
                     camera_planes[current_level] = (-DISPLAY_FOV / 100, 0.0)
+                    monster_timeouts[current_level] = 0.0
+                    monster_spotted[current_level] = MONSTER_SPOT_TIMEOUT
+                    compass_times[current_level] = COMPASS_TIME
+                    compass_burned_out[current_level] = False
                     time_scores[current_level] = 0
                     move_scores[current_level] = 0
                     has_started_level[current_level] = False
+                    display_compass = False
+                    if not ENABLE_CHEAT_MAP:
+                        display_map = False
                 elif event.key == pygame.K_SPACE:
                     pressed = pygame.key.get_pressed()
                     if pressed[pygame.K_RCTRL] or pressed[pygame.K_LCTRL]:
