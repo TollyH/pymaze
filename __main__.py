@@ -32,13 +32,22 @@ ENABLE_CHEAT_MAP = False
 MONSTER_ENABLED = True
 # If this is not None, it will be used as the time taken in seconds to spawn
 # the monster, overriding the times specific to each level.
-MONSTER_START_OVERRIDE = None
+MONSTER_START_OVERRIDE = 0
 # How many seconds the monster will wait between each movement.
 MONSTER_MOVEMENT_WAIT = 0.5
 # Whether the scream sound should be played when the player is killed
 MONSTER_SOUND_ON_KILL = True
 # Whether the monster should be displayed fullscreen when the player is killed
 MONSTER_DISPLAY_ON_KILL = True
+
+# The length of time in seconds that the compass can be used before burning out
+COMPASS_TIME = 10.0
+# The multiplier applied to COMPASS_TIME that it will take to recharge the
+# compass if it isn't burned out
+COMPASS_CHARGE_NORM_MULTIPLIER = 0.5
+# The multiplier applied to COMPASS_TIME that it will take to recharge the
+# compass if it's burned out
+COMPASS_CHARGE_BURN_MULTIPLIER = 1.0
 
 # The maximum frames per second that the game will render at. Low values may
 # cause the game window to become unresponsive.
@@ -173,11 +182,14 @@ def main():
     )
 
     display_map = False
+    display_compass = False
     display_rays = False
     display_solutions = False
 
     current_level = 0
     monster_timeouts = [0.0] * len(levels)
+    compass_times = [COMPASS_TIME] * len(levels)
+    compass_burned_out = [False] * len(levels)
 
     # Game loop
     while True:
@@ -200,6 +212,9 @@ def main():
                         levels[current_level].player_flags.remove(grid_coords)
                     else:
                         levels[current_level].player_flags.add(grid_coords)
+                elif event.key == pygame.K_c:
+                    if not display_map or ENABLE_CHEAT_MAP:
+                        display_compass = not display_compass
                 elif event.key in (pygame.K_LEFTBRACKET,
                                    pygame.K_RIGHTBRACKET):
                     if event.key == pygame.K_LEFTBRACKET and current_level > 0:
@@ -234,6 +249,8 @@ def main():
                         display_solutions = not display_solutions
                     else:
                         display_map = not display_map
+                        if not ENABLE_CHEAT_MAP:
+                            display_compass = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_coords = pygame.mouse.get_pos()
                 if (ALLOW_REALTIME_EDITING and ENABLE_CHEAT_MAP
@@ -421,10 +438,26 @@ def main():
             if has_started_level[current_level]:
                 time_scores[current_level] += frame_time
                 monster_timeouts[current_level] += frame_time
-                if (MONSTER_ENABLED and levels[current_level].monster_wait
-                        is not None and time_scores[current_level]
-                        > (
-                            levels[current_level].monster_wait  # type: ignore
+                if (display_compass and not compass_burned_out[current_level]
+                        and levels[current_level].monster_coords is not None):
+                    compass_times[current_level] -= frame_time
+                    if compass_times[current_level] <= 0.0:
+                        compass_times[current_level] = 0.0
+                        compass_burned_out[current_level] = True
+                elif compass_times[current_level] < COMPASS_TIME:
+                    multiplier = 1 / (
+                        COMPASS_CHARGE_BURN_MULTIPLIER
+                        if compass_burned_out[current_level] else
+                        COMPASS_CHARGE_NORM_MULTIPLIER
+                    )
+                    compass_times[current_level] += frame_time * multiplier
+                    if compass_times[current_level] >= COMPASS_TIME:
+                        compass_times[current_level] = COMPASS_TIME
+                        compass_burned_out[current_level] = False
+                monster_wait = levels[current_level].monster_wait
+                if (MONSTER_ENABLED and monster_wait is not None
+                    and time_scores[current_level] > (
+                            monster_wait
                             if MONSTER_START_OVERRIDE is None else
                             MONSTER_START_OVERRIDE
                         )
@@ -438,17 +471,17 @@ def main():
                 screen, BLUE,
                 (0, 50, VIEWPORT_WIDTH, VIEWPORT_HEIGHT // 2)
             )
-            if levels[current_level].monster_coords is not None:
+            monster_coords = levels[current_level].monster_coords
+            if monster_coords is not None:
                 # Darken ceiling based on monster distance
                 ceiling_darkener = pygame.Surface(
                     (VIEWPORT_WIDTH, VIEWPORT_HEIGHT // 2)
                 )
                 ceiling_darkener.fill(BLACK)
                 ceiling_darkener.set_alpha(
-                    255 // math.sqrt(raycasting.no_sqrt_coord_distance(
-                        levels[current_level].player_coords,
-                        levels[current_level].monster_coords  # type: ignore
-                    ))
+                    round(255 / math.sqrt(raycasting.no_sqrt_coord_distance(
+                        levels[current_level].player_coords, monster_coords
+                    )))
                 )
                 screen.blit(ceiling_darkener, (0, 50))
             # Floor
@@ -700,8 +733,55 @@ def main():
                         + x_offset,
                         levels[current_level].player_coords[1] * tile_height
                         + 50
-                    ), tile_width // 8
+                    ), tile_width / 8
                 )
+            elif display_compass:
+                pygame.draw.circle(
+                    screen, GREY, (VIEWPORT_WIDTH // 2, VIEWPORT_HEIGHT + 50),
+                    VIEWPORT_WIDTH / 4
+                )
+                pygame.draw.circle(
+                    screen, DARK_GREY,
+                    (VIEWPORT_WIDTH // 2, VIEWPORT_HEIGHT + 50),
+                    VIEWPORT_WIDTH / 4 - 10
+                )
+                monster_coords = levels[current_level].monster_coords
+                if (monster_coords is not None
+                        and not compass_burned_out[current_level]):
+                    relative_pos = (
+                        levels[current_level].player_coords[0]
+                        - monster_coords[0],
+                        levels[current_level].player_coords[1]
+                        - monster_coords[1]
+                    )
+                    direction = (
+                        math.atan2(*relative_pos)
+                        - math.atan2(*facing_directions[current_level])
+                    )
+                    line_length = (VIEWPORT_WIDTH / 4 - 10) * (
+                        compass_times[current_level] / COMPASS_TIME
+                    )
+                    offsets = (
+                        VIEWPORT_WIDTH // 2, VIEWPORT_HEIGHT + 50
+                    )
+                    line_end_coords = floor_coordinates((
+                        line_length * math.sin(direction) + offsets[0],
+                        line_length * math.cos(direction) + offsets[1]
+                    ))
+                    pygame.draw.line(
+                        screen, RED,
+                        (VIEWPORT_WIDTH // 2, VIEWPORT_HEIGHT + 50),
+                        line_end_coords, 4
+                    )
+                elif compass_burned_out[current_level]:
+                    pygame.draw.circle(
+                        screen, RED,
+                        (VIEWPORT_WIDTH // 2, VIEWPORT_HEIGHT + 50),
+                        (VIEWPORT_WIDTH // 4 - 10) * (
+                            (COMPASS_TIME - compass_times[current_level])
+                            / COMPASS_TIME
+                        )
+                    )
 
             # HUD is drawn last to prevent it being obstructed
             pygame.draw.rect(screen, GREY, (0, 0, VIEWPORT_WIDTH, 50))

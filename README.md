@@ -20,6 +20,7 @@ algorithm for raycasting. For the fully 2D version without raycasting, see the [
 - `Shift` - Run while held
 - `CTRL` - Crawl while held
 - `Space` - Toggle map
+- `C` - Toggle monster compass
 
 ## Cheat Map Controls
 
@@ -34,6 +35,7 @@ algorithm for raycasting. For the fully 2D version without raycasting, see the [
 - Simply collect all of the golden keys before reaching the exit.
 - In many levels, after a specific amount of time has passed, a monster may spawn. Getting hit by the monster will result in you losing the level immediately.
 - You can place flags on the ground to help you navigate, however if the monster comes into contact with one of these flags, it may destroy it.
+- You have a compass which will point toward the monster's location, however you only have a limited amount of time to use it before you must wait for it to recharge.
 
 ## Map Colours
 
