@@ -58,6 +58,9 @@ COMPASS_CHARGE_NORM_MULTIPLIER = 0.5
 # The multiplier applied to COMPASS_TIME that it will take to recharge the
 # compass if it's burned out
 COMPASS_CHARGE_BURN_MULTIPLIER = 1.0
+# The amount of time in seconds that must have elapsed since the compass was
+# last put away before it will begin to recharge.
+COMPASS_CHARGE_DELAY = 1.5
 
 # The maximum frames per second that the game will render at. Low values may
 # cause the game window to become unresponsive.
@@ -204,6 +207,7 @@ def main():
     monster_spotted = [MONSTER_SPOT_TIMEOUT] * len(levels)
     compass_times = [COMPASS_TIME] * len(levels)
     compass_burned_out = [False] * len(levels)
+    compass_charge_delays = [COMPASS_CHARGE_DELAY] * len(levels)
     flicker_time_remaining = [0.0] * len(levels)
 
     # Game loop
@@ -468,20 +472,27 @@ def main():
                         monster_spotted[current_level] = MONSTER_SPOT_TIMEOUT
                 if (display_compass and not compass_burned_out[current_level]
                         and levels[current_level].monster_coords is not None):
+                    compass_charge_delays[current_level] = COMPASS_CHARGE_DELAY
                     compass_times[current_level] -= frame_time
                     if compass_times[current_level] <= 0.0:
                         compass_times[current_level] = 0.0
                         compass_burned_out[current_level] = True
                 elif compass_times[current_level] < COMPASS_TIME:
-                    multiplier = 1 / (
-                        COMPASS_CHARGE_BURN_MULTIPLIER
-                        if compass_burned_out[current_level] else
-                        COMPASS_CHARGE_NORM_MULTIPLIER
-                    )
-                    compass_times[current_level] += frame_time * multiplier
-                    if compass_times[current_level] >= COMPASS_TIME:
-                        compass_times[current_level] = COMPASS_TIME
-                        compass_burned_out[current_level] = False
+                    if (compass_charge_delays[current_level] == 0.0
+                            or compass_burned_out[current_level]):
+                        multiplier = 1 / (
+                            COMPASS_CHARGE_BURN_MULTIPLIER
+                            if compass_burned_out[current_level] else
+                            COMPASS_CHARGE_NORM_MULTIPLIER
+                        )
+                        compass_times[current_level] += frame_time * multiplier
+                        if compass_times[current_level] >= COMPASS_TIME:
+                            compass_times[current_level] = COMPASS_TIME
+                            compass_burned_out[current_level] = False
+                    elif compass_charge_delays[current_level] > 0.0:
+                        compass_charge_delays[current_level] -= frame_time
+                        if compass_charge_delays[current_level] < 0.0:
+                            compass_charge_delays[current_level] = 0.0
                 monster_wait = levels[current_level].monster_wait
                 if (MONSTER_ENABLED and monster_wait is not None
                     and time_scores[current_level] > (
