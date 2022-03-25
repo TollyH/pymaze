@@ -49,3 +49,7 @@ algorithm for raycasting. For the fully 2D version without raycasting, see the [
 - Turquoise - Flags
 - Purple - Shortest path
 - Lilac - Possible path
+
+---
+
+**Copyright © 2022  Ptolemy Hill and Finlay Griffiths**
