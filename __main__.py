@@ -15,98 +15,10 @@ from typing import List, Literal, Set, Tuple
 
 import pygame
 
+import config_loader as cfg
 import raycasting
 from level import floor_coordinates
 from maze_levels import levels
-
-# ADVANCED OPTIONS ============================================================
-
-# The dimensions used for the 3D view and the map (not including the HUD).
-VIEWPORT_WIDTH = 500
-VIEWPORT_HEIGHT = 500
-
-# Whether a more detailed version of the map should be displayed instead of the
-# default limited one.
-ENABLE_CHEAT_MAP = False
-
-# Whether the monster should be spawned at all.
-MONSTER_ENABLED = True
-# If this is not None, it will be used as the time taken in seconds to spawn
-# the monster, overriding the times specific to each level.
-MONSTER_START_OVERRIDE = None
-# How many seconds the monster will wait between each movement. Decreasing this
-# will increase the rate at which the lights flicker.
-MONSTER_MOVEMENT_WAIT = 0.5
-# Whether the scream sound should be played when the player is killed
-MONSTER_SOUND_ON_KILL = True
-# Whether the monster should be displayed fullscreen when the player is killed
-MONSTER_DISPLAY_ON_KILL = True
-# Whether the spotted sound should be played when the monster enters the
-# player's field of view
-MONSTER_SOUND_ON_SPOT = True
-# The amount of time in seconds that the monster must have been outside the
-# player's field of view before the spotted sound effect will play again
-MONSTER_SPOT_TIMEOUT = 10.0
-# Whether the "lights" should flicker based on the distance of the monster
-MONSTER_FLICKER_LIGHTS = True
-
-# The length of time in seconds that the compass can be used before burning out
-COMPASS_TIME = 10.0
-# The multiplier applied to COMPASS_TIME that it will take to recharge the
-# compass if it isn't burned out
-COMPASS_CHARGE_NORM_MULTIPLIER = 0.5
-# The multiplier applied to COMPASS_TIME that it will take to recharge the
-# compass if it's burned out
-COMPASS_CHARGE_BURN_MULTIPLIER = 1.0
-# The amount of time in seconds that must have elapsed since the compass was
-# last put away before it will begin to recharge.
-COMPASS_CHARGE_DELAY = 1.5
-
-# The maximum frames per second that the game will render at. Low values may
-# cause the game window to become unresponsive.
-FRAME_RATE_LIMIT = 75
-
-# Whether walls will be rendered with the image textures associated with each
-# level. Setting this to False will cause all walls to appear in solid colour,
-# which may also provide some performance boosts.
-TEXTURES_ENABLED = True
-
-# The dimensions of all the PNGs found in the textures folder.
-TEXTURE_WIDTH = 128
-TEXTURE_HEIGHT = 128
-
-# The maximum height that textures will be stretched to internally before they
-# start getting cropped to save on resources. Decreasing this will improve
-# performance, at the cost of nearby textures looking jagged.
-TEXTURE_SCALE_LIMIT = 10000
-
-# The number of rays that will be cast to determine the height of walls.
-# Decreasing this will improve performance, but will decrease visual clarity.
-DISPLAY_COLUMNS = VIEWPORT_WIDTH
-# Your field of vision corresponds to how spread out the rays being cast are.
-# Smaller values result in a narrower field of vision, causing the walls to
-# appear wider. A value of 50 will make each grid square appear in the same
-# aspect ratio as the 3D frame itself.
-DISPLAY_FOV = 50
-
-# Whether maze edges will appear as walls in the 3D view. Disabling this will
-# cause the horizon to be visible, slightly ruining the ceiling/floor effect.
-DRAW_MAZE_EDGE_AS_WALL = True
-
-# Larger values will result in faster speeds. Move speed is measured in grid
-# squares per second, and turn speed in radians per second. Run and crawl
-# multipliers are applied when holding Shift or CTRL respectively.
-TURN_SPEED = 2.5
-MOVE_SPEED = 4.0
-RUN_MULTIPLIER = 2.0
-CRAWL_MULTIPLIER = 0.5
-
-# Allow the presence of walls to be toggled by clicking on the map. Enabling
-# this will disable the ability to view solutions. ENABLE_CHEAT_MAP must be
-# True for this to work.
-ALLOW_REALTIME_EDITING = False
-
-# =============================================================================
 
 WHITE = (0xFF, 0xFF, 0xFF)
 BLACK = (0x00, 0x00, 0x00)
@@ -132,9 +44,9 @@ def main():
     pygame.init()
 
     # Minimum window resolution is 500x500
-    screen = pygame.display.set_mode(
-        (max(VIEWPORT_WIDTH, 500), max(VIEWPORT_HEIGHT + 50, 500))
-    )
+    screen = pygame.display.set_mode((
+        max(cfg.VIEWPORT_WIDTH, 500), max(cfg.VIEWPORT_HEIGHT + 50, 500)
+    ))
     pygame.display.set_caption("Maze - Level 1")
 
     clock = pygame.time.Clock()
@@ -143,7 +55,7 @@ def main():
 
     facing_directions = [(0.0, 1.0)] * len(levels)
     # Camera planes are always perpendicular to facing directions
-    camera_planes = [(-DISPLAY_FOV / 100, 0.0)] * len(levels)
+    camera_planes = [(-cfg.DISPLAY_FOV / 100, 0.0)] * len(levels)
     time_scores = [0.0] * len(levels)
     move_scores = [0] * len(levels)
     has_started_level = [False] * len(levels)
@@ -156,7 +68,7 @@ def main():
         highscores: List[Tuple[float, int]] = [(0.0, 0)] * len(levels)
 
     # Used to create the darker versions of each texture
-    darkener = pygame.Surface((TEXTURE_WIDTH, TEXTURE_HEIGHT))
+    darkener = pygame.Surface((cfg.TEXTURE_WIDTH, cfg.TEXTURE_HEIGHT))
     darkener.fill(BLACK)
     darkener.set_alpha(127)
     # {(level_indices, ...): (light_texture, dark_texture)}
@@ -191,7 +103,8 @@ def main():
     }
 
     monster_texture_scaled = pygame.transform.scale(
-        sprite_textures[raycasting.MONSTER], (VIEWPORT_WIDTH, VIEWPORT_HEIGHT)
+        sprite_textures[raycasting.MONSTER],
+        (cfg.VIEWPORT_WIDTH, cfg.VIEWPORT_HEIGHT)
     )
     monster_jumpscare_sound = pygame.mixer.Sound(
         os.path.join("sounds", "monster_jumpscare.wav")
@@ -207,19 +120,21 @@ def main():
 
     current_level = 0
     monster_timeouts = [0.0] * len(levels)
-    monster_spotted = [MONSTER_SPOT_TIMEOUT] * len(levels)
-    compass_times = [COMPASS_TIME] * len(levels)
+    monster_spotted = [cfg.MONSTER_SPOT_TIMEOUT] * len(levels)
+    compass_times = [cfg.COMPASS_TIME] * len(levels)
     compass_burned_out = [False] * len(levels)
-    compass_charge_delays = [COMPASS_CHARGE_DELAY] * len(levels)
+    compass_charge_delays = [cfg.COMPASS_CHARGE_DELAY] * len(levels)
     flicker_time_remaining = [0.0] * len(levels)
 
     # Game loop
     while True:
         # Limit FPS and record time last frame took to render
-        frame_time = clock.tick(FRAME_RATE_LIMIT) / 1000
-        display_column_width = VIEWPORT_WIDTH // DISPLAY_COLUMNS
-        tile_width = VIEWPORT_WIDTH // levels[current_level].dimensions[0]
-        tile_height = VIEWPORT_HEIGHT // levels[current_level].dimensions[1]
+        frame_time = clock.tick(cfg.FRAME_RATE_LIMIT) / 1000
+        display_column_width = cfg.VIEWPORT_WIDTH // cfg.DISPLAY_COLUMNS
+        tile_width = cfg.VIEWPORT_WIDTH // levels[current_level].dimensions[0]
+        tile_height = (
+            cfg.VIEWPORT_HEIGHT // levels[current_level].dimensions[1]
+        )
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -235,7 +150,7 @@ def main():
                     else:
                         levels[current_level].player_flags.add(grid_coords)
                 elif event.key == pygame.K_c:
-                    if not display_map or ENABLE_CHEAT_MAP:
+                    if not display_map or cfg.ENABLE_CHEAT_MAP:
                         display_compass = not display_compass
                 elif event.key in (pygame.K_LEFTBRACKET,
                                    pygame.K_RIGHTBRACKET):
@@ -248,10 +163,12 @@ def main():
                         continue
                     # Adjust tile width and height for new level
                     tile_width = (
-                        VIEWPORT_WIDTH // levels[current_level].dimensions[0]
+                        cfg.VIEWPORT_WIDTH
+                        // levels[current_level].dimensions[0]
                     )
                     tile_height = (
-                        VIEWPORT_HEIGHT // levels[current_level].dimensions[1]
+                        cfg.VIEWPORT_HEIGHT
+                        // levels[current_level].dimensions[1]
                     )
                     pygame.display.set_caption(
                         f"Maze - Level {current_level + 1}"
@@ -259,17 +176,19 @@ def main():
                 elif event.key == pygame.K_r:
                     levels[current_level].reset()
                     facing_directions[current_level] = (0.0, 1.0)
-                    camera_planes[current_level] = (-DISPLAY_FOV / 100, 0.0)
+                    camera_planes[current_level] = (
+                        -cfg.DISPLAY_FOV / 100, 0.0
+                    )
                     monster_timeouts[current_level] = 0.0
-                    monster_spotted[current_level] = MONSTER_SPOT_TIMEOUT
-                    compass_times[current_level] = COMPASS_TIME
+                    monster_spotted[current_level] = cfg.MONSTER_SPOT_TIMEOUT
+                    compass_times[current_level] = cfg.COMPASS_TIME
                     compass_burned_out[current_level] = False
                     flicker_time_remaining[current_level] = 0.0
                     time_scores[current_level] = 0
                     move_scores[current_level] = 0
                     has_started_level[current_level] = False
                     display_compass = False
-                    if not ENABLE_CHEAT_MAP:
+                    if not cfg.ENABLE_CHEAT_MAP:
                         display_map = False
                 elif event.key == pygame.K_SPACE:
                     pressed = pygame.key.get_pressed()
@@ -279,36 +198,36 @@ def main():
                         display_solutions = not display_solutions
                     else:
                         display_map = not display_map
-                        if not ENABLE_CHEAT_MAP:
+                        if not cfg.ENABLE_CHEAT_MAP:
                             display_compass = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_coords = pygame.mouse.get_pos()
-                if (ALLOW_REALTIME_EDITING and ENABLE_CHEAT_MAP
+                if (cfg.ALLOW_REALTIME_EDITING and cfg.ENABLE_CHEAT_MAP
                         and event.button == pygame.BUTTON_LEFT
-                        and mouse_coords[0] > VIEWPORT_WIDTH
+                        and mouse_coords[0] > cfg.VIEWPORT_WIDTH
                         and mouse_coords[1] >= 50):
                     clicked_tile = (
-                        (mouse_coords[0] - VIEWPORT_WIDTH) // tile_width,
+                        (mouse_coords[0] - cfg.VIEWPORT_WIDTH) // tile_width,
                         (mouse_coords[1] - 50) // tile_height
                     )
                     levels[current_level][clicked_tile] = (
                         not levels[current_level][clicked_tile]
                     )
 
-        if (display_map and ENABLE_CHEAT_MAP
-                and screen.get_size()[0] < VIEWPORT_WIDTH * 2):
+        if (display_map and cfg.ENABLE_CHEAT_MAP
+                and screen.get_size()[0] < cfg.VIEWPORT_WIDTH * 2):
             screen = pygame.display.set_mode(
                 (
-                    max(VIEWPORT_WIDTH * 2, 500),
-                    max(VIEWPORT_HEIGHT + 50, 500)
+                    max(cfg.VIEWPORT_WIDTH * 2, 500),
+                    max(cfg.VIEWPORT_HEIGHT + 50, 500)
                 )
             )
-        elif (not display_map and ENABLE_CHEAT_MAP
-                and screen.get_size()[0] > VIEWPORT_WIDTH):
+        elif (not display_map and cfg.ENABLE_CHEAT_MAP
+                and screen.get_size()[0] > cfg.VIEWPORT_WIDTH):
             screen = pygame.display.set_mode(
                 (
-                    max(VIEWPORT_WIDTH, 500),
-                    max(VIEWPORT_HEIGHT + 50, 500)
+                    max(cfg.VIEWPORT_WIDTH, 500),
+                    max(cfg.VIEWPORT_HEIGHT + 50, 500)
                 )
             )
 
@@ -317,17 +236,17 @@ def main():
         )
         # Do not allow player to move while map is open if cheat map is not
         # enabled
-        if ENABLE_CHEAT_MAP or not display_map:
+        if cfg.ENABLE_CHEAT_MAP or not display_map:
             # Held down keys
             pressed_keys = pygame.key.get_pressed()
             move_multiplier = 1
             if pressed_keys[pygame.K_RCTRL] or pressed_keys[pygame.K_LCTRL]:
-                move_multiplier *= CRAWL_MULTIPLIER
+                move_multiplier *= cfg.CRAWL_MULTIPLIER
             if pressed_keys[pygame.K_RSHIFT] or pressed_keys[pygame.K_LSHIFT]:
-                move_multiplier *= RUN_MULTIPLIER
+                move_multiplier *= cfg.RUN_MULTIPLIER
             # Ensure framerate does not affect speed values
-            turn_speed_mod = frame_time * TURN_SPEED
-            move_speed_mod = frame_time * MOVE_SPEED
+            turn_speed_mod = frame_time * cfg.TURN_SPEED
+            move_speed_mod = frame_time * cfg.MOVE_SPEED
             if pressed_keys[pygame.K_w] or pressed_keys[pygame.K_UP]:
                 if (not levels[current_level].won
                         and not levels[current_level].killed):
@@ -457,58 +376,64 @@ def main():
             screen.blit(lower_hint_text, (10, 280))
         elif levels[current_level].killed:
             screen.fill(RED)
-            if MONSTER_SOUND_ON_KILL and has_started_level[current_level]:
+            if cfg.MONSTER_SOUND_ON_KILL and has_started_level[current_level]:
                 monster_jumpscare_sound.play()
                 has_started_level[current_level] = False
-            if MONSTER_DISPLAY_ON_KILL:
+            if cfg.MONSTER_DISPLAY_ON_KILL:
                 screen.blit(monster_texture_scaled, (
-                    0, 50, VIEWPORT_WIDTH, VIEWPORT_HEIGHT
+                    0, 50, cfg.VIEWPORT_WIDTH, cfg.VIEWPORT_HEIGHT
                 ))
         else:
             if has_started_level[current_level]:
                 time_scores[current_level] += frame_time
                 monster_timeouts[current_level] += frame_time
                 if (monster_spotted[current_level]
-                        < MONSTER_SPOT_TIMEOUT):
+                        < cfg.MONSTER_SPOT_TIMEOUT):
                     monster_spotted[current_level] += frame_time
-                    if monster_spotted[current_level] > MONSTER_SPOT_TIMEOUT:
-                        monster_spotted[current_level] = MONSTER_SPOT_TIMEOUT
+                    if (monster_spotted[current_level]
+                            > cfg.MONSTER_SPOT_TIMEOUT):
+                        monster_spotted[current_level] = (
+                            cfg.MONSTER_SPOT_TIMEOUT
+                        )
                 if (display_compass and not compass_burned_out[current_level]
                         and levels[current_level].monster_coords is not None):
-                    compass_charge_delays[current_level] = COMPASS_CHARGE_DELAY
+                    compass_charge_delays[current_level] = (
+                        cfg.COMPASS_CHARGE_DELAY
+                    )
                     compass_times[current_level] -= frame_time
                     if compass_times[current_level] <= 0.0:
                         compass_times[current_level] = 0.0
                         compass_burned_out[current_level] = True
-                elif compass_times[current_level] < COMPASS_TIME:
+                elif compass_times[current_level] < cfg.COMPASS_TIME:
                     if (compass_charge_delays[current_level] == 0.0
                             or compass_burned_out[current_level]):
                         multiplier = 1 / (
-                            COMPASS_CHARGE_BURN_MULTIPLIER
+                            cfg.COMPASS_CHARGE_BURN_MULTIPLIER
                             if compass_burned_out[current_level] else
-                            COMPASS_CHARGE_NORM_MULTIPLIER
+                            cfg.COMPASS_CHARGE_NORM_MULTIPLIER
                         )
                         compass_times[current_level] += frame_time * multiplier
-                        if compass_times[current_level] >= COMPASS_TIME:
-                            compass_times[current_level] = COMPASS_TIME
+                        if compass_times[current_level] >= cfg.COMPASS_TIME:
+                            compass_times[current_level] = cfg.COMPASS_TIME
                             compass_burned_out[current_level] = False
                     elif compass_charge_delays[current_level] > 0.0:
                         compass_charge_delays[current_level] -= frame_time
                         if compass_charge_delays[current_level] < 0.0:
                             compass_charge_delays[current_level] = 0.0
                 monster_wait = levels[current_level].monster_wait
-                if (MONSTER_ENABLED and monster_wait is not None
+                if (cfg.MONSTER_ENABLED and monster_wait is not None
                     and time_scores[current_level] > (
                             monster_wait
-                            if MONSTER_START_OVERRIDE is None else
-                            MONSTER_START_OVERRIDE
+                            if cfg.MONSTER_START_OVERRIDE is None else
+                            cfg.MONSTER_START_OVERRIDE
                         )
                         and monster_timeouts[current_level]
-                        > MONSTER_MOVEMENT_WAIT):
+                        > cfg.MONSTER_MOVEMENT_WAIT):
                     levels[current_level].move_monster()
                     monster_timeouts[current_level] = 0
                     monster_coords = levels[current_level].monster_coords
-                    if (monster_coords is not None and MONSTER_FLICKER_LIGHTS
+                    if (monster_coords is not None
+                            and cfg.MONSTER_FLICKER_LIGHTS
                             and flicker_time_remaining[current_level] <= 0):
                         flicker_time_remaining[current_level] = 0.0
                         distance = raycasting.no_sqrt_coord_distance(
@@ -526,26 +451,27 @@ def main():
                                 random.uniform(0.0, 0.5)
                             )
             screen.fill(GREY)
-            if not display_map or ENABLE_CHEAT_MAP:
+            if not display_map or cfg.ENABLE_CHEAT_MAP:
                 # Ceiling
                 pygame.draw.rect(
                     screen, BLUE,
-                    (0, 50, VIEWPORT_WIDTH, VIEWPORT_HEIGHT // 2)
+                    (0, 50, cfg.VIEWPORT_WIDTH, cfg.VIEWPORT_HEIGHT // 2)
                 )
                 monster_coords = levels[current_level].monster_coords
                 # Floor
                 pygame.draw.rect(
                     screen, LIGHT_GREY,
                     (
-                        0, VIEWPORT_HEIGHT // 2 + 50,
-                        VIEWPORT_WIDTH, VIEWPORT_HEIGHT // 2
+                        0, cfg.VIEWPORT_HEIGHT // 2 + 50,
+                        cfg.VIEWPORT_WIDTH, cfg.VIEWPORT_HEIGHT // 2
                     )
                 )
 
-            if not display_map or ENABLE_CHEAT_MAP:
+            if not display_map or cfg.ENABLE_CHEAT_MAP:
                 columns, sprites = raycasting.get_columns_sprites(
-                    DISPLAY_COLUMNS, levels[current_level],
-                    DRAW_MAZE_EDGE_AS_WALL, facing_directions[current_level],
+                    cfg.DISPLAY_COLUMNS, levels[current_level],
+                    cfg.DRAW_MAZE_EDGE_AS_WALL,
+                    facing_directions[current_level],
                     camera_planes[current_level]
                 )
             else:
@@ -598,15 +524,16 @@ def main():
                         transformation[1] if transformation[1] != 0 else 1e-5
                     )
                     screen_x_pos = math.floor(
-                        (VIEWPORT_WIDTH / 2)
+                        (cfg.VIEWPORT_WIDTH / 2)
                         * (1 + transformation[0] / transformation[1])
                     )
-                    if (screen_x_pos > VIEWPORT_WIDTH + TEXTURE_WIDTH // 2
-                            or screen_x_pos < -TEXTURE_WIDTH // 2):
+                    if (screen_x_pos
+                            > cfg.VIEWPORT_WIDTH + cfg.TEXTURE_WIDTH // 2
+                            or screen_x_pos < -cfg.TEXTURE_WIDTH // 2):
                         continue
                     sprite_size = (
-                        abs(VIEWPORT_WIDTH // transformation[1]),
-                        abs(VIEWPORT_HEIGHT // transformation[1])
+                        abs(cfg.VIEWPORT_WIDTH // transformation[1]),
+                        abs(cfg.VIEWPORT_HEIGHT // transformation[1])
                     )
                     scaled_texture = pygame.transform.scale(
                         sprite_textures[sprite_type], sprite_size
@@ -615,13 +542,13 @@ def main():
                         scaled_texture,
                         (
                             screen_x_pos - sprite_size[0] // 2,
-                            VIEWPORT_HEIGHT // 2 - sprite_size[1] // 2 + 50
+                            cfg.VIEWPORT_HEIGHT // 2 - sprite_size[1] // 2 + 50
                         )
                     )
                     if sprite_type == raycasting.MONSTER:
-                        if (MONSTER_SOUND_ON_SPOT and
+                        if (cfg.MONSTER_SOUND_ON_SPOT and
                                 monster_spotted[current_level]
-                                == MONSTER_SPOT_TIMEOUT):
+                                == cfg.MONSTER_SPOT_TIMEOUT):
                             monster_spotted_sound.play()
                         monster_spotted[current_level] = 0.0
                 elif object_type == type_column:
@@ -633,9 +560,9 @@ def main():
                         ray_end_coords.append(coord)
                     # Prevent division by 0
                     distance = max(1e-5, distance)
-                    column_height = round(VIEWPORT_HEIGHT / distance)
+                    column_height = round(cfg.VIEWPORT_HEIGHT / distance)
                     texture_draw_successful = False
-                    if TEXTURES_ENABLED:
+                    if cfg.TEXTURES_ENABLED:
                         both_textures = None
                         for indices, images in wall_textures.items():
                             if current_level in indices:
@@ -649,29 +576,31 @@ def main():
                                 int(not side_was_ns)
                             ] % 1
                             texture_x = math.floor(
-                                position_along_wall * TEXTURE_WIDTH
+                                position_along_wall * cfg.TEXTURE_WIDTH
                             )
                             if (not side_was_ns and
                                     facing_directions[current_level][0] > 0):
-                                texture_x = TEXTURE_WIDTH - texture_x - 1
+                                texture_x = cfg.TEXTURE_WIDTH - texture_x - 1
                             elif (side_was_ns and
                                     facing_directions[current_level][1] < 0):
-                                texture_x = TEXTURE_WIDTH - texture_x - 1
+                                texture_x = cfg.TEXTURE_WIDTH - texture_x - 1
                             draw_x = display_column_width * index
                             draw_y = max(
-                                0, -column_height // 2 + VIEWPORT_HEIGHT // 2
+                                0,
+                                -column_height // 2 + cfg.VIEWPORT_HEIGHT // 2
                             ) + 50
                             # Get a single column of pixels
                             pixel_column = texture.subsurface(
-                                texture_x, 0, 1, TEXTURE_HEIGHT
+                                texture_x, 0, 1, cfg.TEXTURE_HEIGHT
                             )
-                            if (column_height > VIEWPORT_HEIGHT
-                                    and column_height > TEXTURE_SCALE_LIMIT):
+                            if (column_height > cfg.VIEWPORT_HEIGHT
+                                    and column_height
+                                    > cfg.TEXTURE_SCALE_LIMIT):
                                 overlap = math.floor(
-                                    (column_height - VIEWPORT_HEIGHT)
+                                    (column_height - cfg.VIEWPORT_HEIGHT)
                                     / (
-                                        (column_height - TEXTURE_HEIGHT)
-                                        / TEXTURE_HEIGHT
+                                        (column_height - cfg.TEXTURE_HEIGHT)
+                                        / cfg.TEXTURE_HEIGHT
                                     )
                                 )
                                 # Crop column so we are only scaling pixels
@@ -679,48 +608,49 @@ def main():
                                 # cost of making textures uneven
                                 pixel_column = pixel_column.subsurface(
                                     0, overlap // 2,
-                                    1, TEXTURE_HEIGHT - overlap
+                                    1, cfg.TEXTURE_HEIGHT - overlap
                                 )
                             pixel_column = pygame.transform.scale(
                                 pixel_column,
                                 (
                                     display_column_width,
-                                    min(column_height, VIEWPORT_HEIGHT)
-                                    if column_height > TEXTURE_SCALE_LIMIT else
-                                    column_height
+                                    min(column_height, cfg.VIEWPORT_HEIGHT)
+                                    if column_height > cfg.TEXTURE_SCALE_LIMIT
+                                    else column_height
                                 )
                             )
-                            if (VIEWPORT_HEIGHT < column_height
-                                    <= TEXTURE_SCALE_LIMIT):
+                            if (cfg.VIEWPORT_HEIGHT < column_height
+                                    <= cfg.TEXTURE_SCALE_LIMIT):
                                 overlap = (
-                                    column_height - VIEWPORT_HEIGHT
+                                    column_height - cfg.VIEWPORT_HEIGHT
                                 ) // 2
                                 pixel_column = pixel_column.subsurface(
                                     0, overlap,
-                                    display_column_width, VIEWPORT_HEIGHT
+                                    display_column_width, cfg.VIEWPORT_HEIGHT
                                 )
                             screen.blit(pixel_column, (draw_x, draw_y))
                             texture_draw_successful = True
                     if not texture_draw_successful:
-                        column_height = min(column_height, VIEWPORT_HEIGHT)
+                        column_height = min(column_height, cfg.VIEWPORT_HEIGHT)
                         colour = DARK_GREY if side_was_ns else BLACK
                         pygame.draw.rect(
                             screen, colour, (
                                 display_column_width * index,
                                 max(
                                     0,
-                                    -column_height // 2 + VIEWPORT_HEIGHT // 2
+                                    -column_height // 2
+                                    + cfg.VIEWPORT_HEIGHT // 2
                                 ) + 50,
                                 display_column_width, column_height
                             )
                         )
             if display_map:
-                x_offset = VIEWPORT_WIDTH if ENABLE_CHEAT_MAP else 0
+                x_offset = cfg.VIEWPORT_WIDTH if cfg.ENABLE_CHEAT_MAP else 0
                 solutions: List[List[Tuple[int, int]]] = []
                 # A set of all coordinates appearing in any solution
                 solution_coords: Set[Tuple[int, int]] = set()
-                if (display_solutions and not ALLOW_REALTIME_EDITING
-                        and ENABLE_CHEAT_MAP):
+                if (display_solutions and not cfg.ALLOW_REALTIME_EDITING
+                        and cfg.ENABLE_CHEAT_MAP):
                     solutions = levels[current_level].find_possible_paths()
                     solution_coords = {x for y in solutions[1:] for x in y}
                 for y, row in enumerate(levels[current_level].wall_map):
@@ -729,17 +659,17 @@ def main():
                                 levels[current_level].player_coords) == (x, y):
                             colour = BLUE
                         elif (levels[current_level].monster_coords == (x, y)
-                                and ENABLE_CHEAT_MAP):
+                                and cfg.ENABLE_CHEAT_MAP):
                             colour = DARK_RED
                         elif ((x, y) in levels[current_level].exit_keys
-                                and ENABLE_CHEAT_MAP):
+                                and cfg.ENABLE_CHEAT_MAP):
                             colour = GOLD
                         elif (x, y) in levels[current_level].player_flags:
                             colour = LIGHT_BLUE
                         elif levels[current_level].start_point == (x, y):
                             colour = RED
                         elif (levels[current_level].end_point == (x, y)
-                                and ENABLE_CHEAT_MAP):
+                                and cfg.ENABLE_CHEAT_MAP):
                             colour = GREEN
                         elif len(solutions) >= 1 and (x, y) in solutions[0]:
                             colour = PURPLE
@@ -754,7 +684,7 @@ def main():
                             )
                         )
                 # Raycast rays
-                if display_rays and ENABLE_CHEAT_MAP:
+                if display_rays and cfg.ENABLE_CHEAT_MAP:
                     for point in ray_end_coords:
                         pygame.draw.line(
                             screen, DARK_GOLD, (
@@ -798,12 +728,12 @@ def main():
 
             monster_coords = levels[current_level].monster_coords
             if (monster_coords is not None
-                    and (not display_map or ENABLE_CHEAT_MAP)):
+                    and (not display_map or cfg.ENABLE_CHEAT_MAP)):
                 # Darken viewport intermittently based on monster distance
-                if MONSTER_FLICKER_LIGHTS:
+                if cfg.MONSTER_FLICKER_LIGHTS:
                     if flicker_time_remaining[current_level] > 0:
                         ceiling_darkener = pygame.Surface(
-                            (VIEWPORT_WIDTH, VIEWPORT_HEIGHT)
+                            (cfg.VIEWPORT_WIDTH, cfg.VIEWPORT_HEIGHT)
                         )
                         ceiling_darkener.fill(BLACK)
                         ceiling_darkener.set_alpha(127)
@@ -813,15 +743,15 @@ def main():
                             flicker_time_remaining[current_level] = 0.0
 
             if display_compass:
-                compass_outer_radius = VIEWPORT_WIDTH // 6
+                compass_outer_radius = cfg.VIEWPORT_WIDTH // 6
                 compass_inner_radius = (
-                    compass_outer_radius - VIEWPORT_WIDTH // 100
+                    compass_outer_radius - cfg.VIEWPORT_WIDTH // 100
                 )
                 compass_centre = (
-                    VIEWPORT_WIDTH - compass_outer_radius
-                    - VIEWPORT_WIDTH // 50,
-                    VIEWPORT_HEIGHT + 50 - compass_outer_radius
-                    - VIEWPORT_WIDTH // 50
+                    cfg.VIEWPORT_WIDTH - compass_outer_radius
+                    - cfg.VIEWPORT_WIDTH // 50,
+                    cfg.VIEWPORT_HEIGHT + 50 - compass_outer_radius
+                    - cfg.VIEWPORT_WIDTH // 50
                 )
                 pygame.draw.circle(
                     screen, GREY, compass_centre, compass_outer_radius
@@ -846,7 +776,7 @@ def main():
                         - math.atan2(*facing_directions[current_level])
                     )
                     line_length = compass_inner_radius * (
-                        compass_times[current_level] / COMPASS_TIME
+                        compass_times[current_level] / cfg.COMPASS_TIME
                     )
                     line_end_coords = floor_coordinates((
                         line_length * math.sin(direction) + compass_centre[0],
@@ -855,19 +785,19 @@ def main():
                     pygame.draw.line(
                         screen, RED, compass_centre, line_end_coords,
                         # Cannot be any thinner than 1px
-                        max(1, VIEWPORT_WIDTH // 100)
+                        max(1, cfg.VIEWPORT_WIDTH // 100)
                     )
                 elif compass_burned_out[current_level]:
                     pygame.draw.circle(
                         screen, RED, compass_centre, compass_inner_radius
                         * (
-                            (COMPASS_TIME - compass_times[current_level])
-                            / COMPASS_TIME
+                            (cfg.COMPASS_TIME - compass_times[current_level])
+                            / cfg.COMPASS_TIME
                         )
                     )
 
             # HUD is drawn last to prevent it being obstructed
-            pygame.draw.rect(screen, GREY, (0, 0, VIEWPORT_WIDTH, 50))
+            pygame.draw.rect(screen, GREY, (0, 0, cfg.VIEWPORT_WIDTH, 50))
             time_score_text = font.render(
                 f"Time: {time_scores[current_level]:.1f}"
                 if has_started_level[current_level] else
