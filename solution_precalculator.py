@@ -11,6 +11,9 @@ from typing import Dict, List, Tuple
 
 
 def precalculate_solutions():
+    # Change working directory to the directory where the script is located
+    # Prevents issues with required files not being found
+    os.chdir(os.path.dirname(__file__))
     if os.path.isdir("precalculated_solutions.pickle"):
         print(
             "A folder named 'precalculated_solutions.pickle' currently exists."

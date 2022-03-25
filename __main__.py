@@ -126,6 +126,9 @@ LIGHT_GREY = (0xCD, 0xCD, 0xCD)
 
 
 def main():
+    # Change working directory to the directory where the script is located
+    # Prevents issues with required files not being found
+    os.chdir(os.path.dirname(__file__))
     pygame.init()
 
     # Minimum window resolution is 500x500
