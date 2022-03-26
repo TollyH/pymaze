@@ -38,6 +38,9 @@ LIGHT_GREY = (0xCD, 0xCD, 0xCD)
 
 
 def main():
+    """
+    Main function for the maze game. Manages all input, output, and timing.
+    """
     # Change working directory to the directory where the script is located
     # Prevents issues with required files not being found
     os.chdir(os.path.dirname(__file__))
