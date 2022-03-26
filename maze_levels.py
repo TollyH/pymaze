@@ -114,6 +114,9 @@ levels = [
     )
 ]
 
+# Change working directory to the directory where the script is located
+# Prevents issues with required files not being found
+os.chdir(os.path.dirname(__file__))
 if os.path.isfile("precalculated_solutions.pickle"):
     with open("precalculated_solutions.pickle", 'rb') as file:
         level_solutions: List[
