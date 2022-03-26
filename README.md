@@ -24,7 +24,7 @@ algorithm for raycasting. For the fully 2D version without raycasting, see the [
 
 ## Cheat Map Controls
 
-*Requires `ENABLE_CHEAT_MAP` in `__main__.py` to be set to `True`*
+*Requires the cheat map to be enabled in the configuration*
 
 - `Space` - Toggle cheat map display
 - `CTRL` + `Space` - Toggle displaying of field of view on map
