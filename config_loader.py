@@ -8,10 +8,10 @@ from typing import Dict, Optional
 _config = configparser.ConfigParser(allow_no_value=True)
 # Preserve the case of option names
 _config.optionxform = str  # type: ignore
+# Look for the config.ini file in the script directory regardless of working
+# directory
 _config_file_path = os.path.join(os.path.dirname(__file__), "config.ini")
 if os.path.isfile(_config_file_path):
-    # Looks for the config.ini file in the script directory regardless of
-    # working directory
     _config.read(_config_file_path)
     _config_options: Dict[str, str] = dict(_config['OPTIONS'])
 else:
