@@ -35,6 +35,9 @@ class ConfigEditorApp:
         # Stores the labels above sliders along with their template strings
         # so that their text values can be dynamically changed easily
         self.scale_labels: Dict[str, Tuple[tkinter.Label, str]] = {}
+        # Stores the checkbox variables for each bool field so that their state
+        # can be dynamically retrieved easily
+        self.checkbuttons: Dict[str, tkinter.IntVar] = {}
 
         self.gui_top_tab_control = tkinter.ttk.Notebook(self.window)
         self.gui_top_tab_control.pack(fill="both", expand=True)
@@ -79,8 +82,10 @@ class ConfigEditorApp:
         self.gui_viewport_height_label.pack(fill="x", expand=True)
         self.gui_viewport_height_slider.pack(fill="x", expand=True)
 
+        self.checkbuttons['ENABLE_CHEAT_MAP'] = tkinter.IntVar()
         self.gui_cheat_map_check = tkinter.Checkbutton(
             self.gui_basic_config_frame, anchor=tkinter.W,
+            variable=self.checkbuttons['ENABLE_CHEAT_MAP'],
             text="Enable the cheat map"
         )
         if self.parse_bool('ENABLE_CHEAT_MAP', False):
@@ -91,11 +96,13 @@ class ConfigEditorApp:
         )
         self.gui_cheat_map_check.pack(fill="x", expand=True)
 
+        self.checkbuttons['MONSTER_ENABLED'] = tkinter.IntVar()
         self.gui_monster_check = tkinter.Checkbutton(
             self.gui_basic_config_frame, anchor=tkinter.W,
+            variable=self.checkbuttons['MONSTER_ENABLED'],
             text="Enable the monster"
         )
-        if self.parse_bool('MONSTER_ENABLED', False):
+        if self.parse_bool('MONSTER_ENABLED', True):
             self.gui_monster_check.select()
         # Set command after select to prevent it being called
         self.gui_monster_check.config(
@@ -103,11 +110,13 @@ class ConfigEditorApp:
         )
         self.gui_monster_check.pack(fill="x", expand=True)
 
+        self.checkbuttons['MONSTER_SOUND_ON_KILL'] = tkinter.IntVar()
         self.gui_monster_kill_sound_check = tkinter.Checkbutton(
             self.gui_basic_config_frame, anchor=tkinter.W,
+            variable=self.checkbuttons['MONSTER_SOUND_ON_KILL'],
             text="Play the jumpscare sound on death"
         )
-        if self.parse_bool('MONSTER_SOUND_ON_KILL', False):
+        if self.parse_bool('MONSTER_SOUND_ON_KILL', True):
             self.gui_monster_kill_sound_check.select()
         # Set command after select to prevent it being called
         self.gui_monster_kill_sound_check.config(
@@ -115,11 +124,13 @@ class ConfigEditorApp:
         )
         self.gui_monster_kill_sound_check.pack(fill="x", expand=True)
 
+        self.checkbuttons['MONSTER_DISPLAY_ON_KILL'] = tkinter.IntVar()
         self.gui_monster_kill_display_check = tkinter.Checkbutton(
             self.gui_basic_config_frame, anchor=tkinter.W,
+            variable=self.checkbuttons['MONSTER_DISPLAY_ON_KILL'],
             text="Display the monster fullscreen on death"
         )
-        if self.parse_bool('MONSTER_DISPLAY_ON_KILL', False):
+        if self.parse_bool('MONSTER_DISPLAY_ON_KILL', True):
             self.gui_monster_kill_display_check.select()
         # Set command after select to prevent it being called
         self.gui_monster_kill_display_check.config(
@@ -128,11 +139,13 @@ class ConfigEditorApp:
         )
         self.gui_monster_kill_display_check.pack(fill="x", expand=True)
 
+        self.checkbuttons['MONSTER_SOUND_ON_SPOT'] = tkinter.IntVar()
         self.gui_monster_spot_sound_check = tkinter.Checkbutton(
             self.gui_basic_config_frame, anchor=tkinter.W,
+            variable=self.checkbuttons['MONSTER_SOUND_ON_SPOT'],
             text="Play a jumpscare sound when the monster is spotted"
         )
-        if self.parse_bool('MONSTER_SOUND_ON_SPOT', False):
+        if self.parse_bool('MONSTER_SOUND_ON_SPOT', True):
             self.gui_monster_spot_sound_check.select()
         # Set command after select to prevent it being called
         self.gui_monster_spot_sound_check.config(
@@ -140,11 +153,13 @@ class ConfigEditorApp:
         )
         self.gui_monster_spot_sound_check.pack(fill="x", expand=True)
 
+        self.checkbuttons['MONSTER_FLICKER_LIGHTS'] = tkinter.IntVar()
         self.gui_monster_flicker_lights_check = tkinter.Checkbutton(
             self.gui_basic_config_frame, anchor=tkinter.W,
+            variable=self.checkbuttons['MONSTER_FLICKER_LIGHTS'],
             text="Flicker lights based on distance to the monster"
         )
-        if self.parse_bool('MONSTER_FLICKER_LIGHTS', False):
+        if self.parse_bool('MONSTER_FLICKER_LIGHTS', True):
             self.gui_monster_flicker_lights_check.select()
         # Set command after select to prevent it being called
         self.gui_monster_flicker_lights_check.config(
@@ -154,24 +169,26 @@ class ConfigEditorApp:
 
         self.gui_frame_rate_limit_label = tkinter.Label(
             self.gui_basic_config_frame, anchor=tkinter.W,
-            text=f"Max FPS — ({self.parse_int('FRAME_RATE_LIMIT', 500)})"
+            text=f"Max FPS — ({self.parse_int('FRAME_RATE_LIMIT', 75)})"
         )
         self.scale_labels['FRAME_RATE_LIMIT'] = (
             self.gui_frame_rate_limit_label, "Max FPS — ({})"
         )
         self.gui_frame_rate_limit_slider = tkinter.ttk.Scale(
             self.gui_basic_config_frame, from_=1, to=360,
-            value=self.parse_int('FRAME_RATE_LIMIT', 500),
+            value=self.parse_int('FRAME_RATE_LIMIT', 75),
             command=lambda x: self.on_scale_change('FRAME_RATE_LIMIT', x, 0)
         )
         self.gui_frame_rate_limit_label.pack(fill="x", expand=True)
         self.gui_frame_rate_limit_slider.pack(fill="x", expand=True)
 
+        self.checkbuttons['TEXTURES_ENABLED'] = tkinter.IntVar()
         self.gui_textures_check = tkinter.Checkbutton(
             self.gui_basic_config_frame, anchor=tkinter.W,
+            variable=self.checkbuttons['TEXTURES_ENABLED'],
             text="Display textures on walls (impacts performance heavily)"
         )
-        if self.parse_bool('TEXTURES_ENABLED', False):
+        if self.parse_bool('TEXTURES_ENABLED', True):
             self.gui_textures_check.select()
         # Set command after select to prevent it being called
         self.gui_textures_check.config(
@@ -179,10 +196,13 @@ class ConfigEditorApp:
         )
         self.gui_textures_check.pack(fill="x", expand=True)
 
+        display_columns_default = self.parse_int(
+            'DISPLAY_COLUMNS', self.parse_int('VIEWPORT_WIDTH', 500)
+        )
         self.gui_display_columns_label = tkinter.Label(
             self.gui_basic_config_frame, anchor=tkinter.W,
             text="Render Resolution (lower this to improve performance) — "
-            + f"({self.parse_int('DISPLAY_COLUMNS', 500)})"
+            + f"({display_columns_default})"
         )
         self.scale_labels['DISPLAY_COLUMNS'] = (
             self.gui_display_columns_label,
@@ -190,9 +210,8 @@ class ConfigEditorApp:
         )
         self.gui_display_columns_slider = tkinter.ttk.Scale(
             self.gui_basic_config_frame, from_=24,
-            to=self.parse_int('VIEWPORT_WIDTH', 500), value=self.parse_int(
-                'DISPLAY_COLUMNS', self.parse_int('VIEWPORT_WIDTH', 500)
-            ),
+            to=self.parse_int('VIEWPORT_WIDTH', 500),
+            value=display_columns_default,
             command=lambda x: self.on_scale_change('DISPLAY_COLUMNS', x, 0)
         )
         self.gui_display_columns_label.pack(fill="x", expand=True)
@@ -237,9 +256,7 @@ class ConfigEditorApp:
         the boolean value current in the specified field.
         """
         # INI files can only contain strings
-        self.config_options[field] = str(
-            int(not self.parse_bool(field, False))
-        )
+        self.config_options[field] = str(self.checkbuttons[field].get())
 
     def save_config(self):
         """
