@@ -59,7 +59,7 @@ class ConfigEditorApp:
         self.gui_viewport_width_slider = tkinter.ttk.Scale(
             self.gui_basic_config_frame, from_=10, to=1000,
             value=self.parse_int('VIEWPORT_WIDTH', 500),
-            command=lambda x: self.on_scale_change('VIEWPORT_WIDTH', x, True)
+            command=lambda x: self.on_scale_change('VIEWPORT_WIDTH', x, 0)
         )
         self.gui_viewport_width_label.pack(fill="x", expand=True)
         self.gui_viewport_width_slider.pack(fill="x", expand=True)
@@ -74,7 +74,7 @@ class ConfigEditorApp:
         self.gui_viewport_height_slider = tkinter.ttk.Scale(
             self.gui_basic_config_frame, from_=10, to=1000,
             value=self.parse_int('VIEWPORT_HEIGHT', 500),
-            command=lambda x: self.on_scale_change('VIEWPORT_HEIGHT', x, True)
+            command=lambda x: self.on_scale_change('VIEWPORT_HEIGHT', x, 0)
         )
         self.gui_viewport_height_label.pack(fill="x", expand=True)
         self.gui_viewport_height_slider.pack(fill="x", expand=True)
@@ -162,7 +162,7 @@ class ConfigEditorApp:
         self.gui_frame_rate_limit_slider = tkinter.ttk.Scale(
             self.gui_basic_config_frame, from_=1, to=360,
             value=self.parse_int('FRAME_RATE_LIMIT', 500),
-            command=lambda x: self.on_scale_change('FRAME_RATE_LIMIT', x, True)
+            command=lambda x: self.on_scale_change('FRAME_RATE_LIMIT', x, 0)
         )
         self.gui_frame_rate_limit_label.pack(fill="x", expand=True)
         self.gui_frame_rate_limit_slider.pack(fill="x", expand=True)
@@ -193,7 +193,7 @@ class ConfigEditorApp:
             to=self.parse_int('VIEWPORT_WIDTH', 500), value=self.parse_int(
                 'DISPLAY_COLUMNS', self.parse_int('VIEWPORT_WIDTH', 500)
             ),
-            command=lambda x: self.on_scale_change('DISPLAY_COLUMNS', x, True)
+            command=lambda x: self.on_scale_change('DISPLAY_COLUMNS', x, 0)
         )
         self.gui_display_columns_label.pack(fill="x", expand=True)
         self.gui_display_columns_slider.pack(fill="x", expand=True)
@@ -205,11 +205,11 @@ class ConfigEditorApp:
 
         self.window.mainloop()
 
-    def on_scale_change(self, field: str, new_value: str, to_int: bool):
+    def on_scale_change(self, field: str, new_value: str, decimal_places: int):
         """
         To be called when the user moves a slider. New_value will always be a
         floating point value represented as a str because of how Tkinter Scales
-        work, but if to_int is True the float will be truncated to an int.
+        work, which will be fixed to the provided number of decimal places.
         Field is the name of the ini field to change.
         """
         if field == "VIEWPORT_WIDTH":
@@ -219,8 +219,15 @@ class ConfigEditorApp:
             if (int(self.gui_display_columns_slider.get())
                     >= self.parse_int('VIEWPORT_WIDTH', 500)):
                 self.gui_display_columns_slider.set(new_width)  # type: ignore
+        # Fix the number of decimal places on a float represented as a string.
+        # Either truncation or right 0 padding will be used.
+        to_store = (
+            new_value.split(".")[0] + "."
+            + new_value.split(".")[1][:decimal_places].rjust(
+                decimal_places, '0'
+            )
+        ).strip('.')
         # INI files can only contain strings
-        to_store = new_value.split(".")[0] if to_int else new_value
         self.config_options[field] = to_store
         self.scale_labels[field][0].config(
             text=self.scale_labels[field][1].format(to_store)
