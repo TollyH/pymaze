@@ -217,6 +217,21 @@ class ConfigEditorApp:
         self.gui_display_columns_label.pack(fill="x", expand=True)
         self.gui_display_columns_slider.pack(fill="x", expand=True)
 
+        self.gui_turn_speed_label = tkinter.Label(
+            self.gui_basic_config_frame, anchor=tkinter.W,
+            text=f"Turn Sensitivity — ({self.parse_float('TURN_SPEED', 2.5)})"
+        )
+        self.scale_labels['TURN_SPEED'] = (
+            self.gui_turn_speed_label, "Turn Sensitivity — ({})"
+        )
+        self.gui_turn_speed_slider = tkinter.ttk.Scale(
+            self.gui_basic_config_frame, from_=0.1, to=10.0,
+            value=self.parse_float('TURN_SPEED', 2.5),
+            command=lambda x: self.on_scale_change('TURN_SPEED', x, 1)
+        )
+        self.gui_turn_speed_label.pack(fill="x", expand=True)
+        self.gui_turn_speed_slider.pack(fill="x", expand=True)
+
         self.gui_save_button = tkinter.ttk.Button(
             self.window, command=self.save_config, text="Save"
         )

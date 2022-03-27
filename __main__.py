@@ -116,6 +116,9 @@ def main():
         os.path.join("sounds", "monster_spotted.wav")
     )
 
+    enable_mouse_control = False
+    old_mouse_pos = (cfg.VIEWPORT_WIDTH // 2, cfg.VIEWPORT_HEIGHT // 2)
+
     display_map = False
     display_compass = False
     display_rays = False
@@ -205,7 +208,20 @@ def main():
                             display_compass = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_coords = pygame.mouse.get_pos()
-                if (cfg.ALLOW_REALTIME_EDITING and cfg.ENABLE_CHEAT_MAP
+                if mouse_coords[0] <= cfg.VIEWPORT_WIDTH:
+                    enable_mouse_control = not enable_mouse_control
+                    if enable_mouse_control:
+                        pygame.mouse.set_pos(
+                            (cfg.VIEWPORT_WIDTH // 2, cfg.VIEWPORT_HEIGHT // 2)
+                        )
+                        old_mouse_pos = (
+                            cfg.VIEWPORT_WIDTH // 2, cfg.VIEWPORT_HEIGHT // 2
+                        )
+                    # Hide cursor and confine to window if controlling with
+                    # mouse
+                    pygame.mouse.set_visible(not enable_mouse_control)
+                    pygame.event.set_grab(enable_mouse_control)
+                elif (cfg.ALLOW_REALTIME_EDITING and cfg.ENABLE_CHEAT_MAP
                         and event.button == pygame.BUTTON_LEFT
                         and mouse_coords[0] > cfg.VIEWPORT_WIDTH
                         and mouse_coords[1] >= 50):
@@ -216,6 +232,35 @@ def main():
                     levels[current_level][clicked_tile] = (
                         not levels[current_level][clicked_tile]
                     )
+            elif event.type == pygame.MOUSEMOTION and enable_mouse_control:
+                mouse_coords = pygame.mouse.get_pos()
+                relative_pos = (
+                    old_mouse_pos[0] - mouse_coords[0],
+                    old_mouse_pos[1] - mouse_coords[1]
+                )
+                # Wrap mouse around screen edges
+                if mouse_coords[0] == 0:
+                    pygame.mouse.set_pos(
+                        (cfg.VIEWPORT_WIDTH - 2, mouse_coords[1])
+                    )
+                elif mouse_coords[0] >= cfg.VIEWPORT_WIDTH - 1:
+                    pygame.mouse.set_pos((1, mouse_coords[1]))
+                turn_speed_mod = cfg.TURN_SPEED * -relative_pos[0] * 0.01
+                old_direction = facing_directions[current_level]
+                facing_directions[current_level] = (
+                    old_direction[0] * math.cos(turn_speed_mod)
+                    - old_direction[1] * math.sin(turn_speed_mod),
+                    old_direction[0] * math.sin(turn_speed_mod)
+                    + old_direction[1] * math.cos(turn_speed_mod)
+                )
+                old_camera_plane = camera_planes[current_level]
+                camera_planes[current_level] = (
+                    old_camera_plane[0] * math.cos(turn_speed_mod)
+                    - old_camera_plane[1] * math.sin(turn_speed_mod),
+                    old_camera_plane[0] * math.sin(turn_speed_mod)
+                    + old_camera_plane[1] * math.cos(turn_speed_mod)
+                )
+                old_mouse_pos = pygame.mouse.get_pos()
 
         if (display_map and cfg.ENABLE_CHEAT_MAP
                 and screen.get_size()[0] < cfg.VIEWPORT_WIDTH * 2):

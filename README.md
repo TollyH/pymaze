@@ -15,7 +15,8 @@ algorithm for raycasting. For the fully 2D version without raycasting, see the [
 ## Controls
 
 - `WASD` or `Up` and `Down` - Move around
-- `Left` and `Right` - Turn camera
+- `Left` and `Right` or `Mouse` - Turn camera
+- `Click` - Toggle mouse control
 - `[` and `]` - Previous/Next Level Respectively
 - `F` - Place/pick up flag
 - `R` - Reset level
