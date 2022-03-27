@@ -229,7 +229,9 @@ class ConfigEditorApp:
         To be called when the user moves a slider. New_value will always be a
         floating point value represented as a str because of how Tkinter Scales
         work, which will be truncated to the provided number of decimal places.
-        Field is the name of the ini field to change.
+        Field is the name of the ini field to change. If new_value is negative,
+        an empty string will be stored in the ini field instead to represent
+        None.
         """
         if field == "VIEWPORT_WIDTH":
             new_width = int(new_value.split(".")[0])
@@ -239,11 +241,12 @@ class ConfigEditorApp:
                     >= self.parse_int('VIEWPORT_WIDTH', 500)):
                 self.gui_display_columns_slider.set(new_width)  # type: ignore
         # Truncate the number of decimal places on a float represented as a
-        # string.
+        # string. If the float is negative, it will be coverted to an empty
+        # string to represent None.
         to_store = (
             new_value.split(".")[0] + "."
             + new_value.split(".")[1][:decimal_places]
-        ).strip('.')
+        ).strip('.') if not new_value.startswith('-') else ''
         # INI files can only contain strings
         self.config_options[field] = to_store
         self.scale_labels[field][0].config(
