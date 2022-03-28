@@ -251,7 +251,7 @@ def main():
                     )
                 elif mouse_coords[0] >= cfg.VIEWPORT_WIDTH - 1:
                     pygame.mouse.set_pos((1, mouse_coords[1]))
-                turn_speed_mod = cfg.TURN_SPEED * -relative_pos[0] * 0.01
+                turn_speed_mod = cfg.TURN_SPEED * -relative_pos[0] * 0.0025
                 old_direction = facing_directions[current_level]
                 facing_directions[current_level] = (
                     old_direction[0] * math.cos(turn_speed_mod)
