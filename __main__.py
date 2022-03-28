@@ -206,9 +206,14 @@ def main():
                         display_map = not display_map
                         if not cfg.ENABLE_CHEAT_MAP:
                             display_compass = False
+                elif event.key == pygame.K_ESCAPE:
+                    enable_mouse_control = False
+                    pygame.mouse.set_visible(True)
+                    pygame.event.set_grab(False)
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_coords = pygame.mouse.get_pos()
-                if mouse_coords[0] <= cfg.VIEWPORT_WIDTH:
+                if (mouse_coords[0] <= cfg.VIEWPORT_WIDTH
+                        and event.button == pygame.BUTTON_LEFT):
                     enable_mouse_control = not enable_mouse_control
                     if enable_mouse_control:
                         pygame.mouse.set_pos(
@@ -232,7 +237,8 @@ def main():
                     levels[current_level][clicked_tile] = (
                         not levels[current_level][clicked_tile]
                     )
-            elif event.type == pygame.MOUSEMOTION and enable_mouse_control:
+            elif (event.type == pygame.MOUSEMOTION and enable_mouse_control
+                    and (not display_map or cfg.ENABLE_CHEAT_MAP)):
                 mouse_coords = pygame.mouse.get_pos()
                 relative_pos = (
                     old_mouse_pos[0] - mouse_coords[0],
