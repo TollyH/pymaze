@@ -724,7 +724,7 @@ def main():
                             colour = RED
                         elif (levels[current_level].end_point == (x, y)
                                 and cfg.ENABLE_CHEAT_MAP):
-                            colour = GREEN
+                            colour = GREENasddddddddddddddddddddddddddddddddddddddddddddd
                         elif len(solutions) >= 1 and (x, y) in solutions[0]:
                             colour = PURPLE
                         elif len(solutions) >= 1 and (x, y) in solution_coords:
