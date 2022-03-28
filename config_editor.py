@@ -284,7 +284,9 @@ class ConfigEditorApp:
             )
         )
         self.gui_monster_movement_label.pack(fill="x", anchor=tkinter.NW)
-        self.gui_monster_movement_warning_label.pack(fill="x", anchor=tkinter.NW)
+        self.gui_monster_movement_warning_label.pack(
+            fill="x", anchor=tkinter.NW
+        )
         self.gui_monster_movement_slider.pack(fill="x", anchor=tkinter.NW)
 
         self.gui_monster_spot_label = tkinter.Label(
