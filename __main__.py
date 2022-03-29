@@ -84,6 +84,10 @@ def main():
     for _, (_, surface_to_dark) in wall_textures.items():
         surface_to_dark.blit(darkener, (0, 0))
 
+    sky_texture = pygame.image.load(
+        os.path.join("textures", "sky.png")
+    ).convert_alpha()
+
     sprite_textures = {
         raycasting.KEY: pygame.image.load(
             os.path.join("textures", "sprite", "key.png")
@@ -520,6 +524,28 @@ def main():
                         cfg.VIEWPORT_WIDTH, cfg.VIEWPORT_HEIGHT // 2
                     )
                 )
+
+            if cfg.TEXTURES_ENABLED:
+                # Draw sky
+                for index in range(cfg.DISPLAY_COLUMNS):
+                    camera_x = 2 * index / cfg.DISPLAY_COLUMNS - 1
+                    direction = facing_directions[current_level]
+                    camera_plane = camera_planes[current_level]
+                    cast_direction = (
+                        direction[0] + camera_plane[0] * camera_x,
+                        direction[1] + camera_plane[1] * camera_x,
+                    )
+                    texture_x = math.floor(
+                        abs(math.atan2(*cast_direction)) / (2 * math.pi)
+                        * cfg.TEXTURE_WIDTH
+                    )
+                    # Get a single column of pixels
+                    scaled_pixel_column = pygame.transform.scale(
+                        sky_texture.subsurface(
+                            texture_x, 0, 1, cfg.TEXTURE_HEIGHT
+                        ), (1, cfg.VIEWPORT_WIDTH // 2)
+                    )
+                    screen.blit(scaled_pixel_column, (index, 50))
 
             if not display_map or cfg.ENABLE_CHEAT_MAP:
                 columns, sprites = raycasting.get_columns_sprites(
