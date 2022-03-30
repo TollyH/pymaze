@@ -60,7 +60,7 @@ class ConfigEditorApp:
             self.gui_viewport_width_label, "View Width — ({})"
         )
         self.gui_viewport_width_slider = tkinter.ttk.Scale(
-            self.gui_basic_config_frame, from_=10, to=1000,
+            self.gui_basic_config_frame, from_=500, to=3840,
             value=self.parse_int('VIEWPORT_WIDTH', 500),
             command=lambda x: self.on_scale_change('VIEWPORT_WIDTH', x, 0)
         )
@@ -75,7 +75,7 @@ class ConfigEditorApp:
             self.gui_viewport_height_label, "View Height — ({})"
         )
         self.gui_viewport_height_slider = tkinter.ttk.Scale(
-            self.gui_basic_config_frame, from_=10, to=1000,
+            self.gui_basic_config_frame, from_=500, to=2160,
             value=self.parse_int('VIEWPORT_HEIGHT', 500),
             command=lambda x: self.on_scale_change('VIEWPORT_HEIGHT', x, 0)
         )
