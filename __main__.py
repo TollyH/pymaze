@@ -905,25 +905,6 @@ def main():
                         )
                     )
 
-            if is_reset_prompt_shown:
-                prompt_background = pygame.Surface(
-                    (cfg.viewport_width, cfg.viewport_height)
-                )
-                prompt_background.fill(LIGHT_BLUE)
-                prompt_background.set_alpha(195)
-                screen.blit(prompt_background, (0, 50))
-                confirm_text = font.render(
-                    "Press 'y' to reset or 'n' to cancel", True, DARK_GREY
-                )
-                screen.blit(
-                    confirm_text, (
-                        cfg.viewport_width // 2
-                        - confirm_text.get_width() // 2,
-                        cfg.viewport_height // 2
-                        - confirm_text.get_height() // 2 + 50,
-                    )
-                )
-
             # HUD is drawn last to prevent it being obstructed
             pygame.draw.rect(screen, GREY, (0, 0, cfg.viewport_width, 50))
             time_score_text = font.render(
@@ -949,6 +930,26 @@ def main():
             screen.blit(time_score_text, (10, 10))
             screen.blit(move_score_text, (180, 10))
             screen.blit(keys_text, (340, 10))
+
+        if is_reset_prompt_shown:
+            prompt_background = pygame.Surface(
+                (cfg.viewport_width, cfg.viewport_height + 50)
+            )
+            prompt_background.fill(LIGHT_BLUE)
+            prompt_background.set_alpha(195)
+            screen.blit(prompt_background, (0, 0))
+            confirm_text = font.render(
+                "Press 'y' to reset or 'n' to cancel", True, DARK_GREY
+            )
+            screen.blit(
+                confirm_text, (
+                    cfg.viewport_width // 2
+                    - confirm_text.get_width() // 2,
+                    cfg.viewport_height // 2
+                    - confirm_text.get_height() // 2 + 50,
+                )
+            )
+
         print(
             f"\r{clock.get_fps():5.2f} FPS - "
             + f"Position ({levels[current_level].player_coords[0]:5.2f},"
