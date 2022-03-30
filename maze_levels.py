@@ -4,9 +4,6 @@ T and F as shorthands for True and False respectively, T corresponding to where
 a wall is and F corresponding to a occupyable space. If a pre-calculated
 solutions file exists, it will be loaded here.
 """
-import os
-import pickle
-from typing import Dict, List, Tuple
 
 from level import Level
 

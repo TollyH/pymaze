@@ -11,7 +11,7 @@ import pickle
 import random
 import sys
 from glob import glob
-from typing import List, Literal, Set, Tuple
+from typing import List, Literal, Tuple
 
 import pygame
 
