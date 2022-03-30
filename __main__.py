@@ -537,14 +537,14 @@ def main():
                     )
                     angle = math.atan2(*cast_direction)
                     texture_x = math.floor(
-                        angle / (2 * math.pi) * cfg.TEXTURE_WIDTH
+                        angle / math.pi * cfg.TEXTURE_WIDTH
                     )
                     # Creates a "mirror" effect preventing a seam when the
                     # texture repeats
                     texture_x = (
                         texture_x % cfg.TEXTURE_WIDTH
                         if angle >= 0 else
-                        cfg.TEXTURE_WIDTH - (texture_x % cfg.TEXTURE_WIDTH)
+                        cfg.TEXTURE_WIDTH - (texture_x % cfg.TEXTURE_WIDTH) - 1
                     )
                     # Get a single column of pixels
                     scaled_pixel_column = pygame.transform.scale(
