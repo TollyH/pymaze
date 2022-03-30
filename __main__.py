@@ -131,6 +131,8 @@ def main():
     display_rays = False
     display_solutions = False
 
+    is_reset_prompt_shown = False
+
     current_level = 0
     monster_timeouts = [0.0] * len(levels)
     monster_spotted = [cfg.monster_spot_timeout] * len(levels)
@@ -158,70 +160,85 @@ def main():
                 sys.exit()
             # Standard "press-once" keys
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_f:
-                    grid_coords = floor_coordinates(
-                        levels[current_level].player_coords
-                    )
-                    if grid_coords in levels[current_level].player_flags:
-                        levels[current_level].player_flags.remove(grid_coords)
-                    else:
-                        levels[current_level].player_flags.add(grid_coords)
-                elif event.key == pygame.K_c:
-                    if not display_map or cfg.enable_cheat_map:
-                        display_compass = not display_compass
-                elif event.key in (pygame.K_LEFTBRACKET,
-                                   pygame.K_RIGHTBRACKET):
-                    if event.key == pygame.K_LEFTBRACKET and current_level > 0:
-                        current_level -= 1
-                    elif (event.key == pygame.K_RIGHTBRACKET
-                            and current_level < len(levels) - 1):
-                        current_level += 1
-                    else:
-                        continue
-                    # Adjust tile width and height for new level
-                    tile_width = (
-                        cfg.viewport_width
-                        // levels[current_level].dimensions[0]
-                    )
-                    tile_height = (
-                        cfg.viewport_height
-                        // levels[current_level].dimensions[1]
-                    )
-                    pygame.display.set_caption(
-                        f"Maze - Level {current_level + 1}"
-                    )
-                elif event.key == pygame.K_r:
-                    levels[current_level].reset()
-                    facing_directions[current_level] = (0.0, 1.0)
-                    camera_planes[current_level] = (
-                        -cfg.display_fov / 100, 0.0
-                    )
-                    monster_timeouts[current_level] = 0.0
-                    monster_spotted[current_level] = cfg.monster_spot_timeout
-                    compass_times[current_level] = cfg.compass_time
-                    compass_burned_out[current_level] = False
-                    flicker_time_remaining[current_level] = 0.0
-                    time_scores[current_level] = 0
-                    move_scores[current_level] = 0
-                    has_started_level[current_level] = False
-                    display_compass = False
-                    if not cfg.enable_cheat_map:
-                        display_map = False
-                elif event.key == pygame.K_SPACE:
-                    pressed = pygame.key.get_pressed()
-                    if pressed[pygame.K_RCTRL] or pressed[pygame.K_LCTRL]:
-                        display_rays = not display_rays
-                    elif pressed[pygame.K_RALT] or pressed[pygame.K_LALT]:
-                        display_solutions = not display_solutions
-                    else:
-                        display_map = not display_map
+                if not is_reset_prompt_shown:
+                    if event.key == pygame.K_f:
+                        grid_coords = floor_coordinates(
+                            levels[current_level].player_coords
+                        )
+                        if grid_coords in levels[current_level].player_flags:
+                            levels[current_level].player_flags.remove(
+                                grid_coords
+                            )
+                        else:
+                            levels[current_level].player_flags.add(
+                                grid_coords
+                            )
+                    elif event.key == pygame.K_c:
+                        if not display_map or cfg.enable_cheat_map:
+                            display_compass = not display_compass
+                    elif event.key in (pygame.K_LEFTBRACKET,
+                                       pygame.K_RIGHTBRACKET):
+                        if (event.key == pygame.K_LEFTBRACKET
+                                and current_level > 0):
+                            current_level -= 1
+                        elif (event.key == pygame.K_RIGHTBRACKET
+                                and current_level < len(levels) - 1):
+                            current_level += 1
+                        else:
+                            continue
+                        # Adjust tile width and height for new level
+                        tile_width = (
+                            cfg.viewport_width
+                            // levels[current_level].dimensions[0]
+                        )
+                        tile_height = (
+                            cfg.viewport_height
+                            // levels[current_level].dimensions[1]
+                        )
+                        pygame.display.set_caption(
+                            f"Maze - Level {current_level + 1}"
+                        )
+                    elif event.key == pygame.K_r:
+                        is_reset_prompt_shown = True
+                    elif event.key == pygame.K_SPACE:
+                        pressed = pygame.key.get_pressed()
+                        if pressed[pygame.K_RCTRL] or pressed[pygame.K_LCTRL]:
+                            display_rays = not display_rays
+                        elif pressed[pygame.K_RALT] or pressed[pygame.K_LALT]:
+                            display_solutions = not display_solutions
+                        else:
+                            display_map = not display_map
+                            if not cfg.enable_cheat_map:
+                                display_compass = False
+                    elif event.key == pygame.K_ESCAPE:
+                        enable_mouse_control = False
+                        pygame.mouse.set_visible(True)
+                        pygame.event.set_grab(False)
+                else:
+                    if event.key == pygame.K_y:
+                        is_reset_prompt_shown = False
+                        levels[current_level].reset()
+                        facing_directions[current_level] = (0.0, 1.0)
+                        camera_planes[current_level] = (
+                            -cfg.display_fov / 100, 0.0
+                        )
+                        monster_timeouts[current_level] = 0.0
+                        monster_spotted[current_level] = (
+                            cfg.monster_spot_timeout
+                        )
+                        compass_times[current_level] = cfg.compass_time
+                        compass_burned_out[current_level] = False
+                        flicker_time_remaining[current_level] = 0.0
+                        time_scores[current_level] = 0
+                        move_scores[current_level] = 0
+                        has_started_level[current_level] = False
+                        display_compass = False
                         if not cfg.enable_cheat_map:
-                            display_compass = False
-                elif event.key == pygame.K_ESCAPE:
-                    enable_mouse_control = False
-                    pygame.mouse.set_visible(True)
-                    pygame.event.set_grab(False)
-            elif event.type == pygame.MOUSEBUTTONDOWN:
+                            display_map = False
+                    elif event.key == pygame.K_n:
+                        is_reset_prompt_shown = False
+            elif (event.type == pygame.MOUSEBUTTONDOWN
+                    and not is_reset_prompt_shown):
                 mouse_coords = pygame.mouse.get_pos()
                 if (mouse_coords[0] <= cfg.viewport_width
                         and event.button == pygame.BUTTON_LEFT):
@@ -249,7 +266,8 @@ def main():
                         not levels[current_level][clicked_tile]
                     )
             elif (event.type == pygame.MOUSEMOTION and enable_mouse_control
-                    and (not display_map or cfg.enable_cheat_map)):
+                    and (not display_map or cfg.enable_cheat_map)
+                    and not is_reset_prompt_shown):
                 mouse_coords = pygame.mouse.get_pos()
                 relative_pos = (
                     old_mouse_pos[0] - mouse_coords[0],
@@ -294,8 +312,9 @@ def main():
             levels[current_level].player_coords
         )
         # Do not allow player to move while map is open if cheat map is not
-        # enabled
-        if cfg.enable_cheat_map or not display_map:
+        # enabled - or if the reset prompt is open
+        if ((cfg.enable_cheat_map or not display_map)
+                and not is_reset_prompt_shown):
             # Held down keys
             pressed_keys = pygame.key.get_pressed()
             move_multiplier = 1
@@ -443,7 +462,7 @@ def main():
                     0, 50, cfg.viewport_width, cfg.viewport_height
                 ))
         else:
-            if has_started_level[current_level]:
+            if has_started_level[current_level] and not is_reset_prompt_shown:
                 time_scores[current_level] += frame_time
                 monster_timeouts[current_level] += frame_time
                 if (monster_spotted[current_level]
@@ -885,6 +904,25 @@ def main():
                             / cfg.compass_time
                         )
                     )
+
+            if is_reset_prompt_shown:
+                prompt_background = pygame.Surface(
+                    (cfg.viewport_width, cfg.viewport_height)
+                )
+                prompt_background.fill(LIGHT_BLUE)
+                prompt_background.set_alpha(195)
+                screen.blit(prompt_background, (0, 50))
+                confirm_text = font.render(
+                    "Press 'y' to reset or 'n' to cancel", True, DARK_GREY
+                )
+                screen.blit(
+                    confirm_text, (
+                        cfg.viewport_width // 2
+                        - confirm_text.get_width() // 2,
+                        cfg.viewport_height // 2
+                        - confirm_text.get_height() // 2 + 50,
+                    )
+                )
 
             # HUD is drawn last to prevent it being obstructed
             pygame.draw.rect(screen, GREY, (0, 0, cfg.viewport_width, 50))
