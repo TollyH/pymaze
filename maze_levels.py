@@ -224,17 +224,3 @@ levels = [
         (39, 39), 120
     )
 ]
-
-# Change working directory to the directory where the script is located
-# Prevents issues with required files not being found
-os.chdir(os.path.dirname(__file__))
-if os.path.isfile("precalculated_solutions.pickle"):
-    with open("precalculated_solutions.pickle", 'rb') as file:
-        level_solutions: List[
-            Dict[Tuple[int, int], List[List[Tuple[int, int]]]]
-        ] = pickle.load(file)
-    for index, solution_map in enumerate(level_solutions):
-        try:
-            levels[index]._solution_cache = solution_map
-        except IndexError:
-            break

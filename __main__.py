@@ -129,7 +129,6 @@ def main():
     display_map = False
     display_compass = False
     display_rays = False
-    display_solutions = False
 
     is_reset_prompt_shown = False
 
@@ -205,8 +204,6 @@ def main():
                         pressed = pygame.key.get_pressed()
                         if pressed[pygame.K_RCTRL] or pressed[pygame.K_LCTRL]:
                             display_rays = not display_rays
-                        elif pressed[pygame.K_RALT] or pressed[pygame.K_LALT]:
-                            display_solutions = not display_solutions
                         else:
                             display_map = not display_map
                             if not cfg.enable_cheat_map:
@@ -757,13 +754,6 @@ def main():
                         )
             if display_map:
                 x_offset = cfg.viewport_width if cfg.enable_cheat_map else 0
-                solutions: List[List[Tuple[int, int]]] = []
-                # A set of all coordinates appearing in any solution
-                solution_coords: Set[Tuple[int, int]] = set()
-                if (display_solutions and not cfg.allow_realtime_editing
-                        and cfg.enable_cheat_map):
-                    solutions = levels[current_level].find_possible_paths()
-                    solution_coords = {x for y in solutions[1:] for x in y}
                 for y, row in enumerate(levels[current_level].wall_map):
                     for x, point in enumerate(row):
                         if floor_coordinates(
@@ -782,10 +772,6 @@ def main():
                         elif (levels[current_level].end_point == (x, y)
                                 and cfg.enable_cheat_map):
                             colour = GREEN
-                        elif len(solutions) >= 1 and (x, y) in solutions[0]:
-                            colour = PURPLE
-                        elif len(solutions) >= 1 and (x, y) in solution_coords:
-                            colour = LILAC
                         else:
                             colour = BLACK if point else WHITE
                         pygame.draw.rect(

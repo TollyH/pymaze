@@ -31,7 +31,6 @@ algorithm for raycasting. For the fully 2D version without raycasting, see the [
 
 - `Space` - Toggle cheat map display
 - `CTRL` + `Space` - Toggle displaying of field of view on map
-- `Alt` + `Space` - Toggle displaying of shortest path to exit/keys on map
 
 ## Instructions
 
@@ -50,8 +49,6 @@ algorithm for raycasting. For the fully 2D version without raycasting, see the [
 - Dark red - Monster
 - Red - Start point
 - Turquoise - Flags
-- Purple - Shortest path
-- Lilac - Possible path
 
 ---
 
