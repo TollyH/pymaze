@@ -150,6 +150,7 @@ def main():
         # Limit FPS and record time last frame took to render
         frame_time = clock.tick(cfg.frame_rate_limit) / 1000
         display_column_width = cfg.viewport_width // cfg.display_columns
+        filled_screen_width = display_column_width * cfg.display_columns
         tile_width = cfg.viewport_width // levels[current_level].dimensions[0]
         tile_height = (
             cfg.viewport_height // levels[current_level].dimensions[1]
@@ -533,7 +534,7 @@ def main():
                 # Ceiling
                 pygame.draw.rect(
                     screen, BLUE,
-                    (0, 50, cfg.viewport_width, cfg.viewport_height // 2)
+                    (0, 50, filled_screen_width, cfg.viewport_height // 2)
                 )
                 monster_coords = levels[current_level].monster_coords
                 # Floor
@@ -541,7 +542,7 @@ def main():
                     screen, LIGHT_GREY,
                     (
                         0, cfg.viewport_height // 2 + 50,
-                        cfg.viewport_width, cfg.viewport_height // 2
+                        filled_screen_width, cfg.viewport_height // 2
                     )
                 )
 
@@ -634,15 +635,15 @@ def main():
                         transformation[1] if transformation[1] != 0 else 1e-5
                     )
                     screen_x_pos = math.floor(
-                        (cfg.viewport_width / 2)
+                        (filled_screen_width / 2)
                         * (1 + transformation[0] / transformation[1])
                     )
                     if (screen_x_pos
-                            > cfg.viewport_width + cfg.texture_width // 2
+                            > filled_screen_width + cfg.texture_width // 2
                             or screen_x_pos < -cfg.texture_width // 2):
                         continue
                     sprite_size = (
-                        abs(cfg.viewport_width // transformation[1]),
+                        abs(filled_screen_width // transformation[1]),
                         abs(cfg.viewport_height // transformation[1])
                     )
                     scaled_texture = pygame.transform.scale(
