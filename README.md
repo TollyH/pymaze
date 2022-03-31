@@ -7,6 +7,8 @@ algorithm for raycasting. For the fully 2D version without raycasting, see the [
 
 ## Installation
 
+*Python 3.8 or greater is required*
+
 1. Download the files by pressing the green "Code" button above, followed by "Download ZIP" - extracting all of the files once the download is complete.
    - Alternatively, if you have git installed, run `git clone https://github.com/TollyH/pygame_maze.git` in a terminal to download the repository.
 2. Install PyGame with the command `pip3 install pygame` on Linux or `pip install pygame` on Windows.
