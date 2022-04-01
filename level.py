@@ -79,6 +79,7 @@ class Level:
 
         self.player_flags: Set[Tuple[int, int]] = set()
 
+        # Used to prevent monster from backtracking
         self._last_monster_position = (-1, -1)
 
         # Maps coordinates to a list of lists of coordinates represting
@@ -238,6 +239,8 @@ class Level:
                         self.monster_coords[0] - 1, self.monster_coords[1]
                     )
             else:
+                # Randomise order of each cardinal direction, then move to
+                # the first one available
                 shuffled_vectors = [(0, 1), (0, -1), (1, 0), (-1, 0)]
                 random.shuffle(shuffled_vectors)
                 for vector in shuffled_vectors:
@@ -259,7 +262,8 @@ class Level:
         """
         Finds all possible paths to the current target(s) from the player's
         current position. The returned result is sorted by path length in
-        ascending order (i.e. the shortest path is first).
+        ascending order (i.e. the shortest path is first). Potentially very
+        computationally expensive.
         """
         targets = (
             [self.end_point] if len(self.exit_keys) == 0 else self.exit_keys

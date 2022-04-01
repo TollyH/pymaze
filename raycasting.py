@@ -6,6 +6,7 @@ from typing import List, Literal, Tuple
 
 import level
 
+# Sprite types
 END_POINT = 0
 KEY = 1
 MONSTER = 2
