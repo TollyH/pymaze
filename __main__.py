@@ -112,8 +112,10 @@ def main():
         ).convert_alpha()
     }
 
-    monster_texture_scaled = pygame.transform.scale(
-        sprite_textures[raycasting.MONSTER],
+    jumpscare_monster_texture = pygame.transform.scale(
+        pygame.image.load(
+            os.path.join("textures", "death_monster.png")
+        ).convert_alpha(),
         (cfg.viewport_width, cfg.viewport_height)
     )
     monster_jumpscare_sound = pygame.mixer.Sound(
@@ -456,7 +458,7 @@ def main():
                 monster_jumpscare_sound.play()
                 has_started_level[current_level] = False
             if cfg.monster_display_on_kill:
-                screen.blit(monster_texture_scaled, (
+                screen.blit(jumpscare_monster_texture, (
                     0, 50, cfg.viewport_width, cfg.viewport_height
                 ))
         else:
