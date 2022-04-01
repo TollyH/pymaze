@@ -196,6 +196,20 @@ class ConfigEditorApp:
         )
         self.gui_textures_check.pack(fill="x", anchor=tkinter.NW)
 
+        self.checkbuttons['SKY_TEXTURES_ENABLED'] = tkinter.IntVar()
+        self.gui_sky_textures_check = tkinter.Checkbutton(
+            self.gui_basic_config_frame, anchor=tkinter.W,
+            variable=self.checkbuttons['SKY_TEXTURES_ENABLED'],
+            text="Display textured sky (impacts performance)"
+        )
+        if self.parse_bool('SKY_TEXTURES_ENABLED', True):
+            self.gui_sky_textures_check.select()
+        # Set command after select to prevent it being called
+        self.gui_sky_textures_check.config(
+            command=lambda: self.on_checkbutton_click('SKY_TEXTURES_ENABLED')
+        )
+        self.gui_sky_textures_check.pack(fill="x", anchor=tkinter.NW)
+
         display_columns_default = self.parse_int(
             'DISPLAY_COLUMNS', self.parse_int('VIEWPORT_WIDTH', 500)
         )

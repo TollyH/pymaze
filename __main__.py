@@ -545,7 +545,7 @@ def main():
                     )
                 )
 
-            if (cfg.textures_enabled
+            if (cfg.sky_textures_enabled
                     and (not display_map or cfg.enable_cheat_map)):
                 # Draw sky
                 for index in range(cfg.display_columns):

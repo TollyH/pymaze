@@ -101,6 +101,10 @@ class Config:
         # with each level. Setting this to False will cause all walls to appear
         # in solid colour, which may also provide some performance boosts.
         self.textures_enabled = self._parse_bool('TEXTURES_ENABLED', True)
+        # Similar to textures_enabled, but for the sky.
+        self.sky_textures_enabled = self._parse_bool(
+            'SKY_TEXTURES_ENABLED', True
+        )
 
         # The dimensions of all the PNGs found in the textures folder.
         self.texture_width = self._parse_int('TEXTURE_WIDTH', 128)
