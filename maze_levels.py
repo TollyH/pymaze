@@ -48,6 +48,61 @@ levels = [
         (7, 0), 20
     ),
     Level(
+        (15, 15),
+        [
+            [F, F, T, T, F, F, F, T, T, F, F, F, T, F, F],
+            [T, F, F, F, F, T, F, T, F, F, T, F, F, F, T],
+            [T, F, T, T, T, T, F, T, T, F, T, T, T, F, T],
+            [T, F, F, F, F, T, F, F, F, F, F, F, F, F, F],
+            [F, F, T, F, T, T, T, T, F, T, T, T, F, T, F],
+            [T, T, T, F, F, F, T, T, F, T, F, T, T, T, F],
+            [F, F, F, F, T, F, F, F, F, T, F, T, F, T, F],
+            [F, T, F, T, T, F, T, T, F, T, F, F, F, F, F],
+            [T, T, F, T, T, F, T, T, T, T, T, T, T, F, T],
+            [T, F, F, F, F, F, F, F, F, T, F, F, T, F, T],
+            [T, T, F, T, T, T, T, T, F, T, T, F, T, F, F],
+            [F, T, F, F, F, F, F, T, F, F, F, F, T, F, T],
+            [F, T, F, T, T, T, T, T, F, T, F, T, T, F, F],
+            [F, T, F, T, T, F, F, T, F, T, F, T, T, F, T],
+            [F, F, F, F, T, T, F, F, F, F, F, F, F, F, T]
+        ],
+        (0, 0), (0, 11),
+        [
+            (0, 4), (8, 1), (8, 7), (0, 7), (12, 4), (12, 6), (10, 5),
+            (10, 9), (14, 0), (14, 12), (14, 10), (5, 13), (4, 3), (3, 14)
+        ],
+        (7, 6), 35
+    ),
+    Level(
+        (17, 17),
+        [
+            [F, F, F, F, T, T, F, T, F, T, T, T, F, F, F, T, T],
+            [F, T, T, F, F, F, F, T, F, T, F, T, F, T, F, F, T],
+            [F, F, T, T, T, T, F, T, F, F, F, T, F, T, T, F, F],
+            [T, F, F, F, T, F, F, F, F, T, T, T, F, F, F, F, T],
+            [T, F, T, F, T, T, T, F, T, T, F, F, F, T, T, F, T],
+            [F, F, F, F, F, F, F, F, T, F, F, T, T, T, F, F, F],
+            [F, T, T, F, T, T, T, F, T, F, T, T, F, F, F, T, F],
+            [F, F, T, F, F, F, F, F, F, F, F, F, F, T, T, T, T],
+            [T, F, T, T, T, T, T, F, F, F, T, T, F, F, F, F, T],
+            [T, F, F, F, F, F, F, F, F, F, F, F, F, T, F, T, T],
+            [F, F, T, T, F, T, T, F, T, F, T, F, T, T, F, F, F],
+            [T, F, F, F, F, T, T, F, T, F, T, T, T, F, F, T, T],
+            [T, T, T, T, T, T, F, F, T, F, F, F, F, F, T, T, F],
+            [T, F, F, T, F, T, F, T, T, T, T, F, T, F, F, F, F],
+            [T, F, T, T, F, F, F, F, F, F, T, F, T, T, F, T, T],
+            [F, F, F, F, F, T, T, T, T, F, F, F, T, F, F, F, T],
+            [T, T, F, T, F, F, T, F, F, F, T, F, T, T, F, T, T]
+        ],
+        (8, 7), (8, 9),
+        [
+            (0, 10), (0, 15), (2, 13), (10, 1), (16, 2), (16, 6), (14, 16),
+            (5, 16), (7, 16), (14, 16), (16, 10), (16, 12), (14, 16), (15, 8),
+            (2, 16), (11, 16), (6, 0),
+        ],
+        (8, 8), 40
+    ),
+    Level(
         (19, 19),
         [
             [F, F, F, F, F, T, F, F, F, T, F, F, F, T, F, F, F, F, F],
@@ -111,6 +166,62 @@ levels = [
             (9, 19), (16, 19)
         ],
         (9, 19), 75
+    ),
+    Level(
+        (40, 40),
+        [
+            [F, F, F, F, F, F, F, F, F, F, F, F, T, F, F, F, F, T, F, F, F, T, F, F, F, F, T, T, T, F, F, F, F, T, T, T, T, T, F, T],
+            [F, T, T, T, F, T, T, T, T, T, T, F, T, F, T, T, T, T, F, T, F, T, F, T, T, F, T, F, F, F, T, T, F, T, F, F, F, F, F, F],
+            [F, F, F, T, F, F, F, F, T, F, T, F, T, F, T, T, F, F, F, T, T, T, F, T, T, F, T, F, T, T, T, T, F, T, F, T, T, F, T, F],
+            [F, T, F, T, T, F, T, T, T, F, T, F, F, F, F, F, F, T, F, T, F, F, F, T, F, F, F, F, T, F, F, T, F, T, F, T, T, T, T, F],
+            [F, T, F, F, T, F, F, F, F, F, T, T, T, T, T, T, F, T, T, T, F, T, F, T, T, F, T, T, T, F, T, T, F, F, F, F, T, F, T, F],
+            [F, T, F, T, T, T, F, T, T, F, T, F, T, T, F, T, F, F, F, F, F, T, F, F, T, F, F, F, F, F, T, F, F, T, T, F, T, F, F, F],
+            [F, T, T, T, F, T, F, T, T, F, F, F, F, F, F, T, F, T, F, T, T, T, T, F, T, T, T, F, T, T, T, T, F, F, F, F, T, T, F, T],
+            [F, F, F, F, F, T, F, F, F, F, T, F, T, F, T, T, F, T, F, T, F, F, T, F, F, T, T, F, F, F, F, T, T, T, T, F, F, T, F, T],
+            [F, T, F, T, T, T, F, T, T, T, T, T, T, F, T, T, F, T, F, T, F, T, T, T, F, T, F, F, T, F, T, T, T, F, T, T, T, T, F, F],
+            [F, T, F, F, T, F, F, T, F, F, F, F, F, F, F, F, F, T, F, T, F, T, F, T, F, T, T, F, T, T, T, F, F, F, T, T, T, F, F, T],
+            [F, T, T, F, F, F, T, T, F, T, T, T, F, T, T, T, F, T, F, F, F, F, F, T, F, F, F, F, T, F, F, F, T, F, F, F, F, F, T, T],
+            [F, F, T, F, T, F, T, F, F, T, F, T, F, T, F, T, F, T, T, T, T, T, T, T, T, T, T, F, T, T, T, F, T, T, T, T, T, F, F, T],
+            [T, F, T, F, T, F, T, T, T, T, F, F, F, T, F, F, F, F, F, F, F, F, F, T, F, F, F, F, T, F, T, F, T, F, F, F, T, T, F, T],
+            [T, F, T, F, T, F, F, F, T, T, T, T, F, T, T, T, F, T, F, T, T, F, T, T, T, T, T, F, T, F, T, T, T, F, T, T, T, F, F, T],
+            [F, F, T, T, T, F, T, F, F, F, T, T, F, T, T, T, F, T, F, F, T, F, F, T, F, F, F, F, F, F, T, F, F, F, T, F, T, F, T, T],
+            [T, F, T, F, T, F, T, T, T, F, F, F, F, F, F, T, F, T, T, T, T, F, T, T, F, T, F, T, T, F, T, T, F, T, T, F, T, F, F, T],
+            [T, F, F, F, T, F, F, F, T, T, T, F, T, T, F, T, T, T, F, F, F, F, T, T, F, T, T, T, T, F, F, F, F, T, F, F, T, T, F, T],
+            [F, F, T, F, T, F, T, F, F, F, T, F, F, T, F, F, F, T, T, F, T, T, T, F, F, F, F, F, T, T, F, T, T, T, F, T, T, T, F, T],
+            [F, T, T, F, T, F, T, T, F, T, T, F, T, T, F, T, T, T, T, F, T, F, F, F, T, F, T, F, F, T, F, T, F, F, F, T, F, F, F, T],
+            [F, T, T, T, T, F, T, T, T, T, T, F, T, F, F, F, F, F, T, F, F, F, T, T, T, F, T, T, F, T, F, T, F, T, T, T, F, T, T, T],
+            [F, F, T, T, F, F, F, F, F, F, T, F, T, T, F, T, F, T, T, T, T, T, T, F, T, T, T, T, F, F, F, F, F, F, F, F, F, F, F, T],
+            [T, F, F, T, F, T, T, F, T, T, T, F, T, T, T, T, F, T, F, F, F, F, F, F, F, F, F, F, F, T, T, T, F, T, T, T, F, T, F, T],
+            [F, F, T, T, F, F, T, F, F, F, T, F, F, F, T, T, T, T, F, T, T, T, T, T, T, T, T, T, T, T, F, T, F, T, F, T, T, T, F, T],
+            [F, T, T, F, F, T, T, F, T, T, T, T, T, T, T, F, F, F, F, T, F, F, F, T, F, F, F, F, F, F, F, T, F, T, F, T, F, T, F, F],
+            [F, F, T, F, T, T, T, F, F, F, F, F, F, F, F, F, T, T, F, F, F, T, F, T, F, T, T, T, T, T, T, T, F, T, F, F, F, F, F, T],
+            [F, T, T, F, F, F, T, T, T, F, T, T, T, T, F, T, T, T, T, F, T, T, F, F, F, F, F, T, F, F, F, F, F, T, F, T, T, T, F, T],
+            [T, T, T, F, T, T, T, F, T, F, T, T, F, T, F, F, F, T, F, F, F, T, T, T, T, T, F, T, T, T, T, F, T, T, F, T, T, F, F, F],
+            [F, F, F, F, F, F, T, F, F, F, F, F, F, T, F, T, F, T, T, T, F, F, F, F, F, T, F, T, F, F, F, F, T, F, F, T, F, F, T, F],
+            [T, T, F, T, T, F, T, T, T, F, T, T, T, T, T, T, F, T, F, T, T, T, T, T, T, T, F, F, F, T, T, T, T, T, T, T, F, T, T, F],
+            [T, F, F, F, T, F, T, F, F, F, F, F, F, F, F, F, F, F, F, F, F, T, F, F, F, F, F, T, F, F, T, F, F, F, F, T, F, T, F, F],
+            [T, T, F, T, T, F, T, T, F, T, F, T, F, T, T, T, T, F, T, T, F, T, F, T, T, T, T, T, F, T, T, T, T, T, F, T, F, T, F, T],
+            [F, F, F, F, T, F, F, T, T, T, T, T, F, F, F, F, T, F, T, T, F, T, F, F, F, T, F, F, F, F, F, F, F, T, F, F, F, T, F, F],
+            [T, F, T, F, T, T, T, T, F, T, F, T, F, T, T, T, T, F, F, F, F, T, F, T, F, F, F, T, T, T, T, T, T, T, T, F, T, T, T, F],
+            [T, F, T, F, F, F, F, T, F, T, F, T, T, T, F, F, F, F, T, T, F, T, F, T, T, T, T, T, F, T, T, F, F, F, T, F, T, F, F, F],
+            [T, T, T, T, F, T, T, T, F, F, F, F, T, T, T, T, T, F, F, F, F, T, F, F, F, F, T, T, F, F, F, F, T, F, T, T, T, F, T, T],
+            [F, T, F, F, F, F, F, T, T, F, T, T, T, F, F, F, F, F, T, T, F, T, F, T, T, F, F, T, T, F, T, F, T, F, T, F, F, F, F, T],
+            [F, F, F, T, F, T, F, F, T, F, F, F, F, F, T, F, T, F, F, F, F, T, F, F, T, F, T, T, T, F, T, F, T, F, T, F, T, T, F, F],
+            [T, F, T, T, F, T, T, T, T, T, F, T, T, T, T, F, T, T, T, F, T, T, F, T, T, F, T, F, F, F, T, F, T, F, T, F, T, F, F, T],
+            [T, F, T, T, F, F, F, T, T, F, F, F, T, F, F, F, F, T, F, F, F, F, F, T, F, F, F, F, T, T, T, F, T, F, F, F, T, F, T, T],
+            [T, F, F, T, T, T, F, F, F, F, T, T, T, F, T, T, F, T, T, F, T, F, T, T, F, T, T, F, T, T, F, F, T, T, F, T, T, F, F, F]
+        ],
+        (0, 0), (39, 39),
+        [
+            (3, 4), (7, 2), (9, 2), (7, 11), (10, 11), (14, 11), (3, 15),
+            (18, 16), (17, 19), (23, 20), (30, 22), (33, 27), (35, 33),
+            (39, 36), (9, 20), (13, 22), (20, 1), (22, 9), (29, 12),
+            (35, 14), (29, 10), (36, 7), (39, 8), (35, 14), (30, 3),
+            (39, 23), (14, 11), (24, 12), (7, 26), (6, 31), (18, 28),
+            (10, 30), (15, 31), (14, 33), (28, 33), (24, 39), (2, 39),
+            (27, 39)
+        ],
+        (39, 39), 120
     )
 ]
 

@@ -1,5 +1,5 @@
 """
-PyGame Maze - Tolly Hill 2022
+PyGame Maze - Copyright © 2022  Ptolemy Hill and Finlay Griffiths
 
 The main script for the game. Creates and draws to the game window, as well as
 receiving and interpreting player input and recording time and movement scores.
