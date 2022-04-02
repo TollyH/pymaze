@@ -3,7 +3,7 @@
 [![python-analysis](https://github.com/TollyH/pygame_maze/actions/workflows/python-analysis.yml/badge.svg?branch=raycasting&event=push)](https://github.com/TollyH/pygame_maze/actions/workflows/python-analysis.yml)
 
 A pseudo-3D, grid-based maze game written in Python with PyGame using a DDA
-algorithm for raycasting. For the fully 2D version without raycasting, see the ["flat" branch](https://github.com/TollyH/pygame_maze/tree/flat).
+algorithm for raycasting.
 
 ## Installation
 
