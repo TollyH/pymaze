@@ -65,15 +65,15 @@ def main():
     # Camera planes are always perpendicular to facing directions
     camera_planes = [(-cfg.display_fov / 100, 0.0)] * len(levels)
     time_scores = [0.0] * len(levels)
-    move_scores = [0] * len(levels)
+    move_scores = [0.0] * len(levels)
     has_started_level = [False] * len(levels)
     if os.path.isfile("highscores.pickle"):
         with open("highscores.pickle", 'rb') as file:
-            highscores: List[Tuple[float, int]] = pickle.load(file)
+            highscores: List[Tuple[float, float]] = pickle.load(file)
             if len(highscores) < len(levels):
-                highscores += [(0.0, 0)] * (len(levels) - len(highscores))
+                highscores += [(0.0, 0.0)] * (len(levels) - len(highscores))
     else:
-        highscores: List[Tuple[float, int]] = [(0.0, 0)] * len(levels)
+        highscores: List[Tuple[float, float]] = [(0.0, 0.0)] * len(levels)
 
     # Used to create the darker versions of each texture
     darkener = pygame.Surface((cfg.texture_width, cfg.texture_height))
@@ -242,8 +242,8 @@ def main():
                         compass_times[current_level] = cfg.compass_time
                         compass_burned_out[current_level] = False
                         flicker_time_remaining[current_level] = 0.0
-                        time_scores[current_level] = 0
-                        move_scores[current_level] = 0
+                        time_scores[current_level] = 0.0
+                        move_scores[current_level] = 0.0
                         has_started_level[current_level] = False
                         display_compass = False
                         if not cfg.enable_cheat_map:
@@ -325,9 +325,7 @@ def main():
                 or screen.get_size()[1] != target_screen_size[1]):
             screen = pygame.display.set_mode(target_screen_size)
 
-        old_grid_position = floor_coordinates(
-            levels[current_level].player_coords
-        )
+        old_position = levels[current_level].player_coords
         # Do not allow player to move while map is open if cheat map is not
         # enabled - or if the reset prompt is open
         if ((cfg.enable_cheat_map or not display_map)
@@ -412,10 +410,11 @@ def main():
                     old_camera_plane[0] * math.sin(-turn_speed_mod)
                     + old_camera_plane[1] * math.cos(-turn_speed_mod)
                 )
-            # Only count up one move score if player crossed a gridline
-            if floor_coordinates(
-                    levels[current_level].player_coords) != old_grid_position:
-                move_scores[current_level] += 1
+            move_scores[current_level] += math.sqrt(
+                raycasting.no_sqrt_coord_distance(
+                    old_position, levels[current_level].player_coords
+                )
+            )
 
         # Victory screen
         if levels[current_level].won:
@@ -442,7 +441,7 @@ def main():
                 True, BLUE
             )
             move_score_text = font.render(
-                f"Move Score: {move_scores[current_level]}",
+                f"Move Score: {move_scores[current_level]:.1f}",
                 True, BLUE
             )
             best_time_score_text = font.render(
@@ -450,7 +449,7 @@ def main():
                 True, BLUE
             )
             best_move_score_text = font.render(
-                f"Best Move Score: {highscores[current_level][1]}",
+                f"Best Move Score: {highscores[current_level][1]:.1f}",
                 True, BLUE
             )
             best_total_time_score_text = font.render(
@@ -458,7 +457,7 @@ def main():
                 True, BLUE
             )
             best_total_move_score_text = font.render(
-                f"Best Game Move Score: {sum(x[1] for x in highscores)}",
+                f"Best Game Move Score: {sum(x[1] for x in highscores):.1f}",
                 True, BLUE
             )
             lower_hint_text = font.render(
@@ -968,9 +967,9 @@ def main():
                 WHITE if levels[current_level].monster_coords is None else RED
             )
             move_score_text = font.render(
-                f"Moves: {move_scores[current_level]}"
+                f"Moves: {move_scores[current_level]:.1f}"
                 if has_started_level[current_level] else
-                f"Moves: {highscores[current_level][1]}",
+                f"Moves: {highscores[current_level][1]:.1f}",
                 True, WHITE
             )
             starting_keys = len(levels[current_level].original_exit_keys)
@@ -981,7 +980,7 @@ def main():
                 f"Keys: {remaining_keys}/{starting_keys}", True, WHITE
             )
             screen.blit(time_score_text, (10, 10))
-            screen.blit(move_score_text, (180, 10))
+            screen.blit(move_score_text, (170, 10))
             screen.blit(keys_text, (340, 10))
 
         if is_reset_prompt_shown:
