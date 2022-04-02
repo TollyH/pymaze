@@ -26,6 +26,7 @@ algorithm for raycasting.
 - `CTRL` - Crawl while held
 - `Space` - Toggle map
 - `C` - Toggle monster compass
+- `E` - Toggle statistics (time, moves, key counts)
 
 ## Cheat Map Controls
 

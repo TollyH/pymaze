@@ -51,7 +51,7 @@ def main():
 
     # Minimum window resolution is 500x500
     screen = pygame.display.set_mode((
-        max(cfg.viewport_width, 500), max(cfg.viewport_height + 50, 500)
+        max(cfg.viewport_width, 500), max(cfg.viewport_height, 500)
     ))
     pygame.display.set_caption("Maze - Level 1")
 
@@ -133,6 +133,7 @@ def main():
 
     display_map = False
     display_compass = False
+    display_stats = False
     display_rays = False
 
     is_reset_prompt_shown = False
@@ -188,6 +189,10 @@ def main():
                         # Compass and map cannot be displayed together
                         if not display_map or cfg.enable_cheat_map:
                             display_compass = not display_compass
+                    elif event.key == pygame.K_e:
+                        # Stats and map cannot be displayed together
+                        if not display_map or cfg.enable_cheat_map:
+                            display_stats = not display_stats
                     elif event.key in (pygame.K_LEFTBRACKET,
                                        pygame.K_RIGHTBRACKET):
                         if (event.key == pygame.K_LEFTBRACKET
@@ -218,8 +223,6 @@ def main():
                             display_rays = not display_rays
                         else:
                             display_map = not display_map
-                            if not cfg.enable_cheat_map:
-                                display_compass = False
                     elif event.key == pygame.K_ESCAPE:
                         enable_mouse_control = False
                         # Return the mouse to normal
@@ -269,11 +272,10 @@ def main():
                     pygame.event.set_grab(enable_mouse_control)
                 elif (cfg.allow_realtime_editing and cfg.enable_cheat_map
                         and event.button == pygame.BUTTON_LEFT
-                        and mouse_coords[0] > cfg.viewport_width
-                        and mouse_coords[1] >= 50):
+                        and mouse_coords[0] > cfg.viewport_width):
                     clicked_tile = (
                         (mouse_coords[0] - cfg.viewport_width) // tile_width,
-                        (mouse_coords[1] - 50) // tile_height
+                        mouse_coords[1] // tile_height
                     )
                     levels[current_level][clicked_tile] = (
                         not levels[current_level][clicked_tile]
@@ -319,7 +321,7 @@ def main():
                 cfg.viewport_width *
                 (2 if cfg.enable_cheat_map and display_map else 1), 500
             ),
-            max(cfg.viewport_height + 50, 500)
+            max(cfg.viewport_height, 500)
         )
         if (screen.get_size()[0] != target_screen_size[0]
                 or screen.get_size()[1] != target_screen_size[1]):
@@ -478,7 +480,7 @@ def main():
                 has_started_level[current_level] = False
             if cfg.monster_display_on_kill:
                 screen.blit(jumpscare_monster_texture, (
-                    0, 50, cfg.viewport_width, cfg.viewport_height
+                    0, 0, cfg.viewport_width, cfg.viewport_height
                 ))
         # Currently playing
         else:
@@ -560,14 +562,14 @@ def main():
                 # Draw solid sky
                 pygame.draw.rect(
                     screen, BLUE,
-                    (0, 50, filled_screen_width, cfg.viewport_height // 2)
+                    (0, 0, filled_screen_width, cfg.viewport_height // 2)
                 )
                 monster_coords = levels[current_level].monster_coords
                 # Draw solid floor
                 pygame.draw.rect(
                     screen, LIGHT_GREY,
                     (
-                        0, cfg.viewport_height // 2 + 50,
+                        0, cfg.viewport_height // 2,
                         filled_screen_width, cfg.viewport_height // 2
                     )
                 )
@@ -602,7 +604,7 @@ def main():
                         ), (display_column_width, cfg.viewport_height // 2)
                     )
                     screen.blit(
-                        scaled_pixel_column, (index * display_column_width, 50)
+                        scaled_pixel_column, (index * display_column_width, 0)
                     )
 
             if not display_map or cfg.enable_cheat_map:
@@ -687,7 +689,7 @@ def main():
                         scaled_texture,
                         (
                             screen_x_pos - sprite_size[0] // 2,
-                            cfg.viewport_height // 2 - sprite_size[1] // 2 + 50
+                            cfg.viewport_height // 2 - sprite_size[1] // 2
                         )
                     )
                     if sprite_type == raycasting.MONSTER:
@@ -748,7 +750,7 @@ def main():
                             draw_y = max(
                                 0,
                                 -column_height // 2 + cfg.viewport_height // 2
-                            ) + 50
+                            )
                             # Get a single column of pixels
                             pixel_column = texture.subsurface(
                                 texture_x, 0, 1, cfg.texture_height
@@ -808,7 +810,7 @@ def main():
                                     0,
                                     -column_height // 2
                                     + cfg.viewport_height // 2
-                                ) + 50,
+                                ),
                                 display_column_width, column_height
                             )
                         )
@@ -837,7 +839,7 @@ def main():
                         pygame.draw.rect(
                             screen, colour, (
                                 tile_width * x + x_offset,
-                                tile_height * y + 50, tile_width, tile_height
+                                tile_height * y, tile_width, tile_height
                             )
                         )
                 # Raycast rays
@@ -848,11 +850,11 @@ def main():
                                 levels[current_level].player_coords[0]
                                 * tile_width + x_offset,
                                 levels[current_level].player_coords[1]
-                                * tile_height + 50
+                                * tile_height
                             ),
                             (
                                 point[0] * tile_width + x_offset,
-                                point[1] * tile_height + 50
+                                point[1] * tile_height
                             ), 1
                         )
                 # Player direction
@@ -861,7 +863,6 @@ def main():
                         levels[current_level].player_coords[0] * tile_width
                         + x_offset,
                         levels[current_level].player_coords[1] * tile_height
-                        + 50
                     ),
                     (
                         levels[current_level].player_coords[0] * tile_width
@@ -869,7 +870,7 @@ def main():
                         + facing_directions[current_level][0] * tile_width
                         // 2,
                         levels[current_level].player_coords[1] * tile_height
-                        + 50 + facing_directions[current_level][1] * tile_width
+                        + facing_directions[current_level][1] * tile_width
                         // 2
                     ), 3
                 )
@@ -879,7 +880,6 @@ def main():
                         levels[current_level].player_coords[0] * tile_width
                         + x_offset,
                         levels[current_level].player_coords[1] * tile_height
-                        + 50
                     ), tile_width / 8
                 )
 
@@ -894,12 +894,12 @@ def main():
                         )
                         viewport_darkener.fill(BLACK)
                         viewport_darkener.set_alpha(127)
-                        screen.blit(viewport_darkener, (0, 50))
+                        screen.blit(viewport_darkener, (0, 0))
                         flicker_time_remaining[current_level] -= frame_time
                         if flicker_time_remaining[current_level] < 0:
                             flicker_time_remaining[current_level] = 0.0
 
-            if display_compass:
+            if display_compass and (not display_map or cfg.enable_cheat_map):
                 compass_outer_radius = cfg.viewport_width // 6
                 compass_inner_radius = (
                     compass_outer_radius - cfg.viewport_width // 100
@@ -907,7 +907,7 @@ def main():
                 compass_centre = (
                     cfg.viewport_width - compass_outer_radius
                     - cfg.viewport_width // 50,
-                    cfg.viewport_height + 50 - compass_outer_radius
+                    cfg.viewport_height - compass_outer_radius
                     - cfg.viewport_width // 50
                 )
                 pygame.draw.circle(
@@ -957,35 +957,45 @@ def main():
                         )
                     )
 
-            # HUD is drawn last to prevent it being obstructed
-            pygame.draw.rect(screen, GREY, (0, 0, cfg.viewport_width, 50))
-            time_score_text = font.render(
-                f"Time: {time_scores[current_level]:.1f}"
-                if has_started_level[current_level] else
-                f"Time: {highscores[current_level][0]:.1f}",
-                True,
-                WHITE if levels[current_level].monster_coords is None else RED
-            )
-            move_score_text = font.render(
-                f"Moves: {move_scores[current_level]:.1f}"
-                if has_started_level[current_level] else
-                f"Moves: {highscores[current_level][1]:.1f}",
-                True, WHITE
-            )
-            starting_keys = len(levels[current_level].original_exit_keys)
-            remaining_keys = (
-                starting_keys - len(levels[current_level].exit_keys)
-            )
-            keys_text = font.render(
-                f"Keys: {remaining_keys}/{starting_keys}", True, WHITE
-            )
-            screen.blit(time_score_text, (10, 10))
-            screen.blit(move_score_text, (170, 10))
-            screen.blit(keys_text, (340, 10))
+            # Stats are always shown before the player begins a level to
+            # display highscores and the key count.
+            if (display_stats or not has_started_level[current_level]
+                    and (not display_map or cfg.enable_cheat_map)):
+                background = pygame.Surface((225, 110))
+                background.fill(
+                    BLACK
+                    if levels[current_level].monster_coords is None else
+                    DARK_RED
+                )
+                background.set_alpha(127)
+                screen.blit(background, (0, cfg.viewport_height - 110))
+
+                time_score_text = font.render(
+                    f"Time: {time_scores[current_level]:.1f}"
+                    if has_started_level[current_level] else
+                    f"Time: {highscores[current_level][0]:.1f}",
+                    True, WHITE
+                )
+                move_score_text = font.render(
+                    f"Moves: {move_scores[current_level]:.1f}"
+                    if has_started_level[current_level] else
+                    f"Moves: {highscores[current_level][1]:.1f}",
+                    True, WHITE
+                )
+                starting_keys = len(levels[current_level].original_exit_keys)
+                remaining_keys = (
+                    starting_keys - len(levels[current_level].exit_keys)
+                )
+                keys_text = font.render(
+                    f"Keys: {remaining_keys}/{starting_keys}", True, WHITE
+                )
+                screen.blit(time_score_text, (10, cfg.viewport_height - 100))
+                screen.blit(move_score_text, (10, cfg.viewport_height - 70))
+                screen.blit(keys_text, (10, cfg.viewport_height - 40))
 
         if is_reset_prompt_shown:
             prompt_background = pygame.Surface(
-                (cfg.viewport_width, cfg.viewport_height + 50)
+                (cfg.viewport_width, cfg.viewport_height)
             )
             prompt_background.fill(LIGHT_BLUE)
             prompt_background.set_alpha(195)
@@ -998,7 +1008,7 @@ def main():
                     cfg.viewport_width // 2
                     - confirm_text.get_width() // 2,
                     cfg.viewport_height // 2
-                    - confirm_text.get_height() // 2 + 50,
+                    - confirm_text.get_height() // 2,
                 )
             )
 
