@@ -233,6 +233,7 @@ def main():
                         time_scores[current_level] = 0.0
                         move_scores[current_level] = 0.0
                         has_started_level[current_level] = False
+                        screen_drawing.total_time_on_screen[current_level] = 0
                         display_compass = False
                         if not cfg.enable_cheat_map:
                             display_map = False
@@ -425,7 +426,7 @@ def main():
             screen_drawing.draw_victory_screen(
                 screen, cfg, last_level_frame[current_level],
                 highscores, current_level, time_scores[current_level],
-                move_scores[current_level]
+                move_scores[current_level], frame_time
             )
         # Death screen
         elif levels[current_level].killed:

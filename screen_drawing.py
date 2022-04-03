@@ -9,6 +9,7 @@ import pygame
 
 from config_loader import Config
 from level import floor_coordinates, Level
+from maze_levels import levels
 
 WHITE = (0xFF, 0xFF, 0xFF)
 BLACK = (0x00, 0x00, 0x00)
@@ -29,16 +30,21 @@ LIGHT_GREY = (0xCD, 0xCD, 0xCD)
 pygame.font.init()
 FONT = pygame.font.SysFont('Tahoma', 24, True)
 
+# Used for the victory scene animations
+total_time_on_screen = [0.0] * len(levels)
+
 
 def draw_victory_screen(screen: pygame.Surface, cfg: Config,
                         background: pygame.Surface,
                         highscores: List[Tuple[float, float]],
                         current_level: int, time_score: float,
-                        move_score: float):
+                        move_score: float, frame_time: float):
     """
     Draw the victory screen seen after beating a level. Displays numerous
-    scores to the player.
+    scores to the player in a gradual animation.
     """
+    total_time_on_screen[current_level] += frame_time
+    time_on_screen = total_time_on_screen[current_level]
     screen.blit(background, (0, 0))
     victory_background = pygame.Surface(
         (cfg.viewport_width, cfg.viewport_height)
@@ -46,30 +52,45 @@ def draw_victory_screen(screen: pygame.Surface, cfg: Config,
     victory_background.fill(GREEN)
     victory_background.set_alpha(195)
     screen.blit(victory_background, (0, 0))
-    time_score_text = FONT.render(f"Time Score: {time_score:.1f}", True, BLUE)
-    move_score_text = FONT.render(f"Move Score: {move_score:.1f}", True, BLUE)
-    best_time_score_text = FONT.render(
-        f"Best Time Score: {highscores[current_level][0]:.1f}", True, BLUE
+    time_score_text = FONT.render(
+        f"Time Score: {time_score * min(1.0, time_on_screen / 2):.1f}", True,
+        DARK_RED
     )
-    best_move_score_text = FONT.render(
-        f"Best Move Score: {highscores[current_level][1]:.1f}", True, BLUE
-    )
-    best_total_time_score_text = FONT.render(
-        f"Best Game Time Score: {sum(x[0] for x in highscores):.1f}", True,
-        BLUE
-    )
-    best_total_move_score_text = FONT.render(
-        f"Best Game Move Score: {sum(x[1] for x in highscores):.1f}", True,
-        BLUE
-    )
-    lower_hint_text = FONT.render("(Lower scores are better)", True, BLUE)
     screen.blit(time_score_text, (10, 10))
-    screen.blit(move_score_text, (10, 40))
-    screen.blit(best_time_score_text, (10, 90))
-    screen.blit(best_move_score_text, (10, 120))
-    screen.blit(best_total_time_score_text, (10, 200))
-    screen.blit(best_total_move_score_text, (10, 230))
-    screen.blit(lower_hint_text, (10, 280))
+    if time_on_screen >= 2.5:
+        move_score_text = FONT.render(
+            "Move Score: "
+            + f"{move_score * min(1.0, (time_on_screen - 2.5) / 2):.1f}",
+            True, DARK_RED
+        )
+        screen.blit(move_score_text, (10, 40))
+    if time_on_screen >= 5:
+        best_time_score_text = FONT.render(
+            f"Best Time Score: {highscores[current_level][0]:.1f}", True,
+            DARK_RED
+        )
+        best_move_score_text = FONT.render(
+            f"Best Move Score: {highscores[current_level][1]:.1f}", True,
+            DARK_RED
+        )
+        screen.blit(best_time_score_text, (10, 90))
+        screen.blit(best_move_score_text, (10, 120))
+    if time_on_screen >= 6:
+        best_total_time_score_text = FONT.render(
+            f"Best Game Time Score: {sum(x[0] for x in highscores):.1f}", True,
+            DARK_RED
+        )
+        best_total_move_score_text = FONT.render(
+            f"Best Game Move Score: {sum(x[1] for x in highscores):.1f}", True,
+            DARK_RED
+        )
+        screen.blit(best_total_time_score_text, (10, 200))
+        screen.blit(best_total_move_score_text, (10, 230))
+    if time_on_screen >= 7 and current_level < len(levels) - 1:
+        lower_hint_text = FONT.render(
+            "Press `]` to go to next level", True, DARK_RED
+        )
+        screen.blit(lower_hint_text, (10, 280))
 
 
 def draw_kill_screen(screen: pygame.Surface, cfg: Config,
