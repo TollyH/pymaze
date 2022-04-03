@@ -164,13 +164,29 @@ class Level:
                     found_valid = True
             if not found_valid:
                 return
+        grid_coords = floor_coordinates(target)
+        old_grid_coords = floor_coordinates(self.player_coords)
+        relative_grid_pos = (
+            grid_coords[0] - old_grid_coords[0],
+            grid_coords[1] - old_grid_coords[1]
+        )
+        # Moved diagonally therefore skipping a square, make sure that's valid
+        if relative_grid_pos[0] and relative_grid_pos[1]:
+            diagonal_path_free = False
+            if not self[old_grid_coords[0] + relative_grid_pos[0],
+                        old_grid_coords[1]]:
+                diagonal_path_free = True
+            elif not self[old_grid_coords[0],
+                          old_grid_coords[1] + relative_grid_pos[1]]:
+                diagonal_path_free = True
+            if not diagonal_path_free:
+                return
         self.player_coords = target
-        if floor_coordinates(target) in self.exit_keys:
-            self.exit_keys.remove(floor_coordinates(target))
-        if floor_coordinates(target) == self.monster_coords:
+        if grid_coords in self.exit_keys:
+            self.exit_keys.remove(grid_coords)
+        if grid_coords == self.monster_coords:
             self.killed = True
-        elif (floor_coordinates(target) == self.end_point
-                and len(self.exit_keys) == 0):
+        elif grid_coords == self.end_point and len(self.exit_keys) == 0:
             self.won = True
 
     def move_monster(self):
