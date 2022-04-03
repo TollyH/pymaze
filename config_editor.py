@@ -485,7 +485,7 @@ class ConfigEditorApp:
                     >= self.parse_int('VIEWPORT_WIDTH', 500)):
                 self.gui_display_columns_slider.set(new_width)  # type: ignore
         # Truncate the number of decimal places on a float represented as a
-        # string. If the float is negative, it will be coverted to an empty
+        # string. If the float is negative, it will be converted to an empty
         # string to represent None.
         to_store = (
             new_value.split(".")[0] + "."

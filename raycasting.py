@@ -2,7 +2,7 @@
 Contains functions related to the raycast rendering used to generate pseudo-3D
 graphics.
 """
-from typing import List, Literal, Tuple
+from typing import List, Tuple
 
 import level
 
@@ -37,7 +37,7 @@ def get_first_collision(current_level: level.Level,
     # When traversing one unit in a direction, what will the coordinate of the
     # other direction increase by?
     step_size = (abs(1 / direction[0]), abs(1 / direction[1]))
-    current_tile = list(level.floor_coordinates(current_level.player_coords))
+    current_tile = level.floor_coordinates(current_level.player_coords)
     # The current length of the X and Y rays respectively
     dimension_ray_length = [0.0, 0.0]
     step = [0, 0]
@@ -76,74 +76,71 @@ def get_first_collision(current_level: level.Level,
     # Stores whether a North/South or East/West wall was hit
     side_was_ns = False
     tile_found = False
-    sprites: List[
-        Tuple[Tuple[float, float], Literal[0, 1, 2, 3, 4, 5], float]
-    ] = []
+    sprites: List[Tuple[Tuple[float, float], int, float]] = []
     while not tile_found:
         # Move along ray
         if dimension_ray_length[0] < dimension_ray_length[1]:
-            current_tile[0] += step[0]
+            current_tile = (current_tile[0] + step[0], current_tile[1])
             distance = dimension_ray_length[0]
             dimension_ray_length[0] += step_size[0]
             side_was_ns = False
         else:
-            current_tile[1] += step[1]
+            current_tile = (current_tile[0], current_tile[1] + step[1])
             distance = dimension_ray_length[1]
             dimension_ray_length[1] += step_size[1]
             side_was_ns = True
 
-        if not current_level.is_coord_in_bounds(tuple(current_tile)):
+        if not current_level.is_coord_in_bounds(current_tile):
             # Edge of wall map has been reached, yet no wall in sight
             if edge_is_wall:
                 tile_found = True
             else:
                 return None, sprites
         else:
-            check_coords = tuple(current_tile)
-            if check_coords in current_level.exit_keys:
+            if current_tile in current_level.exit_keys:
                 sprites.append((
-                    (check_coords[0] + 0.5, check_coords[1] + 0.5),
+                    (current_tile[0] + 0.5, current_tile[1] + 0.5),
                     KEY, no_sqrt_coord_distance(
                         current_level.player_coords,
-                        (check_coords[0] + 0.5, check_coords[1] + 0.5)
+                        (current_tile[0] + 0.5, current_tile[1] + 0.5)
                     )
                 ))
-            if current_level.end_point == check_coords:
+            if current_level.end_point == current_tile:
                 sprites.append((
-                    (check_coords[0] + 0.5, check_coords[1] + 0.5),
+                    (current_tile[0] + 0.5, current_tile[1] + 0.5),
                     END_POINT
                     if len(current_level.exit_keys) != 0 else
                     END_POINT_ACTIVE, no_sqrt_coord_distance(
                         current_level.player_coords,
-                        (check_coords[0] + 0.5, check_coords[1] + 0.5)
+                        (current_tile[0] + 0.5, current_tile[1] + 0.5)
                     )
                 ))
-            if current_level.monster_coords == check_coords:
+            if current_level.monster_coords == current_tile:
                 sprites.append((
-                    (check_coords[0] + 0.5, check_coords[1] + 0.5),
+                    (current_tile[0] + 0.5, current_tile[1] + 0.5),
                     MONSTER, no_sqrt_coord_distance(
                         current_level.player_coords,
-                        (check_coords[0] + 0.5, check_coords[1] + 0.5)
+                        (current_tile[0] + 0.5, current_tile[1] + 0.5)
                     )
                 ))
-            if current_level.start_point == check_coords:
+            if current_level.start_point == current_tile:
                 sprites.append((
-                    (check_coords[0] + 0.5, check_coords[1] + 0.5),
+                    (current_tile[0] + 0.5, current_tile[1] + 0.5),
                     START_POINT, no_sqrt_coord_distance(
                         current_level.player_coords,
-                        (check_coords[0] + 0.5, check_coords[1] + 0.5)
+                        (current_tile[0] + 0.5, current_tile[1] + 0.5)
                     )
                 ))
-            if check_coords in current_level.player_flags:
+            if current_tile in current_level.player_flags:
                 sprites.append((
-                    (check_coords[0] + 0.5, check_coords[1] + 0.5),
+                    (current_tile[0] + 0.5, current_tile[1] + 0.5),
                     FLAG, no_sqrt_coord_distance(
                         current_level.player_coords,
-                        (check_coords[0] + 0.5, check_coords[1] + 0.5)
+                        (current_tile[0] + 0.5, current_tile[1] + 0.5)
                     )
                 ))
             # Collision check
-            if current_level[check_coords]:
+            if current_level[current_tile]:
                 tile_found = True
     # If this point is reached, a wall tile has been found
     collision_point = (
@@ -175,12 +172,8 @@ def get_columns_sprites(display_columns: int, current_level: level.Level,
     visible sprites as tuples (coordinate, type, distance) where type is either
     END_POINT, KEY, MONSTER, or START_POINT.
     """
-    columns: List[
-        Tuple[Tuple[float, float], float, float, bool]
-    ] = []
-    sprites: List[
-        Tuple[Tuple[float, float], Literal[0, 1, 2, 3, 4, 5], float]
-    ] = []
+    columns: List[Tuple[Tuple[float, float], float, float, bool]] = []
+    sprites: List[Tuple[Tuple[float, float], int, float]] = []
     for index in range(display_columns):
         camera_x = 2 * index / display_columns - 1
         cast_direction = (

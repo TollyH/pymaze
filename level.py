@@ -11,14 +11,14 @@ def floor_coordinates(coord: Tuple[float, float]):
     """
     Convert a precise coordinate to one representing whole tile position.
     """
-    return (math.floor(coord[0]), math.floor(coord[1]))
+    return math.floor(coord[0]), math.floor(coord[1])
 
 
 class Level:
     """
     A class representing a single maze level. Contains a wall map
     as a 2D array, with True representing the maze walls, and False
-    represting occupyable space. Also keeps track of the current player
+    representing occupy-able space. Also keeps track of the current player
     coordinates within the level and can calculate possible solutions.
     Monster start and wait can be set to None if you do not wish the level
     to have a monster. This class will not automatically move or spawn
@@ -82,7 +82,7 @@ class Level:
         # Used to prevent monster from backtracking
         self._last_monster_position = (-1, -1)
 
-        # Maps coordinates to a list of lists of coordinates represting
+        # Maps coordinates to a list of lists of coordinates represented
         # possible paths from a previous player position. Saves on unnecessary
         # repeated calculations.
         self._solution_cache: Dict[
@@ -299,8 +299,8 @@ class Level:
         Checks if a coordinate in within the boundaries of the maze.
         """
         return (
-            coord[0] >= 0 and coord[0] < self.dimensions[0]
-            and coord[1] >= 0 and coord[1] < self.dimensions[1]
+                0 <= coord[0] < self.dimensions[0]
+                and 0 <= coord[1] < self.dimensions[1]
         )
 
     def _path_search(self, current_path: List[Tuple[int, int]],

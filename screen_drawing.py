@@ -1,0 +1,425 @@
+"""
+Contains functions for performing most display related tasks, including
+drawing columns, sprites, and HUD elements.
+"""
+import math
+from typing import List, Optional, Tuple
+
+import pygame
+
+from config_loader import Config
+from level import floor_coordinates, Level
+
+WHITE = (0xFF, 0xFF, 0xFF)
+BLACK = (0x00, 0x00, 0x00)
+BLUE = (0x00, 0x30, 0xFF)
+LIGHT_BLUE = (0x07, 0xF0, 0xF0)
+GOLD = (0xE1, 0xBB, 0x12)
+DARK_GOLD = (0x70, 0x5E, 0x09)
+GREEN = (0x00, 0xFF, 0x10)
+DARK_GREEN = (0x00, 0x80, 0x00)
+RED = (0xFF, 0x00, 0x00)
+DARK_RED = (0x80, 0x00, 0x00)
+PURPLE = (0x87, 0x23, 0xD9)
+LILAC = (0xD7, 0xA6, 0xFF)
+GREY = (0xAA, 0xAA, 0xAA)
+DARK_GREY = (0x20, 0x20, 0x20)
+LIGHT_GREY = (0xCD, 0xCD, 0xCD)
+
+pygame.font.init()
+FONT = pygame.font.SysFont('Tahoma', 24, True)
+
+
+def draw_victory_screen(screen: pygame.Surface, cfg: Config,
+                        background: pygame.Surface,
+                        highscores: List[Tuple[float, float]],
+                        current_level: int, time_score: float,
+                        move_score: float):
+    """
+    Draw the victory screen seen after beating a level. Displays numerous
+    scores to the player.
+    """
+    screen.blit(background, (0, 0))
+    victory_background = pygame.Surface(
+        (cfg.viewport_width, cfg.viewport_height)
+    )
+    victory_background.fill(GREEN)
+    victory_background.set_alpha(195)
+    screen.blit(victory_background, (0, 0))
+    time_score_text = FONT.render(f"Time Score: {time_score:.1f}", True, BLUE)
+    move_score_text = FONT.render(f"Move Score: {move_score:.1f}", True, BLUE)
+    best_time_score_text = FONT.render(
+        f"Best Time Score: {highscores[current_level][0]:.1f}", True, BLUE
+    )
+    best_move_score_text = FONT.render(
+        f"Best Move Score: {highscores[current_level][1]:.1f}", True, BLUE
+    )
+    best_total_time_score_text = FONT.render(
+        f"Best Game Time Score: {sum(x[0] for x in highscores):.1f}", True,
+        BLUE
+    )
+    best_total_move_score_text = FONT.render(
+        f"Best Game Move Score: {sum(x[1] for x in highscores):.1f}", True,
+        BLUE
+    )
+    lower_hint_text = FONT.render("(Lower scores are better)", True, BLUE)
+    screen.blit(time_score_text, (10, 10))
+    screen.blit(move_score_text, (10, 40))
+    screen.blit(best_time_score_text, (10, 90))
+    screen.blit(best_move_score_text, (10, 120))
+    screen.blit(best_total_time_score_text, (10, 200))
+    screen.blit(best_total_move_score_text, (10, 230))
+    screen.blit(lower_hint_text, (10, 280))
+
+
+def draw_kill_screen(screen: pygame.Surface, cfg: Config,
+                     jumpscare_monster_texture: pygame.Surface):
+    """
+    Draw the red kill screen optionally displaying the monster
+    """
+    screen.fill(RED)
+    if cfg.monster_display_on_kill:
+        screen.blit(jumpscare_monster_texture, (
+            0, 0, cfg.viewport_width, cfg.viewport_height
+        ))
+
+
+def draw_untextured_column(screen: pygame.Surface, cfg: Config, index: int,
+                           side_was_ns: bool, column_height: int):
+    """
+    Draw a single black/grey column to the screen. Designed for if textures
+    are disabled or a texture wasn't found for the current level.
+    """
+    display_column_width = cfg.viewport_width // cfg.display_columns
+    column_height = min(column_height, cfg.viewport_height)
+    colour = DARK_GREY if side_was_ns else BLACK
+    pygame.draw.rect(
+        screen, colour, (
+            display_column_width * index,
+            max(0, -column_height // 2 + cfg.viewport_height // 2),
+            display_column_width, column_height
+        )
+    )
+
+
+def draw_textured_column(screen: pygame.Surface, cfg: Config,
+                         coord: Tuple[float, float], side_was_ns: bool,
+                         column_height: int, index: int,
+                         facing: Tuple[float, float], texture: pygame.Surface):
+    """
+    Takes a single column of pixels from the given texture and scales it to
+    the required height before drawing it to the screen.
+    """
+    # Determines how far along the texture we need to go by keeping only the
+    # decimal part of the collision coordinate
+    display_column_width = cfg.viewport_width // cfg.display_columns
+    position_along_wall = coord[int(not side_was_ns)] % 1
+    texture_x = math.floor(position_along_wall * cfg.texture_width)
+    if not side_was_ns and facing[0] > 0:
+        texture_x = cfg.texture_width - texture_x - 1
+    elif side_was_ns and facing[1] < 0:
+        texture_x = cfg.texture_width - texture_x - 1
+    # The location on the screen to start drawing the column
+    draw_x = display_column_width * index
+    draw_y = max(0, -column_height // 2 + cfg.viewport_height // 2)
+    # Get a single column of pixels
+    pixel_column = texture.subsurface(texture_x, 0, 1, cfg.texture_height)
+    if (column_height > cfg.viewport_height
+            and column_height > cfg.texture_scale_limit):
+        # Crop the column so we are only scaling pixels that will be within the
+        # viewport. This will boost performance, at the cost of making textures
+        # uneven. This will only occur if the column is taller than the config
+        # value in texture_scale_limit.
+        overlap = math.floor(
+            (column_height - cfg.viewport_height)
+            / ((column_height - cfg.texture_height) / cfg.texture_height)
+        )
+        pixel_column = pixel_column.subsurface(
+            0, overlap // 2, 1, cfg.texture_height - overlap
+        )
+    # Scale the pixel column to fill required height
+    pixel_column = pygame.transform.scale(
+        pixel_column,
+        (
+            display_column_width,
+            min(column_height, cfg.viewport_height)
+            if column_height > cfg.texture_scale_limit else
+            column_height
+        )
+    )
+    # Ensure capped height pixel columns still render in the correct Y position
+    if cfg.viewport_height < column_height <= cfg.texture_scale_limit:
+        overlap = (column_height - cfg.viewport_height) // 2
+        pixel_column = pixel_column.subsurface(
+            0, overlap, display_column_width, cfg.viewport_height
+        )
+    screen.blit(pixel_column, (draw_x, draw_y))
+
+
+def draw_sprite(screen: pygame.Surface, cfg: Config,
+                coord: Tuple[float, float], player_coords: Tuple[float, float],
+                camera_plane: Tuple[float, float], facing: Tuple[float, float],
+                texture: pygame.Surface):
+    """
+    Draw a transformed 2D sprite onto the screen. Provides the illusion of
+    an object being drawn in 3D space by scaling up and down.
+    """
+    display_column_width = cfg.viewport_width // cfg.display_columns
+    filled_screen_width = display_column_width * cfg.display_columns
+    relative_pos = (coord[0] - player_coords[0], coord[1] - player_coords[1])
+    inverse_camera = (
+        1 / (camera_plane[0] * facing[1] - facing[0] * camera_plane[1])
+    )
+    transformation = (
+        inverse_camera * (
+            facing[1] * relative_pos[0] - facing[0] * relative_pos[1]
+        ),
+        inverse_camera * (
+            -camera_plane[1] * relative_pos[0] + camera_plane[0]
+            * relative_pos[1]
+        )
+    )
+    # Prevent divisions by 0
+    transformation = (
+        transformation[0] if transformation[0] != 0 else 1e-5,
+        transformation[1] if transformation[1] != 0 else 1e-5
+    )
+    screen_x_pos = math.floor(
+        (filled_screen_width / 2) * (1 + transformation[0] / transformation[1])
+    )
+    if (screen_x_pos > filled_screen_width + cfg.texture_width // 2
+            or screen_x_pos < -cfg.texture_width // 2):
+        # Sprite is fully off screen - don't render it
+        return
+    sprite_size = (
+        abs(filled_screen_width // transformation[1]),
+        abs(cfg.viewport_height // transformation[1])
+    )
+    scaled_texture = pygame.transform.scale(texture, sprite_size)
+    screen.blit(
+        scaled_texture, (
+            screen_x_pos - sprite_size[0] // 2,
+            cfg.viewport_height // 2 - sprite_size[1] // 2
+        )
+    )
+
+
+def draw_solid_background(screen: pygame.Surface, cfg: Config):
+    """
+    Draw two rectangles stacked on top of each other horizontally on the screen
+    """
+    display_column_width = cfg.viewport_width // cfg.display_columns
+    filled_screen_width = display_column_width * cfg.display_columns
+    # Draw solid sky
+    pygame.draw.rect(
+        screen, BLUE, (0, 0, filled_screen_width, cfg.viewport_height // 2)
+    )
+    # Draw solid floor
+    pygame.draw.rect(
+        screen, LIGHT_GREY,
+        (
+            0, cfg.viewport_height // 2, filled_screen_width,
+            cfg.viewport_height // 2
+        )
+    )
+
+
+def draw_sky_texture(screen: pygame.Surface, cfg: Config,
+                     facing: Tuple[float, float],
+                     camera_plane: Tuple[float, float],
+                     sky_texture: pygame.Surface):
+    """
+    Draw textured sky based on facing direction. Player position does not
+    affect sky, only direction.
+    """
+    display_column_width = cfg.viewport_width // cfg.display_columns
+    for index in range(cfg.display_columns):
+        camera_x = 2 * index / cfg.display_columns - 1
+        cast_direction = (
+            facing[0] + camera_plane[0] * camera_x,
+            facing[1] + camera_plane[1] * camera_x,
+        )
+        angle = math.atan2(*cast_direction)
+        texture_x = math.floor(angle / math.pi * cfg.texture_width)
+        # Creates a "mirror" effect preventing a seam when the texture repeats
+        texture_x = (
+            texture_x % cfg.texture_width
+            if angle >= 0 else
+            cfg.texture_width - (texture_x % cfg.texture_width) - 1
+        )
+        # Get a single column of pixels
+        scaled_pixel_column = pygame.transform.scale(
+            sky_texture.subsurface(texture_x, 0, 1, cfg.texture_height),
+            (display_column_width, cfg.viewport_height // 2)
+        )
+        screen.blit(scaled_pixel_column, (index * display_column_width, 0))
+
+
+def draw_map(screen: pygame.Surface, cfg: Config, current_level: Level,
+             display_rays: bool, ray_end_coords: List[Tuple[float, float]],
+             facing: Tuple[float, float]):
+    """
+    Draw a 2D map representing the current level. This will cover the screen
+    unless enable_cheat_map is True in the config.
+    """
+    tile_width = cfg.viewport_width // current_level.dimensions[0]
+    tile_height = cfg.viewport_height // current_level.dimensions[1]
+    x_offset = cfg.viewport_width if cfg.enable_cheat_map else 0
+    for y, row in enumerate(current_level.wall_map):
+        for x, point in enumerate(row):
+            if floor_coordinates(
+                    current_level.player_coords) == (x, y):
+                colour = BLUE
+            elif (current_level.monster_coords == (x, y)
+                    and cfg.enable_cheat_map):
+                colour = DARK_RED
+            elif (x, y) in current_level.exit_keys and cfg.enable_cheat_map:
+                colour = GOLD
+            elif (x, y) in current_level.player_flags:
+                colour = LIGHT_BLUE
+            elif current_level.start_point == (x, y):
+                colour = RED
+            elif current_level.end_point == (x, y) and cfg.enable_cheat_map:
+                colour = GREEN
+            else:
+                colour = BLACK if point else WHITE
+            pygame.draw.rect(
+                screen, colour, (
+                    tile_width * x + x_offset,
+                    tile_height * y, tile_width, tile_height
+                )
+            )
+    # Raycast rays
+    if display_rays and cfg.enable_cheat_map:
+        for point in ray_end_coords:
+            pygame.draw.line(
+                screen, DARK_GOLD, (
+                    current_level.player_coords[0]
+                    * tile_width + x_offset,
+                    current_level.player_coords[1]
+                    * tile_height
+                ),
+                (
+                    point[0] * tile_width + x_offset,
+                    point[1] * tile_height
+                ), 1
+            )
+    # Player direction
+    pygame.draw.line(
+        screen, DARK_RED, (
+            current_level.player_coords[0] * tile_width + x_offset,
+            current_level.player_coords[1] * tile_height
+        ),
+        (
+            current_level.player_coords[0] * tile_width + x_offset + facing[0]
+            * tile_width // 2,
+            current_level.player_coords[1] * tile_height + facing[1]
+            * tile_width // 2
+        ), 3
+    )
+    # Exact player position
+    pygame.draw.circle(
+        screen, DARK_GREEN, (
+            current_level.player_coords[0] * tile_width + x_offset,
+            current_level.player_coords[1] * tile_height
+        ), tile_width / 8
+    )
+
+
+def draw_stats(screen: pygame.Surface, cfg: Config, monster_spawned: bool,
+               time_score: float, move_score: float, remaining_keys: int,
+               starting_keys: int):
+    """
+    Draw a time, move count, and key counts to the bottom left-hand corner of
+    the screen with a transparent black background if the monster hasn't
+    spawned or a transparent red one if it has.
+    """
+    background = pygame.Surface((225, 110))
+    background.fill(DARK_RED if monster_spawned else BLACK)
+    background.set_alpha(127)
+    screen.blit(background, (0, cfg.viewport_height - 110))
+
+    time_score_text = FONT.render(f"Time: {time_score:.1f}", True, WHITE)
+    move_score_text = FONT.render(f"Moves: {move_score:.1f}", True, WHITE)
+    keys_text = FONT.render(
+        f"Keys: {remaining_keys}/{starting_keys}", True, WHITE
+    )
+    screen.blit(time_score_text, (10, cfg.viewport_height - 100))
+    screen.blit(move_score_text, (10, cfg.viewport_height - 70))
+    screen.blit(keys_text, (10, cfg.viewport_height - 40))
+
+
+def draw_compass(screen: pygame.Surface, cfg: Config,
+                 target: Optional[Tuple[float, float]],
+                 source: Tuple[float, float], facing: Tuple[float, float],
+                 burned: bool, time_active: float):
+    """
+    Draws a compass to the lower right-hand corner of the screen. Points to
+    the target from the facing direction of the source, unless it is burned
+    or there is no target. The length of the line is determined by how long
+    the compass has been active.
+    """
+    compass_outer_radius = cfg.viewport_width // 6
+    compass_inner_radius = compass_outer_radius - cfg.viewport_width // 100
+    compass_centre = (
+        cfg.viewport_width - compass_outer_radius - cfg.viewport_width // 50,
+        cfg.viewport_height - compass_outer_radius - cfg.viewport_width // 50
+    )
+    pygame.draw.circle(screen, GREY, compass_centre, compass_outer_radius)
+    pygame.draw.circle(screen, DARK_GREY, compass_centre, compass_inner_radius)
+    if target is not None and not burned:
+        # The distance between the player and the monster in each axis
+        relative_pos = (source[0] - target[0], source[1] - target[1])
+        # The angle to the monster relative to the facing direction
+        direction = math.atan2(*relative_pos) - math.atan2(*facing)
+        # Compass line gets shorter as it runs out of charge
+        line_length = compass_inner_radius * time_active / cfg.compass_time
+        line_end_coords = floor_coordinates((
+            line_length * math.sin(direction) + compass_centre[0],
+            line_length * math.cos(direction) + compass_centre[1]
+        ))
+        pygame.draw.line(
+            screen, RED, compass_centre, line_end_coords,
+            # Cannot be any thinner than 1px
+            max(1, cfg.viewport_width // 100)
+        )
+    elif burned:
+        pygame.draw.circle(
+            screen, RED, compass_centre, compass_inner_radius
+            * (cfg.compass_time - time_active) / cfg.compass_time
+        )
+
+
+def darken_viewport(screen: pygame.Surface, cfg: Config):
+    """
+    Draw a black transparent overlay over the entire viewport.
+    """
+    viewport_darkener = pygame.Surface(
+        (cfg.viewport_width, cfg.viewport_height)
+    )
+    viewport_darkener.fill(BLACK)
+    viewport_darkener.set_alpha(127)
+    screen.blit(viewport_darkener, (0, 0))
+
+
+def draw_reset_prompt(screen: pygame.Surface, cfg: Config,
+                      background: pygame.Surface):
+    """
+    Draw a transparent overlay over a given background asking the user if they
+    are sure that they want to reset the level.
+    """
+    screen.blit(background, (0, 0))
+    prompt_background = pygame.Surface(
+        (cfg.viewport_width, cfg.viewport_height)
+    )
+    prompt_background.fill(LIGHT_BLUE)
+    prompt_background.set_alpha(195)
+    screen.blit(prompt_background, (0, 0))
+    confirm_text = FONT.render(
+        "Press 'y' to reset or 'n' to cancel", True, DARK_GREY
+    )
+    screen.blit(confirm_text, (
+            cfg.viewport_width // 2 - confirm_text.get_width() // 2,
+            cfg.viewport_height // 2 - confirm_text.get_height() // 2,
+        )
+    )

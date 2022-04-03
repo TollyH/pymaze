@@ -1,9 +1,9 @@
 """
 PyGame Maze - Copyright © 2022  Ptolemy Hill and Finlay Griffiths
 
-The main script for the game. Creates and draws to the game window, as well as
-receiving and interpreting player input and recording time and movement scores.
-Also handles time-based events such as monster movement and spawning.
+The main script for the game. Creates the game window, receives and interprets
+player input, and records time and movement scores. Also handles time-based
+events such as monster movement and spawning.
 """
 import math
 import os
@@ -11,30 +11,15 @@ import pickle
 import random
 import sys
 from glob import glob
-from typing import List, Literal, Tuple
+from typing import List, Tuple
 
 import pygame
 
 import config_loader
 import raycasting
+import screen_drawing
 from level import floor_coordinates
 from maze_levels import levels
-
-WHITE = (0xFF, 0xFF, 0xFF)
-BLACK = (0x00, 0x00, 0x00)
-BLUE = (0x00, 0x30, 0xFF)
-LIGHT_BLUE = (0x07, 0xF0, 0xF0)
-GOLD = (0xE1, 0xBB, 0x12)
-DARK_GOLD = (0x70, 0x5E, 0x09)
-GREEN = (0x00, 0xFF, 0x10)
-DARK_GREEN = (0x00, 0x80, 0x00)
-RED = (0xFF, 0x00, 0x00)
-DARK_RED = (0x80, 0x00, 0x00)
-PURPLE = (0x87, 0x23, 0xD9)
-LILAC = (0xD7, 0xA6, 0xFF)
-GREY = (0xAA, 0xAA, 0xAA)
-DARK_GREY = (0x20, 0x20, 0x20)
-LIGHT_GREY = (0xCD, 0xCD, 0xCD)
 
 
 def main():
@@ -57,9 +42,7 @@ def main():
 
     clock = pygame.time.Clock()
 
-    font = pygame.font.SysFont('Tahoma', 24, True)
-
-    # X+Y facing directions, times, moves, etc are specific to each level,
+    # X+Y facing directions, times, moves, etc. are specific to each level,
     # so are each stored in a list
     facing_directions = [(0.0, 1.0)] * len(levels)
     # Camera planes are always perpendicular to facing directions
@@ -77,7 +60,7 @@ def main():
 
     # Used to create the darker versions of each texture
     darkener = pygame.Surface((cfg.texture_width, cfg.texture_height))
-    darkener.fill(BLACK)
+    darkener.fill(screen_drawing.BLACK)
     darkener.set_alpha(127)
     # {(level_indices, ...): (light_texture, dark_texture)}
     wall_textures = {
@@ -148,6 +131,13 @@ def main():
     compass_charge_delays = [cfg.compass_charge_delay] * len(levels)
     flicker_time_remaining = [0.0] * len(levels)
 
+    # Used to draw level behind victory/reset screens without having to raycast
+    # during every new frame.
+    last_level_frame = [
+        pygame.Surface((cfg.viewport_width, cfg.viewport_height))
+        for _ in range(len(levels))
+    ]
+
     # Game loop
     while True:
         if os.path.getmtime('config.ini') > last_config_edit:
@@ -156,11 +146,6 @@ def main():
             cfg = config_loader.Config()
         # Limit FPS and record time last frame took to render
         frame_time = clock.tick(cfg.frame_rate_limit) / 1000
-        display_column_width = cfg.viewport_width // cfg.display_columns
-        # If the width of the display columns does not divide nicely into the
-        # total viewport width, there will be a border. This stores the width
-        # of however much of the viewport is filled with actual content.
-        filled_screen_width = display_column_width * cfg.display_columns
         # Used for the 2D map
         tile_width = cfg.viewport_width // levels[current_level].dimensions[0]
         tile_height = (
@@ -437,53 +422,21 @@ def main():
             if highscores_updated and not os.path.isdir("highscores.pickle"):
                 with open("highscores.pickle", 'wb') as file:
                     pickle.dump(highscores, file)
-            screen.fill(GREEN)
-            time_score_text = font.render(
-                f"Time Score: {time_scores[current_level]:.1f}",
-                True, BLUE
+            screen_drawing.draw_victory_screen(
+                screen, cfg, last_level_frame[current_level],
+                highscores, current_level, time_scores[current_level],
+                move_scores[current_level]
             )
-            move_score_text = font.render(
-                f"Move Score: {move_scores[current_level]:.1f}",
-                True, BLUE
-            )
-            best_time_score_text = font.render(
-                f"Best Time Score: {highscores[current_level][0]:.1f}",
-                True, BLUE
-            )
-            best_move_score_text = font.render(
-                f"Best Move Score: {highscores[current_level][1]:.1f}",
-                True, BLUE
-            )
-            best_total_time_score_text = font.render(
-                f"Best Game Time Score: {sum(x[0] for x in highscores):.1f}",
-                True, BLUE
-            )
-            best_total_move_score_text = font.render(
-                f"Best Game Move Score: {sum(x[1] for x in highscores):.1f}",
-                True, BLUE
-            )
-            lower_hint_text = font.render(
-                "(Lower scores are better)", True, BLUE
-            )
-            screen.blit(time_score_text, (10, 10))
-            screen.blit(move_score_text, (10, 40))
-            screen.blit(best_time_score_text, (10, 90))
-            screen.blit(best_move_score_text, (10, 120))
-            screen.blit(best_total_time_score_text, (10, 200))
-            screen.blit(best_total_move_score_text, (10, 230))
-            screen.blit(lower_hint_text, (10, 280))
         # Death screen
         elif levels[current_level].killed:
-            screen.fill(RED)
             if cfg.monster_sound_on_kill and has_started_level[current_level]:
                 monster_jumpscare_sound.play()
                 has_started_level[current_level] = False
-            if cfg.monster_display_on_kill:
-                screen.blit(jumpscare_monster_texture, (
-                    0, 0, cfg.viewport_width, cfg.viewport_height
-                ))
+            screen_drawing.draw_kill_screen(
+                screen, cfg, jumpscare_monster_texture
+            )
         # Currently playing
-        else:
+        elif not is_reset_prompt_shown:
             if has_started_level[current_level] and not is_reset_prompt_shown:
                 # Progress time-based attributes and events
                 time_scores[current_level] += frame_time
@@ -557,55 +510,15 @@ def main():
                             flicker_time_remaining[current_level] = (
                                 random.uniform(0.0, 0.5)
                             )
-            screen.fill(GREY)
             if not display_map or cfg.enable_cheat_map:
-                # Draw solid sky
-                pygame.draw.rect(
-                    screen, BLUE,
-                    (0, 0, filled_screen_width, cfg.viewport_height // 2)
-                )
-                monster_coords = levels[current_level].monster_coords
-                # Draw solid floor
-                pygame.draw.rect(
-                    screen, LIGHT_GREY,
-                    (
-                        0, cfg.viewport_height // 2,
-                        filled_screen_width, cfg.viewport_height // 2
-                    )
-                )
+                screen_drawing.draw_solid_background(screen, cfg)
 
             if (cfg.sky_textures_enabled
                     and (not display_map or cfg.enable_cheat_map)):
-                # Draw textured sky based on facing direction.
-                # Player position does not affect sky, only direction.
-                for index in range(cfg.display_columns):
-                    camera_x = 2 * index / cfg.display_columns - 1
-                    direction = facing_directions[current_level]
-                    camera_plane = camera_planes[current_level]
-                    cast_direction = (
-                        direction[0] + camera_plane[0] * camera_x,
-                        direction[1] + camera_plane[1] * camera_x,
-                    )
-                    angle = math.atan2(*cast_direction)
-                    texture_x = math.floor(
-                        angle / math.pi * cfg.texture_width
-                    )
-                    # Creates a "mirror" effect preventing a seam when the
-                    # texture repeats
-                    texture_x = (
-                        texture_x % cfg.texture_width
-                        if angle >= 0 else
-                        cfg.texture_width - (texture_x % cfg.texture_width) - 1
-                    )
-                    # Get a single column of pixels
-                    scaled_pixel_column = pygame.transform.scale(
-                        sky_texture.subsurface(
-                            texture_x, 0, 1, cfg.texture_height
-                        ), (display_column_width, cfg.viewport_height // 2)
-                    )
-                    screen.blit(
-                        scaled_pixel_column, (index * display_column_width, 0)
-                    )
+                screen_drawing.draw_sky_texture(
+                    screen, cfg, facing_directions[current_level],
+                    camera_planes[current_level], sky_texture
+                )
 
             if not display_map or cfg.enable_cheat_map:
                 columns, sprites = raycasting.get_columns_sprites(
@@ -623,7 +536,7 @@ def main():
             type_sprite = 1
             # A generic combination of both wall columns and sprites
             # [(index, type, euclidean_squared), ...]
-            objects: List[Tuple[int, Literal[0, 1], float]] = [
+            objects: List[Tuple[int, int, float]] = [
                 (i, type_column, x[2]) for i, x in enumerate(columns)
             ]
             objects += [
@@ -639,58 +552,12 @@ def main():
                     # Sprites are just flat images scaled and blitted onto the
                     # 3D view.
                     coord, sprite_type, _ = sprites[index]
-                    relative_pos = (
-                        coord[0] - levels[current_level].player_coords[0],
-                        coord[1] - levels[current_level].player_coords[1]
-                    )
-                    inverse_camera = (
-                        1 / (
-                            camera_planes[current_level][0]
-                            * facing_directions[current_level][1]
-                            - facing_directions[current_level][0]
-                            * camera_planes[current_level][1]
-                        )
-                    )
-                    transformation = (
-                        inverse_camera * (
-                            facing_directions[current_level][1]
-                            * relative_pos[0]
-                            - facing_directions[current_level][0]
-                            * relative_pos[1]
-                        ),
-                        inverse_camera * (
-                            -camera_planes[current_level][1] * relative_pos[0]
-                            + camera_planes[current_level][0] * relative_pos[1]
-                        )
-                    )
-                    # Prevent divisions by 0
-                    transformation = (
-                        transformation[0] if transformation[0] != 0 else 1e-5,
-                        transformation[1] if transformation[1] != 0 else 1e-5
-                    )
-                    screen_x_pos = math.floor(
-                        (filled_screen_width / 2)
-                        * (1 + transformation[0] / transformation[1])
-                    )
-                    if (screen_x_pos
-                            > filled_screen_width + cfg.texture_width // 2
-                            or screen_x_pos < -cfg.texture_width // 2):
-                        # Sprite is fully off screen - don't render it and move
-                        # onto the next render object
-                        continue
-                    sprite_size = (
-                        abs(filled_screen_width // transformation[1]),
-                        abs(cfg.viewport_height // transformation[1])
-                    )
-                    scaled_texture = pygame.transform.scale(
-                        sprite_textures[sprite_type], sprite_size
-                    )
-                    screen.blit(
-                        scaled_texture,
-                        (
-                            screen_x_pos - sprite_size[0] // 2,
-                            cfg.viewport_height // 2 - sprite_size[1] // 2
-                        )
+                    screen_drawing.draw_sprite(
+                        screen, cfg, coord,
+                        levels[current_level].player_coords,
+                        camera_planes[current_level],
+                        facing_directions[current_level],
+                        sprite_textures[sprite_type]
                     )
                     if sprite_type == raycasting.MONSTER:
                         # If the monster has been rendered, play the jumpscare
@@ -729,158 +596,22 @@ def main():
                             # Select either light or dark texture
                             # depending on side
                             texture = both_textures[int(side_was_ns)]
-                            # Determines how far along the texture we need to
-                            # go by keeping only the decimal part of the
-                            # collision coordinate
-                            position_along_wall = coord[
-                                int(not side_was_ns)
-                            ] % 1
-                            texture_x = math.floor(
-                                position_along_wall * cfg.texture_width
+                            screen_drawing.draw_textured_column(
+                                screen, cfg, coord, side_was_ns, column_height,
+                                index, facing_directions[current_level],
+                                texture
                             )
-                            if (not side_was_ns and
-                                    facing_directions[current_level][0] > 0):
-                                texture_x = cfg.texture_width - texture_x - 1
-                            elif (side_was_ns and
-                                    facing_directions[current_level][1] < 0):
-                                texture_x = cfg.texture_width - texture_x - 1
-                            # The location on the screen to start drawing the
-                            # column
-                            draw_x = display_column_width * index
-                            draw_y = max(
-                                0,
-                                -column_height // 2 + cfg.viewport_height // 2
-                            )
-                            # Get a single column of pixels
-                            pixel_column = texture.subsurface(
-                                texture_x, 0, 1, cfg.texture_height
-                            )
-                            if (column_height > cfg.viewport_height
-                                    and column_height
-                                    > cfg.texture_scale_limit):
-                                # Crop the column so we are only scaling pixels
-                                # that will be within the viewport. This will
-                                # boost performance, at the cost of making
-                                # textures uneven. This will only occur if the
-                                # column is taller than the config value in
-                                # texture_scale_limit
-                                overlap = math.floor(
-                                    (column_height - cfg.viewport_height)
-                                    / (
-                                        (column_height - cfg.texture_height)
-                                        / cfg.texture_height
-                                    )
-                                )
-                                pixel_column = pixel_column.subsurface(
-                                    0, overlap // 2,
-                                    1, cfg.texture_height - overlap
-                                )
-                            # Scale the pixel column to fill required height
-                            pixel_column = pygame.transform.scale(
-                                pixel_column,
-                                (
-                                    display_column_width,
-                                    min(column_height, cfg.viewport_height)
-                                    if column_height > cfg.texture_scale_limit
-                                    else column_height
-                                )
-                            )
-                            # Ensure capped height pixel columns still render
-                            # in the correct Y position.
-                            if (cfg.viewport_height < column_height
-                                    <= cfg.texture_scale_limit):
-                                overlap = (
-                                    column_height - cfg.viewport_height
-                                ) // 2
-                                pixel_column = pixel_column.subsurface(
-                                    0, overlap,
-                                    display_column_width, cfg.viewport_height
-                                )
-                            screen.blit(pixel_column, (draw_x, draw_y))
                             texture_draw_successful = True
                     if not texture_draw_successful:
                         # Fallback to drawing solid textureless walls if a
                         # texture for the current level's walls was not found.
-                        column_height = min(column_height, cfg.viewport_height)
-                        colour = DARK_GREY if side_was_ns else BLACK
-                        pygame.draw.rect(
-                            screen, colour, (
-                                display_column_width * index,
-                                max(
-                                    0,
-                                    -column_height // 2
-                                    + cfg.viewport_height // 2
-                                ),
-                                display_column_width, column_height
-                            )
+                        screen_drawing.draw_untextured_column(
+                            screen, cfg, index, side_was_ns, column_height
                         )
             if display_map:
-                x_offset = cfg.viewport_width if cfg.enable_cheat_map else 0
-                for y, row in enumerate(levels[current_level].wall_map):
-                    for x, point in enumerate(row):
-                        if floor_coordinates(
-                                levels[current_level].player_coords) == (x, y):
-                            colour = BLUE
-                        elif (levels[current_level].monster_coords == (x, y)
-                                and cfg.enable_cheat_map):
-                            colour = DARK_RED
-                        elif ((x, y) in levels[current_level].exit_keys
-                                and cfg.enable_cheat_map):
-                            colour = GOLD
-                        elif (x, y) in levels[current_level].player_flags:
-                            colour = LIGHT_BLUE
-                        elif levels[current_level].start_point == (x, y):
-                            colour = RED
-                        elif (levels[current_level].end_point == (x, y)
-                                and cfg.enable_cheat_map):
-                            colour = GREEN
-                        else:
-                            colour = BLACK if point else WHITE
-                        pygame.draw.rect(
-                            screen, colour, (
-                                tile_width * x + x_offset,
-                                tile_height * y, tile_width, tile_height
-                            )
-                        )
-                # Raycast rays
-                if display_rays and cfg.enable_cheat_map:
-                    for point in ray_end_coords:
-                        pygame.draw.line(
-                            screen, DARK_GOLD, (
-                                levels[current_level].player_coords[0]
-                                * tile_width + x_offset,
-                                levels[current_level].player_coords[1]
-                                * tile_height
-                            ),
-                            (
-                                point[0] * tile_width + x_offset,
-                                point[1] * tile_height
-                            ), 1
-                        )
-                # Player direction
-                pygame.draw.line(
-                    screen, DARK_RED, (
-                        levels[current_level].player_coords[0] * tile_width
-                        + x_offset,
-                        levels[current_level].player_coords[1] * tile_height
-                    ),
-                    (
-                        levels[current_level].player_coords[0] * tile_width
-                        + x_offset
-                        + facing_directions[current_level][0] * tile_width
-                        // 2,
-                        levels[current_level].player_coords[1] * tile_height
-                        + facing_directions[current_level][1] * tile_width
-                        // 2
-                    ), 3
-                )
-                # Exact player position
-                pygame.draw.circle(
-                    screen, DARK_GREEN, (
-                        levels[current_level].player_coords[0] * tile_width
-                        + x_offset,
-                        levels[current_level].player_coords[1] * tile_height
-                    ), tile_width / 8
+                screen_drawing.draw_map(
+                    screen, cfg, levels[current_level], display_rays,
+                    ray_end_coords, facing_directions[current_level]
                 )
 
             monster_coords = levels[current_level].monster_coords
@@ -889,127 +620,53 @@ def main():
                 # Darken viewport intermittently based on monster distance
                 if cfg.monster_flicker_lights:
                     if flicker_time_remaining[current_level] > 0:
-                        viewport_darkener = pygame.Surface(
-                            (cfg.viewport_width, cfg.viewport_height)
-                        )
-                        viewport_darkener.fill(BLACK)
-                        viewport_darkener.set_alpha(127)
-                        screen.blit(viewport_darkener, (0, 0))
+                        screen_drawing.darken_viewport(screen, cfg)
                         flicker_time_remaining[current_level] -= frame_time
                         if flicker_time_remaining[current_level] < 0:
                             flicker_time_remaining[current_level] = 0.0
 
             if display_compass and (not display_map or cfg.enable_cheat_map):
-                compass_outer_radius = cfg.viewport_width // 6
-                compass_inner_radius = (
-                    compass_outer_radius - cfg.viewport_width // 100
-                )
-                compass_centre = (
-                    cfg.viewport_width - compass_outer_radius
-                    - cfg.viewport_width // 50,
-                    cfg.viewport_height - compass_outer_radius
-                    - cfg.viewport_width // 50
-                )
-                pygame.draw.circle(
-                    screen, GREY, compass_centre, compass_outer_radius
-                )
-                pygame.draw.circle(
-                    screen, DARK_GREY, compass_centre, compass_inner_radius
-                )
                 monster_coords = levels[current_level].monster_coords
-                if (monster_coords is not None
-                        and not compass_burned_out[current_level]):
+                if monster_coords is not None:
                     monster_coords = (
                         monster_coords[0] + 0.5, monster_coords[1] + 0.5
                     )
-                    # The distance between the player and the monster in each
-                    # axis
-                    relative_pos = (
-                        levels[current_level].player_coords[0]
-                        - monster_coords[0],
-                        levels[current_level].player_coords[1]
-                        - monster_coords[1]
-                    )
-                    # The angle to the monster relative to the facing direction
-                    direction = (
-                        math.atan2(*relative_pos)
-                        - math.atan2(*facing_directions[current_level])
-                    )
-                    # Compass line gets shorter as it runs out of charge
-                    line_length = compass_inner_radius * (
-                        compass_times[current_level] / cfg.compass_time
-                    )
-                    line_end_coords = floor_coordinates((
-                        line_length * math.sin(direction) + compass_centre[0],
-                        line_length * math.cos(direction) + compass_centre[1]
-                    ))
-                    pygame.draw.line(
-                        screen, RED, compass_centre, line_end_coords,
-                        # Cannot be any thinner than 1px
-                        max(1, cfg.viewport_width // 100)
-                    )
-                elif compass_burned_out[current_level]:
-                    pygame.draw.circle(
-                        screen, RED, compass_centre, compass_inner_radius
-                        * (
-                            (cfg.compass_time - compass_times[current_level])
-                            / cfg.compass_time
-                        )
-                    )
+                screen_drawing.draw_compass(
+                    screen, cfg, monster_coords,
+                    levels[current_level].player_coords,
+                    facing_directions[current_level],
+                    compass_burned_out[current_level],
+                    compass_times[current_level]
+                )
 
             # Stats are always shown before the player begins a level to
             # display highscores and the key count.
             if (display_stats or not has_started_level[current_level]
                     and (not display_map or cfg.enable_cheat_map)):
-                background = pygame.Surface((225, 110))
-                background.fill(
-                    BLACK
-                    if levels[current_level].monster_coords is None else
-                    DARK_RED
+                time_score = (
+                    time_scores[current_level]
+                    if has_started_level[current_level] else
+                    highscores[current_level][0]
                 )
-                background.set_alpha(127)
-                screen.blit(background, (0, cfg.viewport_height - 110))
+                move_score = (
+                    move_scores[current_level]
+                    if has_started_level[current_level] else
+                    highscores[current_level][1]
+                )
+                screen_drawing.draw_stats(
+                    screen, cfg,
+                    levels[current_level].monster_coords is not None,
+                    time_score, move_score,
+                    len(levels[current_level].original_exit_keys)
+                    - len(levels[current_level].exit_keys),
+                    len(levels[current_level].original_exit_keys)
+                )
 
-                time_score_text = font.render(
-                    f"Time: {time_scores[current_level]:.1f}"
-                    if has_started_level[current_level] else
-                    f"Time: {highscores[current_level][0]:.1f}",
-                    True, WHITE
-                )
-                move_score_text = font.render(
-                    f"Moves: {move_scores[current_level]:.1f}"
-                    if has_started_level[current_level] else
-                    f"Moves: {highscores[current_level][1]:.1f}",
-                    True, WHITE
-                )
-                starting_keys = len(levels[current_level].original_exit_keys)
-                remaining_keys = (
-                    starting_keys - len(levels[current_level].exit_keys)
-                )
-                keys_text = font.render(
-                    f"Keys: {remaining_keys}/{starting_keys}", True, WHITE
-                )
-                screen.blit(time_score_text, (10, cfg.viewport_height - 100))
-                screen.blit(move_score_text, (10, cfg.viewport_height - 70))
-                screen.blit(keys_text, (10, cfg.viewport_height - 40))
+            last_level_frame[current_level] = screen.copy()
 
         if is_reset_prompt_shown:
-            prompt_background = pygame.Surface(
-                (cfg.viewport_width, cfg.viewport_height)
-            )
-            prompt_background.fill(LIGHT_BLUE)
-            prompt_background.set_alpha(195)
-            screen.blit(prompt_background, (0, 0))
-            confirm_text = font.render(
-                "Press 'y' to reset or 'n' to cancel", True, DARK_GREY
-            )
-            screen.blit(
-                confirm_text, (
-                    cfg.viewport_width // 2
-                    - confirm_text.get_width() // 2,
-                    cfg.viewport_height // 2
-                    - confirm_text.get_height() // 2,
-                )
+            screen_drawing.draw_reset_prompt(
+                screen, cfg, last_level_frame[current_level]
             )
 
         print(

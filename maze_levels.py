@@ -1,7 +1,7 @@
 """
 Contains the definitions of each instance of Level. Also provides the constants
 T and F as shorthands for True and False respectively, T corresponding to where
-a wall is and F corresponding to a occupyable space. If a pre-calculated
+a wall is and F corresponding to an occupy-able space. If a pre-calculated
 solutions file exists, it will be loaded here.
 """
 

@@ -9,7 +9,7 @@ algorithm for raycasting.
 
 *Python 3.8 or greater is required*
 
-1. Download the files by pressing the green "Code" button above, followed by "Download ZIP" - extracting all of the files once the download is complete.
+1. Download the files by pressing the green "Code" button above, followed by "Download ZIP" - extracting all the files once the download is complete.
    - Alternatively, if you have git installed, run `git clone https://github.com/TollyH/pygame_maze.git` in a terminal to download the repository.
 2. Install PyGame with the command `pip3 install pygame` on Linux or `pip install pygame` on Windows.
 3. Run `__main__.py` to start the game.
@@ -37,7 +37,7 @@ algorithm for raycasting.
 
 ## Instructions
 
-- Simply collect all of the golden keys before reaching the exit.
+- Simply collect all the golden keys before reaching the exit.
 - In many levels, after a specific amount of time has passed, a monster may spawn. Getting hit by the monster will result in you losing the level immediately.
 - You can place flags on the ground to help you navigate, however if the monster comes into contact with one of these flags, it may destroy it.
 - You have a compass which will point toward the monster's location, however you only have a limited amount of time to use it before you must wait for it to recharge.
