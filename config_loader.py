@@ -93,6 +93,9 @@ class Config:
             'COMPASS_CHARGE_DELAY', 1.5
         )
 
+        # Amount of time in seconds before player placed walls are broken.
+        self.player_wall_time = self._parse_float('PLAYER_WALL_TIME', 15.0)
+
         # The maximum frames per second that the game will render at.
         # Low values may cause the game window to become unresponsive.
         self.frame_rate_limit = self._parse_int('FRAME_RATE_LIMIT', 75)

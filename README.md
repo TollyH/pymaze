@@ -21,6 +21,7 @@ algorithm for raycasting.
 - `Click` - Toggle mouse control
 - `[` and `]` - Previous/Next Level Respectively
 - `F` - Place/pick up flag
+- `Q` - Place temporary barricade
 - `R` - Reset level
 - `Shift` - Run while held
 - `CTRL` - Crawl while held
@@ -41,6 +42,7 @@ algorithm for raycasting.
 - In many levels, after a specific amount of time has passed, a monster may spawn. Getting hit by the monster will result in you losing the level immediately.
 - You can place flags on the ground to help you navigate, however if the monster comes into contact with one of these flags, it may destroy it.
 - You have a compass which will point toward the monster's location, however you only have a limited amount of time to use it before you must wait for it to recharge.
+- You can place a temporary barricade which will act like any other wall until it breaks. You may only have one built at a time, it cannot be broken early, and it will block you as well as the monster.
 
 ## Map Colours
 
@@ -52,6 +54,7 @@ algorithm for raycasting.
 - Dark red - Monster
 - Red - Start point
 - Turquoise - Flags
+- Purple - Player placed wall
 
 ---
 

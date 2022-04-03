@@ -23,11 +23,12 @@ def get_first_collision(current_level: level.Level,
     specified direction from a particular origin. The result will always be a
     tuple, of which the first item will be None if no collision occurs before
     the edge of the wall map, or a tuple
-    (coordinate, distance, euclidean_squared, side_was_ns) if a collision did
-    occur. Side is False if a North/South wall was hit, or True if an East/West
-    wall was. The second tuple item is a list of tuples of sprite tile
-    coordinates, their associated type, being either END_POINT, KEY, MONSTER,
-    START_POINT, or FLAG - and the euclidean distance to the sprite.
+    (coordinate, tile, distance, euclidean_squared, side_was_ns) if a collision
+    did occur. Side is False if a North/South wall was hit, or True if an
+    East/West wall was. The second tuple item is a list of tuples of sprite
+    tile coordinates, their associated type, being either END_POINT, KEY,
+    MONSTER, START_POINT, FLAG, or END_POINT_ACTIVE - and the euclidean
+    distance to the sprite.
     """
     # Prevent divide by 0
     if direction[0] == 0:
@@ -149,13 +150,13 @@ def get_first_collision(current_level: level.Level,
     )
     if not side_was_ns:
         return (
-            collision_point, dimension_ray_length[0] - step_size[0],
-            no_sqrt_coord_distance(
+            collision_point, current_tile,
+            dimension_ray_length[0] - step_size[0], no_sqrt_coord_distance(
                 current_level.player_coords, collision_point
             ), side_was_ns
         ), sprites
     return (
-        collision_point, dimension_ray_length[1] - step_size[1],
+        collision_point, current_tile, dimension_ray_length[1] - step_size[1],
         no_sqrt_coord_distance(
             current_level.player_coords, collision_point
         ), side_was_ns
@@ -168,11 +169,13 @@ def get_columns_sprites(display_columns: int, current_level: level.Level,
     """
     Get a list of the intersection positions and distances of each column's ray
     for a particular wall map by utilising raycasting. Tuples are in format
-    (coordinate, distance, euclidean_squared, side_was_ns). Also gets a list of
-    visible sprites as tuples (coordinate, type, distance) where type is either
-    END_POINT, KEY, MONSTER, or START_POINT.
+    (coordinate, tile, distance, euclidean_squared, side_was_ns). Also gets a
+    list of visible sprites as tuples (coordinate, type, distance) where type
+    is either ND_POINT, KEY, MONSTER, START_POINT, FLAG, or END_POINT_ACTIVE.
     """
-    columns: List[Tuple[Tuple[float, float], float, float, bool]] = []
+    columns: List[
+        Tuple[Tuple[float, float], Tuple[int, int], float, float, bool]
+    ] = []
     sprites: List[Tuple[Tuple[float, float], int, float]] = []
     for index in range(display_columns):
         camera_x = 2 * index / display_columns - 1
@@ -184,7 +187,9 @@ def get_columns_sprites(display_columns: int, current_level: level.Level,
             current_level, cast_direction, edge_is_wall
         )
         if result is None:
-            columns.append(((0.0, 0.0), float('inf'), float('inf'), False))
+            columns.append(
+                ((0.0, 0.0), (0, 0), float('inf'), float('inf'), False)
+            )
         else:
             columns.append(result)
         for new in new_sprites:

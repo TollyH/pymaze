@@ -11,7 +11,7 @@ import pickle
 import random
 import sys
 from glob import glob
-from typing import List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import pygame
 
@@ -63,13 +63,22 @@ def main():
     darkener.fill(screen_drawing.BLACK)
     darkener.set_alpha(127)
     # {(level_indices, ...): (light_texture, dark_texture)}
-    wall_textures = {
-        # Parse wall texture names to tuples of integers
+    wall_textures: Dict[Tuple[int], Tuple[pygame.Surface, pygame.Surface]] = {
+        # Parse wall texture surfaces to tuples of integers
         tuple(int(y) for y in os.path.split(x)[-1].split(".")[0].split("-")):
         (pygame.image.load(x).convert(), pygame.image.load(x).convert())
         for x in glob(os.path.join("textures", "wall", "*.png"))
     }
     for _, (_, surface_to_dark) in wall_textures.items():
+        surface_to_dark.blit(darkener, (0, 0))
+    # {degradation_stage: (light_texture, dark_texture)}
+    player_wall_textures: Dict[int, Tuple[pygame.Surface, pygame.Surface]] = {
+        # Parse player wall texture surfaces to integer
+        int(os.path.split(x)[-1].split(".")[0]):
+            (pygame.image.load(x).convert(), pygame.image.load(x).convert())
+        for x in glob(os.path.join("textures", "player_wall", "*.png"))
+    }
+    for _, (_, surface_to_dark) in player_wall_textures.items():
         surface_to_dark.blit(darkener, (0, 0))
 
     sky_texture = pygame.image.load(
@@ -130,6 +139,9 @@ def main():
     compass_burned_out = [False] * len(levels)
     compass_charge_delays = [cfg.compass_charge_delay] * len(levels)
     flicker_time_remaining = [0.0] * len(levels)
+
+    # [None | (grid_x, grid_y, time_of_placement)]
+    player_walls: List[Optional[Tuple[int, int, float]]] = [None] * len(levels)
 
     # Used to draw level behind victory/reset screens without having to raycast
     # during every new frame.
@@ -200,6 +212,27 @@ def main():
                         pygame.display.set_caption(
                             f"Maze - Level {current_level + 1}"
                         )
+                    elif (event.key == pygame.K_q
+                            and player_walls[current_level] is None
+                            and has_started_level[current_level]):
+                        cardinal_facing = (
+                            round(facing_directions[current_level][0]),
+                            round(facing_directions[current_level][1])
+                        )
+                        grid_coords = floor_coordinates(
+                            levels[current_level].player_coords
+                        )
+                        target = (
+                            grid_coords[0] + cardinal_facing[0],
+                            grid_coords[1] + cardinal_facing[1]
+                        )
+                        if (levels[current_level].is_coord_in_bounds(target)
+                                and not levels[current_level][target]):
+                            player_walls[current_level] = (
+                                target[0], target[1],
+                                time_scores[current_level]
+                            )
+                            levels[current_level][target] = True
                     elif event.key == pygame.K_r:
                         is_reset_prompt_shown = True
                     elif event.key == pygame.K_SPACE:
@@ -237,6 +270,11 @@ def main():
                         display_compass = False
                         if not cfg.enable_cheat_map:
                             display_map = False
+                        if player_walls[current_level] is not None:
+                            levels[current_level][
+                                player_walls[current_level][:2]
+                            ] = False
+                            player_walls[current_level] = None
                     elif event.key == pygame.K_n:
                         is_reset_prompt_shown = False
             elif (event.type == pygame.MOUSEBUTTONDOWN
@@ -451,6 +489,15 @@ def main():
                         monster_spotted[current_level] = (
                             cfg.monster_spot_timeout
                         )
+                if (player_walls[current_level] is not None
+                        and time_scores[current_level]
+                        >= player_walls[current_level][2]
+                        + cfg.player_wall_time):
+                    # Remove player placed wall if enough time has passed
+                    levels[current_level][
+                        player_walls[current_level][:2]
+                    ] = False
+                    player_walls[current_level] = None
                 if (display_compass and not compass_burned_out[current_level]
                         and levels[current_level].monster_coords is not None):
                     # Decay remaining compass time
@@ -538,7 +585,7 @@ def main():
             # A generic combination of both wall columns and sprites
             # [(index, type, euclidean_squared), ...]
             objects: List[Tuple[int, int, float]] = [
-                (i, type_column, x[2]) for i, x in enumerate(columns)
+                (i, type_column, x[3]) for i, x in enumerate(columns)
             ]
             objects += [
                 (i, type_sprite, x[2]) for i, x in enumerate(sprites)
@@ -571,7 +618,7 @@ def main():
                         monster_spotted[current_level] = 0.0
                 elif object_type == type_column:
                     # A column is a portion of a wall that was hit by a ray.
-                    coord, distance, _, side_was_ns = columns[index]
+                    coord, tile, distance, _, side_was_ns = columns[index]
                     # Edge of maze when drawing maze edges as walls is disabled
                     # Entire ray will be skipped, revealing the horizon.
                     if distance == float('inf'):
@@ -589,10 +636,25 @@ def main():
                     texture_draw_successful = False
                     if cfg.textures_enabled:
                         both_textures = None
-                        for indices, images in wall_textures.items():
-                            if current_level in indices:
-                                both_textures = images
-                                break
+                        if (player_walls[current_level] is not None
+                                and tile == player_walls[current_level][:2]):
+                            # Select appropriate player wall texture depending
+                            # on how long the wall has left until breaking.
+                            both_textures = player_wall_textures[
+                                math.floor(
+                                    (
+                                        time_scores[current_level]
+                                        - player_walls[current_level][2]
+                                    ) / cfg.player_wall_time * len(
+                                        player_wall_textures
+                                    )
+                                )
+                            ]
+                        else:
+                            for indices, images in wall_textures.items():
+                                if current_level in indices:
+                                    both_textures = images
+                                    break
                         if both_textures is not None:
                             # Select either light or dark texture
                             # depending on side
@@ -612,7 +674,9 @@ def main():
             if display_map:
                 screen_drawing.draw_map(
                     screen, cfg, levels[current_level], display_rays,
-                    ray_end_coords, facing_directions[current_level]
+                    ray_end_coords, facing_directions[current_level],
+                    None if player_walls[current_level] is None else
+                    player_walls[current_level][:2]
                 )
 
             monster_coords = levels[current_level].monster_coords

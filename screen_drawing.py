@@ -22,7 +22,6 @@ DARK_GREEN = (0x00, 0x80, 0x00)
 RED = (0xFF, 0x00, 0x00)
 DARK_RED = (0x80, 0x00, 0x00)
 PURPLE = (0x87, 0x23, 0xD9)
-LILAC = (0xD7, 0xA6, 0xFF)
 GREY = (0xAA, 0xAA, 0xAA)
 DARK_GREY = (0x20, 0x20, 0x20)
 LIGHT_GREY = (0xCD, 0xCD, 0xCD)
@@ -278,7 +277,8 @@ def draw_sky_texture(screen: pygame.Surface, cfg: Config,
 
 def draw_map(screen: pygame.Surface, cfg: Config, current_level: Level,
              display_rays: bool, ray_end_coords: List[Tuple[float, float]],
-             facing: Tuple[float, float]):
+             facing: Tuple[float, float],
+             player_wall: Optional[Tuple[int, int]]):
     """
     Draw a 2D map representing the current level. This will cover the screen
     unless enable_cheat_map is True in the config.
@@ -302,6 +302,8 @@ def draw_map(screen: pygame.Surface, cfg: Config, current_level: Level,
                 colour = RED
             elif current_level.end_point == (x, y) and cfg.enable_cheat_map:
                 colour = GREEN
+            elif player_wall is not None and player_wall == (x, y):
+                colour = PURPLE
             else:
                 colour = BLACK if point else WHITE
             pygame.draw.rect(

@@ -396,6 +396,25 @@ class ConfigEditorApp:
         self.gui_compass_charge_delay_label.pack(fill="x", anchor=tkinter.NW)
         self.gui_compass_charge_delay_slider.pack(fill="x", anchor=tkinter.NW)
 
+        self.gui_player_wall_time_label = tkinter.Label(
+            self.gui_advanced_config_frame, anchor=tkinter.W,
+            text="Amount of time before player placed walls break (seconds) — "
+                 + f"({self.parse_float('PLAYER_WALL_TIME', 15.0)})"
+        )
+        self.scale_labels['PLAYER_WALL_TIME'] = (
+            self.gui_player_wall_time_label,
+            "Amount of time before player placed walls break (seconds) — ({})"
+        )
+        self.gui_player_wall_time_slider = tkinter.ttk.Scale(
+            self.gui_advanced_config_frame, from_=1.0, to=120.0,
+            value=self.parse_float('PLAYER_WALL_TIME', 15.0),
+            command=lambda x: self.on_scale_change(
+                'PLAYER_WALL_TIME', x, 1
+            )
+        )
+        self.gui_player_wall_time_label.pack(fill="x", anchor=tkinter.NW)
+        self.gui_player_wall_time_slider.pack(fill="x", anchor=tkinter.NW)
+
         self.gui_texture_scale_label = tkinter.Label(
             self.gui_advanced_config_frame, anchor=tkinter.W,
             text="Internal texture stretch limit — "
