@@ -11,14 +11,14 @@ import pickle
 import random
 import sys
 from glob import glob
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 import pygame
 
 import config_loader
+import level
 import raycasting
 import screen_drawing
-from level import floor_coordinates
 from maze_levels import levels
 
 
@@ -139,6 +139,7 @@ def main():
     compass_burned_out = [False] * len(levels)
     compass_charge_delays = [cfg.compass_charge_delay] * len(levels)
     flicker_time_remaining = [0.0] * len(levels)
+    pickup_flash_time_remaining = 0.0
 
     # [None | (grid_x, grid_y, time_of_placement)]
     player_walls: List[Optional[Tuple[int, int, float]]] = [None] * len(levels)
@@ -171,7 +172,7 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if not is_reset_prompt_shown:
                     if event.key == pygame.K_f:
-                        grid_coords = floor_coordinates(
+                        grid_coords = level.floor_coordinates(
                             levels[current_level].player_coords
                         )
                         if grid_coords in levels[current_level].player_flags:
@@ -219,7 +220,7 @@ def main():
                             round(facing_directions[current_level][0]),
                             round(facing_directions[current_level][1])
                         )
-                        grid_coords = floor_coordinates(
+                        grid_coords = level.floor_coordinates(
                             levels[current_level].player_coords
                         )
                         target = (
@@ -366,45 +367,47 @@ def main():
             # Ensure framerate does not affect speed values
             turn_speed_mod = frame_time * cfg.turn_speed
             move_speed_mod = frame_time * cfg.move_speed
+            # A set of events that occurred due to player movement
+            events: Set[int] = set()
             if pressed_keys[pygame.K_w] or pressed_keys[pygame.K_UP]:
                 if (not levels[current_level].won
                         and not levels[current_level].killed):
-                    levels[current_level].move_player((
+                    events.update(levels[current_level].move_player((
                         facing_directions[current_level][0] * move_speed_mod
                         * move_multiplier,
                         facing_directions[current_level][1] * move_speed_mod
                         * move_multiplier
-                    ))
+                    )))
                     has_started_level[current_level] = True
             if pressed_keys[pygame.K_s] or pressed_keys[pygame.K_DOWN]:
                 if (not levels[current_level].won
                         and not levels[current_level].killed):
-                    levels[current_level].move_player((
+                    events.update(levels[current_level].move_player((
                         -facing_directions[current_level][0] * move_speed_mod
                         * move_multiplier,
                         -facing_directions[current_level][1] * move_speed_mod
                         * move_multiplier
-                    ))
+                    )))
                     has_started_level[current_level] = True
             if pressed_keys[pygame.K_a]:
                 if (not levels[current_level].won
                         and not levels[current_level].killed):
-                    levels[current_level].move_player((
+                    events.update(levels[current_level].move_player((
                         facing_directions[current_level][1] * move_speed_mod
                         * move_multiplier,
                         -facing_directions[current_level][0] * move_speed_mod
                         * move_multiplier
-                    ))
+                    )))
                     has_started_level[current_level] = True
             if pressed_keys[pygame.K_d]:
                 if (not levels[current_level].won
                         and not levels[current_level].killed):
-                    levels[current_level].move_player((
+                    events.update(levels[current_level].move_player((
                         -facing_directions[current_level][1] * move_speed_mod
                         * move_multiplier,
                         facing_directions[current_level][0] * move_speed_mod
                         * move_multiplier
-                    ))
+                    )))
                     has_started_level[current_level] = True
             if pressed_keys[pygame.K_RIGHT]:
                 old_direction = facing_directions[current_level]
@@ -436,6 +439,8 @@ def main():
                     old_camera_plane[0] * math.sin(-turn_speed_mod)
                     + old_camera_plane[1] * math.cos(-turn_speed_mod)
                 )
+            if level.PICKED_UP_KEY in events:
+                pickup_flash_time_remaining = 0.4
             move_scores[current_level] += math.sqrt(
                 raycasting.no_sqrt_coord_distance(
                     old_position, levels[current_level].player_coords
@@ -679,13 +684,21 @@ def main():
                     player_walls[current_level][:2]
                 )
 
+            if pickup_flash_time_remaining > 0:
+                screen_drawing.flash_viewport(
+                    screen, cfg, False, pickup_flash_time_remaining
+                )
+                pickup_flash_time_remaining -= frame_time
+                if pickup_flash_time_remaining < 0:
+                    pickup_flash_time_remaining = 0.0
+
             monster_coords = levels[current_level].monster_coords
             if (monster_coords is not None
                     and (not display_map or cfg.enable_cheat_map)):
                 # Darken viewport intermittently based on monster distance
                 if cfg.monster_flicker_lights:
                     if flicker_time_remaining[current_level] > 0:
-                        screen_drawing.darken_viewport(screen, cfg)
+                        screen_drawing.flash_viewport(screen, cfg, True, 0.5)
                         flicker_time_remaining[current_level] -= frame_time
                         if flicker_time_remaining[current_level] < 0:
                             flicker_time_remaining[current_level] = 0.0
