@@ -6,6 +6,13 @@ import math
 import random
 from typing import Dict, List, Optional, Set, Tuple
 
+MOVED = 0
+MOVED_GRID_DIAGONALLY = 1
+ALTERNATE_COORD_CHOSEN = 2
+PICKED_UP_KEY = 3
+WON = 4
+KILLED = 5
+
 
 def floor_coordinates(coord: Tuple[float, float]):
     """
@@ -137,11 +144,15 @@ class Level:
         """
         Moves the player either relative to their current position, or to an
         absolute location. Key collection and victory checking will be
-        performed automatically. Silently fails if the player cannot move by
-        the specified vector or to the specified position.
+        performed automatically. Fails without raising an error if the player
+        cannot move by the specified vector or to the specified position.
+        Returns a set of actions that took place as a result of the move,
+        which may be empty if nothing changed. All events are included, so for
+        example if MOVED_GRID_DIAGONALLY is returned, MOVED will also be.
         """
+        events: Set[int] = set()
         if self.won or self.killed:
-            return
+            return events
         if relative:
             target = (
                 self.player_coords[0] + vector[0],
@@ -162,8 +173,9 @@ class Level:
                 if self.is_coord_in_bounds(alt_move) and not self[alt_move]:
                     target = alt_move
                     found_valid = True
+                    events.add(ALTERNATE_COORD_CHOSEN)
             if not found_valid:
-                return
+                return events
         grid_coords = floor_coordinates(target)
         old_grid_coords = floor_coordinates(self.player_coords)
         relative_grid_pos = (
@@ -180,14 +192,20 @@ class Level:
                           old_grid_coords[1] + relative_grid_pos[1]]:
                 diagonal_path_free = True
             if not diagonal_path_free:
-                return
+                return events
+            events.add(MOVED_GRID_DIAGONALLY)
         self.player_coords = target
+        events.add(MOVED)
         if grid_coords in self.exit_keys:
             self.exit_keys.remove(grid_coords)
+            events.add(PICKED_UP_KEY)
         if grid_coords == self.monster_coords:
             self.killed = True
+            events.add(KILLED)
         elif grid_coords == self.end_point and len(self.exit_keys) == 0:
             self.won = True
+            events.add(WON)
+        return events
 
     def move_monster(self):
         """
