@@ -706,7 +706,7 @@ def main():
 
             # Stats are always shown before the player begins a level to
             # display highscores and the key count.
-            if (display_stats or not has_started_level[current_level]
+            if ((display_stats or not has_started_level[current_level])
                     and (not display_map or cfg.enable_cheat_map)):
                 time_score = (
                     time_scores[current_level]
