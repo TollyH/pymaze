@@ -120,7 +120,7 @@ def main():
     )
 
     enable_mouse_control = False
-    # Used to calculate gow far mouse has travelled for mouse control
+    # Used to calculate how far mouse has travelled for mouse control
     old_mouse_pos = (cfg.viewport_width // 2, cfg.viewport_height // 2)
 
     display_map = False
@@ -138,6 +138,7 @@ def main():
     compass_times = [cfg.compass_time] * len(levels)
     compass_burned_out = [False] * len(levels)
     compass_charge_delays = [cfg.compass_charge_delay] * len(levels)
+    wall_place_cooldown = [0.0] * len(levels)
     flicker_time_remaining = [0.0] * len(levels)
     pickup_flash_time_remaining = 0.0
 
@@ -215,6 +216,7 @@ def main():
                         )
                     elif (event.key == pygame.K_q
                             and player_walls[current_level] is None
+                            and wall_place_cooldown[current_level] == 0
                             and has_started_level[current_level]):
                         cardinal_facing = (
                             round(facing_directions[current_level][0]),
@@ -494,6 +496,11 @@ def main():
                         monster_spotted[current_level] = (
                             cfg.monster_spot_timeout
                         )
+                if wall_place_cooldown[current_level] > 0:
+                    wall_place_cooldown[current_level] -= frame_time
+                    wall_place_cooldown[current_level] = max(
+                        0.0, wall_place_cooldown[current_level]
+                    )
                 if (player_walls[current_level] is not None
                         and time_scores[current_level]
                         >= player_walls[current_level][2]
@@ -503,6 +510,9 @@ def main():
                         player_walls[current_level][:2]
                     ] = False
                     player_walls[current_level] = None
+                    wall_place_cooldown[current_level] = (
+                        cfg.player_wall_cooldown
+                    )
                 if (display_compass and not compass_burned_out[current_level]
                         and levels[current_level].monster_coords is not None):
                     # Decay remaining compass time
@@ -529,8 +539,9 @@ def main():
                     elif compass_charge_delays[current_level] > 0.0:
                         # Decrement delay before compass charging
                         compass_charge_delays[current_level] -= frame_time
-                        if compass_charge_delays[current_level] < 0.0:
-                            compass_charge_delays[current_level] = 0.0
+                        compass_charge_delays[current_level] = max(
+                            0.0, compass_charge_delays[current_level]
+                        )
                 monster_wait = levels[current_level].monster_wait
                 # Move monster if it is enabled and a sufficient amount of time
                 # has passed since last move/level start
@@ -689,8 +700,9 @@ def main():
                     screen, cfg, False, pickup_flash_time_remaining
                 )
                 pickup_flash_time_remaining -= frame_time
-                if pickup_flash_time_remaining < 0:
-                    pickup_flash_time_remaining = 0.0
+                pickup_flash_time_remaining = max(
+                    0.0, pickup_flash_time_remaining
+                )
 
             monster_coords = levels[current_level].monster_coords
             if (monster_coords is not None
@@ -700,8 +712,9 @@ def main():
                     if flicker_time_remaining[current_level] > 0:
                         screen_drawing.flash_viewport(screen, cfg, True, 0.5)
                         flicker_time_remaining[current_level] -= frame_time
-                        if flicker_time_remaining[current_level] < 0:
-                            flicker_time_remaining[current_level] = 0.0
+                        flicker_time_remaining[current_level] = max(
+                            0.0, flicker_time_remaining[current_level]
+                        )
 
             if display_compass and (not display_map or cfg.enable_cheat_map):
                 monster_coords = levels[current_level].monster_coords

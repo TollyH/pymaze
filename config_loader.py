@@ -95,6 +95,11 @@ class Config:
 
         # Amount of time in seconds before player placed walls are broken.
         self.player_wall_time = self._parse_float('PLAYER_WALL_TIME', 15.0)
+        # Amount of time the player must wait after a wall has been broken
+        # before being able to place another one.
+        self.player_wall_cooldown = self._parse_float(
+            'PLAYER_WALL_COOLDOWN', 20.0
+        )
 
         # The maximum frames per second that the game will render at.
         # Low values may cause the game window to become unresponsive.

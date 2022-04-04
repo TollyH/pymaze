@@ -415,6 +415,25 @@ class ConfigEditorApp:
         self.gui_player_wall_time_label.pack(fill="x", anchor=tkinter.NW)
         self.gui_player_wall_time_slider.pack(fill="x", anchor=tkinter.NW)
 
+        self.gui_player_wall_cooldown_label = tkinter.Label(
+            self.gui_advanced_config_frame, anchor=tkinter.W,
+            text="Cooldown before player can place another wall (seconds) — "
+                 + f"({self.parse_float('PLAYER_WALL_COOLDOWN', 20.0)})"
+        )
+        self.scale_labels['PLAYER_WALL_COOLDOWN'] = (
+            self.gui_player_wall_cooldown_label,
+            "Cooldown before player can place another wall (seconds) — ({})"
+        )
+        self.gui_player_wall_cooldown_slider = tkinter.ttk.Scale(
+            self.gui_advanced_config_frame, from_=0.0, to=120.0,
+            value=self.parse_float('PLAYER_WALL_COOLDOWN', 20.0),
+            command=lambda x: self.on_scale_change(
+                'PLAYER_WALL_COOLDOWN', x, 1
+            )
+        )
+        self.gui_player_wall_cooldown_label.pack(fill="x", anchor=tkinter.NW)
+        self.gui_player_wall_cooldown_slider.pack(fill="x", anchor=tkinter.NW)
+
         self.gui_texture_scale_label = tkinter.Label(
             self.gui_advanced_config_frame, anchor=tkinter.W,
             text="Internal texture stretch limit — "
