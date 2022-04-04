@@ -10,11 +10,13 @@ import os
 import pickle
 import random
 import sys
+import threading
 from glob import glob
 from typing import Dict, List, Optional, Set, Tuple
 
 import pygame
 
+import config_editor
 import config_loader
 import level
 import raycasting
@@ -249,6 +251,14 @@ def main():
                         # Return the mouse to normal
                         pygame.mouse.set_visible(True)
                         pygame.event.set_grab(False)
+                    elif event.key == pygame.K_SLASH:
+                        pressed = pygame.key.get_pressed()
+                        if pressed[pygame.K_RCTRL] or pressed[pygame.K_LCTRL]:
+                            # Launch config editor in separate thread to
+                            # prevent blocking the main game.
+                            threading.Thread(
+                                target=config_editor.ConfigEditorApp
+                            ).start()
                 else:
                     if event.key == pygame.K_y:
                         # Resets almost all attributes related to the current
