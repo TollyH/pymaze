@@ -39,6 +39,13 @@ class ConfigEditorApp:
         # can be dynamically retrieved easily
         self.checkbuttons: Dict[str, tkinter.IntVar] = {}
 
+        self.gui_restart_warning_label = tkinter.Label(
+            self.window, fg='red',
+            text="Be aware that some settings may not work properly or cause "
+            + "issues until after restarting the game"
+        )
+        self.gui_restart_warning_label.pack(fill='x', expand=True)
+
         self.gui_top_tab_control = tkinter.ttk.Notebook(self.window)
         self.gui_top_tab_control.pack(fill="both", expand=True)
 
