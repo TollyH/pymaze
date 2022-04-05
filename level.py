@@ -9,9 +9,11 @@ from typing import Dict, List, Optional, Set, Tuple
 MOVED = 0
 MOVED_GRID_DIAGONALLY = 1
 ALTERNATE_COORD_CHOSEN = 2
-PICKED_UP_KEY = 3
-WON = 4
-KILLED = 5
+PICKUP = 3
+PICKED_UP_KEY = 4
+PICKED_UP_KEY_SENSOR = 5
+WON = 6
+KILLED = 7
 
 
 def floor_coordinates(coord: Tuple[float, float]):
@@ -34,6 +36,7 @@ class Level:
     def __init__(self, dimensions: Tuple[int, int],
                  wall_map: List[List[bool]], start_point: Tuple[int, int],
                  end_point: Tuple[int, int], exit_keys: List[Tuple[int, int]],
+                 key_sensors: List[Tuple[int, int]],
                  monster_start: Optional[Tuple[int, int]],
                  monster_wait: Optional[float]):
         """
@@ -71,6 +74,15 @@ class Level:
         self.original_exit_keys = exit_keys
         # Create a shallow copy of exit keys to be manipulated on collection
         self.exit_keys = [*exit_keys]
+
+        for sensor in key_sensors:
+            if not self.is_coord_in_bounds(sensor):
+                raise ValueError("Out of bounds key sensor coordinates")
+            if self[sensor]:
+                raise ValueError("Key sensor cannot be inside wall")
+        self.original_key_sensors = key_sensors
+        # Create a shallow copy of key sensors to be manipulated on collection
+        self.key_sensors = [*key_sensors]
 
         self.monster_coords: Optional[Tuple[int, int]] = None
         if monster_start is not None:
@@ -199,6 +211,11 @@ class Level:
         if grid_coords in self.exit_keys:
             self.exit_keys.remove(grid_coords)
             events.add(PICKED_UP_KEY)
+            events.add(PICKUP)
+        if grid_coords in self.key_sensors:
+            self.key_sensors.remove(grid_coords)
+            events.add(PICKED_UP_KEY_SENSOR)
+            events.add(PICKUP)
         if grid_coords == self.monster_coords:
             self.killed = True
             events.add(KILLED)
@@ -318,8 +335,9 @@ class Level:
         """
         Reset this level to its original state
         """
-        # Shallow copy to prevent original key list being modified
+        # Shallow copy to prevent original key (sensor) list being modified
         self.exit_keys = [*self.original_exit_keys]
+        self.key_sensors = [*self.original_key_sensors]
         self.player_flags = set()
         self.player_coords = (
             self.start_point[0] + 0.5, self.start_point[1] + 0.5

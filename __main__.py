@@ -105,6 +105,9 @@ def main():
         ).convert_alpha(),
         raycasting.END_POINT_ACTIVE: pygame.image.load(
             os.path.join("textures", "sprite", "end_point_active.png")
+        ).convert_alpha(),
+        raycasting.KEY_SENSOR: pygame.image.load(
+            os.path.join("textures", "sprite", "key_sensor.png")
         ).convert_alpha()
     }
 
@@ -140,6 +143,7 @@ def main():
     compass_times = [cfg.compass_time] * len(levels)
     compass_burned_out = [False] * len(levels)
     compass_charge_delays = [cfg.compass_charge_delay] * len(levels)
+    key_sensor_times = [0.0] * len(levels)
     wall_place_cooldown = [0.0] * len(levels)
     flicker_time_remaining = [0.0] * len(levels)
     pickup_flash_time_remaining = 0.0
@@ -453,8 +457,10 @@ def main():
                     old_camera_plane[0] * math.sin(-turn_speed_mod)
                     + old_camera_plane[1] * math.cos(-turn_speed_mod)
                 )
-            if level.PICKED_UP_KEY in events:
+            if level.PICKUP in events:
                 pickup_flash_time_remaining = 0.4
+            if level.PICKED_UP_KEY_SENSOR in events:
+                key_sensor_times[current_level] = cfg.compass_time
             move_scores[current_level] += math.sqrt(
                 raycasting.no_sqrt_coord_distance(
                     old_position, levels[current_level].player_coords
@@ -508,6 +514,11 @@ def main():
                         monster_spotted[current_level] = (
                             cfg.monster_spot_timeout
                         )
+                if key_sensor_times[current_level] > 0:
+                    key_sensor_times[current_level] -= frame_time
+                    key_sensor_times[current_level] = max(
+                        0.0, key_sensor_times[current_level]
+                    )
                 if wall_place_cooldown[current_level] > 0:
                     wall_place_cooldown[current_level] -= frame_time
                     wall_place_cooldown[current_level] = max(
@@ -703,6 +714,7 @@ def main():
                 screen_drawing.draw_map(
                     screen, cfg, levels[current_level], display_rays,
                     ray_end_coords, facing_directions[current_level],
+                    key_sensor_times[current_level] > 0,
                     None if player_walls[current_level] is None else
                     player_walls[current_level][:2]
                 )

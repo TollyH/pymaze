@@ -44,6 +44,7 @@ algorithm for raycasting.
 - You can place flags on the ground to help you navigate, however if the monster comes into contact with one of these flags, it may destroy it.
 - You have a compass which will point toward the monster's location, however you only have a limited amount of time to use it before you must wait for it to recharge.
 - You can place a temporary barricade which will act like any other wall until it breaks. You may only have one built at a time, it cannot be broken early, and it will block you as well as the monster.
+- Some levels contain single use key sensor which will display the location of every key on the map for a limited amount of time.
 
 ## Map Colours
 
@@ -56,6 +57,7 @@ algorithm for raycasting.
 - Red - Start point
 - Turquoise - Flags
 - Purple - Player placed wall
+- Dark gold - Key sensors
 
 ---
 

@@ -331,12 +331,12 @@ class ConfigEditorApp:
 
         self.gui_compass_time_label = tkinter.Label(
             self.gui_advanced_config_frame, anchor=tkinter.W,
-            text="Time before compass burnout (seconds) — "
+            text="Time before compass burnout and key sensor time (seconds) — "
             + f"({self.parse_float('COMPASS_TIME', 10.0)})"
         )
         self.scale_labels['COMPASS_TIME'] = (
             self.gui_compass_time_label,
-            "Time before compass burnout (seconds) — ({})"
+            "Time before compass burnout and key sensor time (seconds) — ({})"
         )
         self.gui_compass_time_slider = tkinter.ttk.Scale(
             self.gui_advanced_config_frame, from_=1.0, to=60.0,

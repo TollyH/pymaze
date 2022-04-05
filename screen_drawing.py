@@ -277,7 +277,7 @@ def draw_sky_texture(screen: pygame.Surface, cfg: Config,
 
 def draw_map(screen: pygame.Surface, cfg: Config, current_level: Level,
              display_rays: bool, ray_end_coords: List[Tuple[float, float]],
-             facing: Tuple[float, float],
+             facing: Tuple[float, float], has_key_sensor: bool,
              player_wall: Optional[Tuple[int, int]]):
     """
     Draw a 2D map representing the current level. This will cover the screen
@@ -294,8 +294,11 @@ def draw_map(screen: pygame.Surface, cfg: Config, current_level: Level,
             elif (current_level.monster_coords == (x, y)
                     and cfg.enable_cheat_map):
                 colour = DARK_RED
-            elif (x, y) in current_level.exit_keys and cfg.enable_cheat_map:
+            elif (x, y) in current_level.exit_keys and (
+                    cfg.enable_cheat_map or has_key_sensor):
                 colour = GOLD
+            elif (x, y) in current_level.key_sensors and cfg.enable_cheat_map:
+                colour = DARK_GOLD
             elif (x, y) in current_level.player_flags:
                 colour = LIGHT_BLUE
             elif current_level.start_point == (x, y):

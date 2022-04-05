@@ -75,7 +75,7 @@ class Config:
         )
 
         # The length of time in seconds that the compass can be used before
-        # burning out
+        # burning out. Also used as the time that the key sensor will last.
         self.compass_time = self._parse_float('COMPASS_TIME', 10.0)
         # The multiplier applied to COMPASS_TIME that it will take to recharge
         # the compass if it isn't burned out
