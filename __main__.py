@@ -460,7 +460,7 @@ def main():
             if level.PICKUP in events:
                 pickup_flash_time_remaining = 0.4
             if level.PICKED_UP_KEY_SENSOR in events:
-                key_sensor_times[current_level] = cfg.compass_time
+                key_sensor_times[current_level] = cfg.key_sensor_time
             move_scores[current_level] += math.sqrt(
                 raycasting.no_sqrt_coord_distance(
                     old_position, levels[current_level].player_coords

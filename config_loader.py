@@ -75,7 +75,7 @@ class Config:
         )
 
         # The length of time in seconds that the compass can be used before
-        # burning out. Also used as the time that the key sensor will last.
+        # burning out.
         self.compass_time = self._parse_float('COMPASS_TIME', 10.0)
         # The multiplier applied to COMPASS_TIME that it will take to recharge
         # the compass if it isn't burned out
@@ -92,6 +92,10 @@ class Config:
         self.compass_charge_delay = self._parse_float(
             'COMPASS_CHARGE_DELAY', 1.5
         )
+
+        # Amount of time that keys will be shown on the map when picking up a
+        # key sensor in seconds.
+        self.key_sensor_time = self._parse_float('KEY_SENSOR_TIME', 10.0)
 
         # Amount of time in seconds before player placed walls are broken.
         self.player_wall_time = self._parse_float('PLAYER_WALL_TIME', 15.0)

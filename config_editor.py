@@ -331,12 +331,12 @@ class ConfigEditorApp:
 
         self.gui_compass_time_label = tkinter.Label(
             self.gui_advanced_config_frame, anchor=tkinter.W,
-            text="Time before compass burnout and key sensor time (seconds) — "
+            text="Time before compass burnout (seconds) — "
             + f"({self.parse_float('COMPASS_TIME', 10.0)})"
         )
         self.scale_labels['COMPASS_TIME'] = (
             self.gui_compass_time_label,
-            "Time before compass burnout and key sensor time (seconds) — ({})"
+            "Time before compass burnout (seconds) — ({})"
         )
         self.gui_compass_time_slider = tkinter.ttk.Scale(
             self.gui_advanced_config_frame, from_=1.0, to=60.0,
@@ -402,6 +402,23 @@ class ConfigEditorApp:
         )
         self.gui_compass_charge_delay_label.pack(fill="x", anchor=tkinter.NW)
         self.gui_compass_charge_delay_slider.pack(fill="x", anchor=tkinter.NW)
+
+        self.gui_key_sensor_time_label = tkinter.Label(
+            self.gui_advanced_config_frame, anchor=tkinter.W,
+            text="Time key sensor lasts after pickup (seconds) — "
+                 + f"({self.parse_float('KEY_SENSOR_TIME', 10.0)})"
+        )
+        self.scale_labels['KEY_SENSOR_TIME'] = (
+            self.gui_key_sensor_time_label,
+            "Time key sensor lasts after pickup (seconds) — ({})"
+        )
+        self.gui_key_sensor_time_slider = tkinter.ttk.Scale(
+            self.gui_advanced_config_frame, from_=1.0, to=60.0,
+            value=self.parse_float('KEY_SENSOR_TIME', 10.0),
+            command=lambda x: self.on_scale_change('KEY_SENSOR_TIME', x, 1)
+        )
+        self.gui_key_sensor_time_label.pack(fill="x", anchor=tkinter.NW)
+        self.gui_key_sensor_time_slider.pack(fill="x", anchor=tkinter.NW)
 
         self.gui_player_wall_time_label = tkinter.Label(
             self.gui_advanced_config_frame, anchor=tkinter.W,
