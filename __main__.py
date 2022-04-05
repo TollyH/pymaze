@@ -156,6 +156,7 @@ def main():
 
     # Game loop
     while True:
+        screen.fill(screen_drawing.BLACK)
         if os.path.getmtime('config.ini') > last_config_edit:
             # Config has been edited so it should be reloaded.
             last_config_edit = os.path.getmtime('config.ini')
