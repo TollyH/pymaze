@@ -288,6 +288,7 @@ def main():
                                 player_walls[current_level][:2]
                             ] = False
                             player_walls[current_level] = None
+                        wall_place_cooldown[current_level] = 0.0
                     elif event.key == pygame.K_n:
                         is_reset_prompt_shown = False
             elif (event.type == pygame.MOUSEBUTTONDOWN
