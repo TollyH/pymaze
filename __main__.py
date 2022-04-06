@@ -124,6 +124,21 @@ def main():
         os.path.join("sounds", "monster_spotted.wav")
     )
 
+    # {min_distance_to_play: Sound}
+    # Must be in ascending numerical order
+    breathing_sounds = {
+        0: pygame.mixer.Sound(
+            os.path.join("sounds", "player_breathe", "heavy.wav")
+        ),
+        5: pygame.mixer.Sound(
+            os.path.join("sounds", "player_breathe", "medium.wav")
+        ),
+        10: pygame.mixer.Sound(
+            os.path.join("sounds", "player_breathe", "light.wav")
+        )
+    }
+    time_to_breathing_finish = 0.0
+
     enable_mouse_control = False
     # Used to calculate how far mouse has travelled for mouse control
     old_mouse_pos = (cfg.viewport_width // 2, cfg.viewport_height // 2)
@@ -597,6 +612,28 @@ def main():
                             flicker_time_remaining[current_level] = (
                                 random.uniform(0.0, 0.5)
                             )
+
+            # Play background breathing if the previous breathing play has
+            # finished
+            if time_to_breathing_finish > 0:
+                time_to_breathing_finish -= frame_time
+            if (time_to_breathing_finish <= 0
+                    and has_started_level[current_level]):
+                # There is no monster, so play the calmest breathing sound
+                selected_sound = breathing_sounds[max(breathing_sounds)]
+                if levels[current_level].monster_coords is not None:
+                    distance = math.sqrt(raycasting.no_sqrt_coord_distance(
+                        levels[current_level].player_coords,
+                        levels[current_level].monster_coords
+                    ))
+                    for min_distance, sound in breathing_sounds.items():
+                        if distance >= min_distance:
+                            selected_sound = sound
+                        else:
+                            break
+                time_to_breathing_finish = selected_sound.get_length()
+                selected_sound.play()
+
             if not display_map or cfg.enable_cheat_map:
                 screen_drawing.draw_solid_background(screen, cfg)
 
