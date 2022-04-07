@@ -73,6 +73,16 @@ class Config:
         self.monster_flicker_lights = self._parse_bool(
             'MONSTER_FLICKER_LIGHTS', True
         )
+        # Whether a random monster roaming sound should play with volume
+        # dependent on monster distance
+        self.monster_sound_roaming = self._parse_bool(
+            'MONSTER_SOUND_ROAMING', True
+        )
+        # The amount of time in seconds between playing random monster roaming
+        # sounds.
+        self.monster_roam_sound_delay = self._parse_float(
+            'MONSTER_ROAM_SOUND_DELAY', 7.5
+        )
 
         # The length of time in seconds that the compass can be used before
         # burning out.

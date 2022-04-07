@@ -174,6 +174,20 @@ class ConfigEditorApp:
         )
         self.gui_monster_flicker_lights_check.pack(fill="x", anchor=tkinter.NW)
 
+        self.checkbuttons['MONSTER_SOUND_ROAMING'] = tkinter.IntVar()
+        self.gui_monster_sound_roaming_check = tkinter.Checkbutton(
+            self.gui_basic_config_frame, anchor=tkinter.W,
+            variable=self.checkbuttons['MONSTER_SOUND_ROAMING'],
+            text="Play random monster roaming sounds"
+        )
+        if self.parse_bool('MONSTER_SOUND_ROAMING', True):
+            self.gui_monster_sound_roaming_check.select()
+        # Set command after select to prevent it being called
+        self.gui_monster_sound_roaming_check.config(
+            command=lambda: self.on_checkbutton_click('MONSTER_SOUND_ROAMING')
+        )
+        self.gui_monster_sound_roaming_check.pack(fill="x", anchor=tkinter.NW)
+
         self.gui_frame_rate_limit_label = tkinter.Label(
             self.gui_basic_config_frame, anchor=tkinter.W,
             text=f"Max FPS — ({self.parse_int('FRAME_RATE_LIMIT', 75)})"
@@ -328,6 +342,29 @@ class ConfigEditorApp:
         )
         self.gui_monster_spot_label.pack(fill="x", anchor=tkinter.NW)
         self.gui_monster_spot_slider.pack(fill="x", anchor=tkinter.NW)
+
+        self.gui_monster_roam_sound_delay_label = tkinter.Label(
+            self.gui_advanced_config_frame, anchor=tkinter.W,
+            text="Time between monster roaming sounds (seconds) — "
+                 + f"({self.parse_float('MONSTER_ROAM_SOUND_DELAY', 7.5)})"
+        )
+        self.scale_labels['MONSTER_ROAM_SOUND_DELAY'] = (
+            self.gui_monster_roam_sound_delay_label,
+            "Time between monster roaming sounds (seconds) — ({})"
+        )
+        self.gui_monster_roam_sound_delay_slider = tkinter.ttk.Scale(
+            self.gui_advanced_config_frame, from_=0.1, to=60.0,
+            value=self.parse_float('MONSTER_ROAM_SOUND_DELAY', 7.5),
+            command=lambda x: self.on_scale_change(
+                'MONSTER_ROAM_SOUND_DELAY', x, 1
+            )
+        )
+        self.gui_monster_roam_sound_delay_label.pack(
+            fill="x", anchor=tkinter.NW
+        )
+        self.gui_monster_roam_sound_delay_slider.pack(
+            fill="x", anchor=tkinter.NW
+        )
 
         self.gui_compass_time_label = tkinter.Label(
             self.gui_advanced_config_frame, anchor=tkinter.W,

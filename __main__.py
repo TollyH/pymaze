@@ -139,6 +139,12 @@ def main():
     }
     time_to_breathing_finish = 0.0
 
+    monster_roam_sounds = [
+        pygame.mixer.Sound(x)
+        for x in glob(os.path.join("sounds", "monster_roam", "*.wav"))
+    ]
+    time_to_next_roam_sound = 0.0
+
     enable_mouse_control = False
     # Used to calculate how far mouse has travelled for mouse control
     old_mouse_pos = (cfg.viewport_width // 2, cfg.viewport_height // 2)
@@ -632,6 +638,28 @@ def main():
                         else:
                             break
                 time_to_breathing_finish = selected_sound.get_length()
+                selected_sound.play()
+
+            # Play monster roaming sound if enough time has passed and monster
+            # is present
+            if time_to_next_roam_sound > 0:
+                time_to_next_roam_sound -= frame_time
+            if (time_to_next_roam_sound <= 0
+                    and levels[current_level].monster_coords is not None
+                    and cfg.monster_sound_roaming):
+                selected_sound = random.choice(monster_roam_sounds)
+                time_to_next_roam_sound = (
+                        selected_sound.get_length()
+                        + cfg.monster_roam_sound_delay
+                )
+                distance = math.sqrt(raycasting.no_sqrt_coord_distance(
+                    levels[current_level].player_coords,
+                    levels[current_level].monster_coords
+                ))
+                # Adjust volume based on monster distance
+                # (the further away the quieter) - tanh limits values between
+                # 0 and 1
+                selected_sound.set_volume(math.tanh(3 / distance))
                 selected_sound.play()
 
             if not display_map or cfg.enable_cheat_map:
