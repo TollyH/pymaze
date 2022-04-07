@@ -145,6 +145,12 @@ def main():
     ]
     time_to_next_roam_sound = 0.0
 
+    # Constant ambient sound - loops infinitely
+    pygame.mixer.music.load(os.path.join("sounds", "ambience.wav"))
+    light_flicker_sound = pygame.mixer.Sound(
+        os.path.join("sounds", "light_flicker.wav")
+    )
+
     enable_mouse_control = False
     # Used to calculate how far mouse has travelled for mouse control
     old_mouse_pos = (cfg.viewport_width // 2, cfg.viewport_height // 2)
@@ -491,6 +497,8 @@ def main():
 
         # Victory screen
         if levels[current_level].won:
+            if pygame.mixer.music.get_busy():
+                pygame.mixer.music.stop()
             # Overwrite existing highscores if required
             highscores_updated = False
             if (time_scores[current_level] < highscores[current_level][0]
@@ -515,6 +523,8 @@ def main():
             )
         # Death screen
         elif levels[current_level].killed:
+            if pygame.mixer.music.get_busy():
+                pygame.mixer.music.stop()
             if cfg.monster_sound_on_kill and has_started_level[current_level]:
                 monster_jumpscare_sound.play()
                 has_started_level[current_level] = False
@@ -523,7 +533,9 @@ def main():
             )
         # Currently playing
         elif not is_reset_prompt_shown:
-            if has_started_level[current_level] and not is_reset_prompt_shown:
+            if not pygame.mixer.music.get_busy():
+                pygame.mixer.music.play()
+            if has_started_level[current_level]:
                 # Progress time-based attributes and events
                 time_scores[current_level] += frame_time
                 monster_timeouts[current_level] += frame_time
@@ -619,6 +631,7 @@ def main():
                             flicker_time_remaining[current_level] = (
                                 random.uniform(0.0, 0.5)
                             )
+                            light_flicker_sound.play()
 
             # Play background breathing if the previous breathing play has
             # finished
@@ -844,8 +857,9 @@ def main():
                 )
 
             last_level_frame[current_level] = screen.copy()
-
-        if is_reset_prompt_shown:
+        else:
+            if pygame.mixer.music.get_busy():
+                pygame.mixer.music.stop()
             screen_drawing.draw_reset_prompt(
                 screen, cfg, last_level_frame[current_level]
             )
