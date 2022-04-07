@@ -857,7 +857,8 @@ def main():
                 )
 
             last_level_frame[current_level] = screen.copy()
-        else:
+
+        if is_reset_prompt_shown:
             if pygame.mixer.music.get_busy():
                 pygame.mixer.music.stop()
             screen_drawing.draw_reset_prompt(
