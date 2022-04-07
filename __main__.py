@@ -199,7 +199,14 @@ def main():
                 sys.exit()
             # Standard "press-once" keys
             elif event.type == pygame.KEYDOWN:
-                if not is_reset_prompt_shown:
+                # Never stop the user regaining control of their mouse with
+                # escape.
+                if event.key == pygame.K_ESCAPE:
+                    enable_mouse_control = False
+                    # Return the mouse to normal
+                    pygame.mouse.set_visible(True)
+                    pygame.event.set_grab(False)
+                elif not is_reset_prompt_shown:
                     if event.key == pygame.K_f:
                         grid_coords = level.floor_coordinates(
                             levels[current_level].player_coords
@@ -272,11 +279,6 @@ def main():
                             display_rays = not display_rays
                         else:
                             display_map = not display_map
-                    elif event.key == pygame.K_ESCAPE:
-                        enable_mouse_control = False
-                        # Return the mouse to normal
-                        pygame.mouse.set_visible(True)
-                        pygame.event.set_grab(False)
                     elif event.key == pygame.K_SLASH:
                         pressed = pygame.key.get_pressed()
                         if pressed[pygame.K_RCTRL] or pressed[pygame.K_LCTRL]:
@@ -317,8 +319,7 @@ def main():
                         wall_place_cooldown[current_level] = 0.0
                     elif event.key == pygame.K_n:
                         is_reset_prompt_shown = False
-            elif (event.type == pygame.MOUSEBUTTONDOWN
-                    and not is_reset_prompt_shown):
+            elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_coords = pygame.mouse.get_pos()
                 if (mouse_coords[0] <= cfg.viewport_width
                         and event.button == pygame.BUTTON_LEFT):
