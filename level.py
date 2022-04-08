@@ -13,7 +13,7 @@ PICKUP = 3
 PICKED_UP_KEY = 4
 PICKED_UP_KEY_SENSOR = 5
 WON = 6
-KILLED = 7
+MONSTER_CAUGHT = 7
 
 
 def floor_coordinates(coord: Tuple[float, float]):
@@ -217,8 +217,7 @@ class Level:
             events.add(PICKED_UP_KEY_SENSOR)
             events.add(PICKUP)
         if grid_coords == self.monster_coords:
-            self.killed = True
-            events.add(KILLED)
+            events.add(MONSTER_CAUGHT)
         elif grid_coords == self.end_point and len(self.exit_keys) == 0:
             self.won = True
             events.add(WON)
@@ -228,14 +227,14 @@ class Level:
         """
         Moves the monster one space in a random available direction, unless
         the player is in the unobstructed view of one of the cardinal
-        directions, in which case move toward the player instead. If the
-        monster and the player occupy the same grid square, self.killed will
-        be set to True.
+        directions, in which case move toward the player instead.
+        If the monster and the player occupy the same grid square, True will be
+        returned, else False will be.
         """
         last_monster_position = self.monster_coords
         player_grid_position = floor_coordinates(self.player_coords)
         if self.monster_start is None:
-            return
+            return False
         if self.monster_coords is None:
             self.monster_coords = self.monster_start
         else:
@@ -306,8 +305,7 @@ class Level:
         self._last_monster_position = last_monster_position
         if self.monster_coords in self.player_flags and random.random() < 0.25:
             self.player_flags.remove(self.monster_coords)
-        if self.monster_coords == player_grid_position:
-            self.killed = True
+        return self.monster_coords == player_grid_position
 
     def find_possible_paths(self):
         """

@@ -3,6 +3,7 @@ Contains functions for performing most display related tasks, including
 drawing columns, sprites, and HUD elements.
 """
 import math
+import random
 from typing import List, Optional, Tuple
 
 import pygame
@@ -95,13 +96,37 @@ def draw_victory_screen(screen: pygame.Surface, cfg: Config,
 def draw_kill_screen(screen: pygame.Surface, cfg: Config,
                      jumpscare_monster_texture: pygame.Surface):
     """
-    Draw the red kill screen optionally displaying the monster
+    Draw the red kill screen with the monster fullscreen
     """
     screen.fill(RED)
-    if cfg.monster_display_on_kill:
-        screen.blit(jumpscare_monster_texture, (
-            0, 0, cfg.viewport_width, cfg.viewport_height
-        ))
+    screen.blit(jumpscare_monster_texture, (
+        0, 0, cfg.viewport_width, cfg.viewport_height
+    ))
+
+
+def draw_escape_screen(screen: pygame.Surface, cfg: Config,
+                       jumpscare_monster_texture: pygame.Surface):
+    """
+    Draw the monster fullscreen and prompt the user to spam W to escape
+    """
+    screen.blit(jumpscare_monster_texture, (
+        random.randint(-5, 5), random.randint(-5, 5),
+        cfg.viewport_width, cfg.viewport_height
+    ))
+    background = pygame.Surface((cfg.viewport_width, 55))
+    background.fill(BLACK)
+    background.set_alpha(127)
+    screen.blit(background, (0, cfg.viewport_height - 55))
+    escape_prompt = FONT.render(
+        "Press W as fast as you can to escape!", True, WHITE
+    )
+    screen.blit(
+        escape_prompt,
+        (
+            cfg.viewport_width // 2 - escape_prompt.get_width() // 2,
+            cfg.viewport_height - 45
+        )
+    )
 
 
 def draw_untextured_column(screen: pygame.Surface, cfg: Config, index: int,

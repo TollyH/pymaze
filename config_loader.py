@@ -52,11 +52,6 @@ class Config:
         self.monster_sound_on_kill = self._parse_bool(
             'MONSTER_SOUND_ON_KILL', True
         )
-        # Whether the monster should be displayed fullscreen when the player is
-        # killed
-        self.monster_display_on_kill = self._parse_bool(
-            'MONSTER_DISPLAY_ON_KILL', True
-        )
         # Whether the spotted sound should be played when the monster enters
         # the player's field of view
         self.monster_sound_on_spot = self._parse_bool(
@@ -82,6 +77,15 @@ class Config:
         # sounds.
         self.monster_roam_sound_delay = self._parse_float(
             'MONSTER_ROAM_SOUND_DELAY', 7.5
+        )
+        # The total amount of time in each level that can be spent in the
+        # "spam to escape" sequence with the monster
+        self.monster_time_to_escape = self._parse_float(
+            'MONSTER_TIME_TO_ESCAPE', 5.0
+        )
+        # The number of key-presses required to escape from the monster
+        self.monster_presses_to_escape = self._parse_int(
+            'MONSTER_PRESSES_TO_ESCAPE', 10
         )
 
         # The length of time in seconds that the compass can be used before

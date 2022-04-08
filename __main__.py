@@ -167,6 +167,9 @@ def main():
     # How long since the monster was last spotted. Used to prevent the
     # "spotted" jumpscare sound playing repeatedly.
     monster_spotted = [cfg.monster_spot_timeout] * len(levels)
+    monster_escape_time = [cfg.monster_time_to_escape] * len(levels)
+    # -1 means that the monster has not currently caught the player
+    monster_escape_clicks = [-1] * len(levels)
     compass_times = [cfg.compass_time] * len(levels)
     compass_burned_out = [False] * len(levels)
     compass_charge_delays = [cfg.compass_charge_delay] * len(levels)
@@ -307,6 +310,10 @@ def main():
                         monster_spotted[current_level] = (
                             cfg.monster_spot_timeout
                         )
+                        monster_escape_clicks[current_level] = -1
+                        monster_escape_time[current_level] = (
+                            cfg.monster_time_to_escape
+                        )
                         compass_times[current_level] = cfg.compass_time
                         compass_burned_out[current_level] = False
                         flicker_time_remaining[current_level] = 0.0
@@ -325,6 +332,15 @@ def main():
                         wall_place_cooldown[current_level] = 0.0
                     elif event.key == pygame.K_n:
                         is_reset_prompt_shown = False
+                if monster_escape_clicks[current_level] >= 0:
+                    if event.key == pygame.K_w:
+                        monster_escape_clicks[current_level] += 1
+                        if (monster_escape_clicks[current_level]
+                                >= cfg.monster_presses_to_escape):
+                            monster_escape_clicks[current_level] = -1
+                            levels[current_level].monster_coords = (
+                                levels[current_level].monster_start
+                            )
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_coords = pygame.mouse.get_pos()
                 if (mouse_coords[0] <= cfg.viewport_width
@@ -402,7 +418,8 @@ def main():
         # Do not allow player to move while map is open if cheat map is not
         # enabled - or if the reset prompt is open
         if ((cfg.enable_cheat_map or not display_map)
-                and not is_reset_prompt_shown):
+                and not is_reset_prompt_shown
+                and monster_escape_clicks[current_level] == -1):
             # Held down keys - movement and turning
             pressed_keys = pygame.key.get_pressed()
             move_multiplier = 1
@@ -494,6 +511,9 @@ def main():
                     old_position, levels[current_level].player_coords
                 )
             )
+            if level.MONSTER_CAUGHT in events:
+                monster_escape_clicks[current_level] = 0
+                display_map = False
 
         # Victory screen
         if levels[current_level].won:
@@ -603,14 +623,17 @@ def main():
                 # Move monster if it is enabled and a sufficient amount of time
                 # has passed since last move/level start
                 if (cfg.monster_enabled and monster_wait is not None
-                    and time_scores[current_level] > (
+                        and time_scores[current_level] > (
                             monster_wait
                             if cfg.monster_start_override is None else
                             cfg.monster_start_override
                         )
                         and monster_timeouts[current_level]
-                        > cfg.monster_movement_wait):
-                    levels[current_level].move_monster()
+                        > cfg.monster_movement_wait
+                        and monster_escape_clicks[current_level] == -1):
+                    if levels[current_level].move_monster():
+                        monster_escape_clicks[current_level] = 0
+                        display_map = False
                     monster_timeouts[current_level] = 0
                     monster_coords = levels[current_level].monster_coords
                     if (monster_coords is not None
@@ -857,6 +880,14 @@ def main():
                 )
 
             last_level_frame[current_level] = screen.copy()
+
+            if monster_escape_clicks[current_level] >= 0:
+                screen_drawing.draw_escape_screen(
+                    screen, cfg, jumpscare_monster_texture
+                )
+                monster_escape_time[current_level] -= frame_time
+                if monster_escape_time[current_level] <= 0:
+                    levels[current_level].killed = True
 
         if is_reset_prompt_shown:
             if pygame.mixer.music.get_busy():

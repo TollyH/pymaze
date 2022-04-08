@@ -131,21 +131,6 @@ class ConfigEditorApp:
         )
         self.gui_monster_kill_sound_check.pack(fill="x", anchor=tkinter.NW)
 
-        self.checkbuttons['MONSTER_DISPLAY_ON_KILL'] = tkinter.IntVar()
-        self.gui_monster_kill_display_check = tkinter.Checkbutton(
-            self.gui_basic_config_frame, anchor=tkinter.W,
-            variable=self.checkbuttons['MONSTER_DISPLAY_ON_KILL'],
-            text="Display the monster fullscreen on death"
-        )
-        if self.parse_bool('MONSTER_DISPLAY_ON_KILL', True):
-            self.gui_monster_kill_display_check.select()
-        # Set command after select to prevent it being called
-        self.gui_monster_kill_display_check.config(
-            command=lambda:
-                self.on_checkbutton_click('MONSTER_DISPLAY_ON_KILL')
-        )
-        self.gui_monster_kill_display_check.pack(fill="x", anchor=tkinter.NW)
-
         self.checkbuttons['MONSTER_SOUND_ON_SPOT'] = tkinter.IntVar()
         self.gui_monster_spot_sound_check = tkinter.Checkbutton(
             self.gui_basic_config_frame, anchor=tkinter.W,
@@ -219,6 +204,50 @@ class ConfigEditorApp:
         )
         self.gui_compass_time_label.pack(fill="x", anchor=tkinter.NW)
         self.gui_compass_time_slider.pack(fill="x", anchor=tkinter.NW)
+
+        self.gui_monster_time_to_escape_label = tkinter.Label(
+            self.gui_basic_config_frame, anchor=tkinter.W,
+            text="Total time to escape monster per level (seconds) — "
+                 + f"({self.parse_float('MONSTER_TIME_TO_ESCAPE', 5.0)})"
+        )
+        self.scale_labels['MONSTER_TIME_TO_ESCAPE'] = (
+            self.gui_monster_time_to_escape_label,
+            "Total time to escape monster per level (seconds) — ({})"
+        )
+        self.gui_monster_time_to_escape_slider = tkinter.ttk.Scale(
+            self.gui_basic_config_frame, from_=1.0, to=30.0,
+            value=self.parse_float('MONSTER_TIME_TO_ESCAPE', 5.0),
+            command=lambda x: self.on_scale_change(
+                'MONSTER_TIME_TO_ESCAPE', x, 1
+            )
+        )
+        self.gui_monster_time_to_escape_label.pack(fill="x", anchor=tkinter.NW)
+        self.gui_monster_time_to_escape_slider.pack(
+            fill="x", anchor=tkinter.NW
+        )
+
+        self.gui_monster_presses_to_escape_label = tkinter.Label(
+            self.gui_basic_config_frame, anchor=tkinter.W,
+            text="Total key presses to escape monster (seconds) — "
+                 + f"({self.parse_int('MONSTER_PRESSES_TO_ESCAPE', 10)})"
+        )
+        self.scale_labels['MONSTER_PRESSES_TO_ESCAPE'] = (
+            self.gui_monster_presses_to_escape_label,
+            "Total key presses to escape monster (seconds) — ({})"
+        )
+        self.gui_monster_presses_to_escape_slider = tkinter.ttk.Scale(
+            self.gui_basic_config_frame, from_=0, to=60,
+            value=self.parse_int('MONSTER_PRESSES_TO_ESCAPE', 10),
+            command=lambda x: self.on_scale_change(
+                'MONSTER_PRESSES_TO_ESCAPE', x, 0
+            )
+        )
+        self.gui_monster_presses_to_escape_label.pack(
+            fill="x", anchor=tkinter.NW
+        )
+        self.gui_monster_presses_to_escape_slider.pack(
+            fill="x", anchor=tkinter.NW
+        )
 
         self.gui_key_sensor_time_label = tkinter.Label(
             self.gui_basic_config_frame, anchor=tkinter.W,
@@ -313,7 +342,7 @@ class ConfigEditorApp:
         self.gui_turn_speed_slider = tkinter.ttk.Scale(
             self.gui_basic_config_frame, from_=0.1, to=10.0,
             value=self.parse_float('TURN_SPEED', 2.5),
-            command=lambda x: self.on_scale_change('TURN_SPEED', x, 1)
+            command=lambda x: self.on_scale_change('TURN_SPEED', x, 2)
         )
         self.gui_turn_speed_label.pack(fill="x", anchor=tkinter.NW)
         self.gui_turn_speed_slider.pack(fill="x", anchor=tkinter.NW)
