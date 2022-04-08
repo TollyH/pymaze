@@ -145,6 +145,11 @@ def main():
     ]
     time_to_next_roam_sound = 0.0
 
+    key_pickup_sounds = [
+        pygame.mixer.Sound(x)
+        for x in glob(os.path.join("sounds", "key_pickup", "*.wav"))
+    ]
+
     # Constant ambient sound - loops infinitely
     pygame.mixer.music.load(os.path.join("sounds", "ambience.wav"))
     light_flicker_sound = pygame.mixer.Sound(
@@ -504,6 +509,8 @@ def main():
                 )
             if level.PICKUP in events:
                 pickup_flash_time_remaining = 0.4
+            if level.PICKED_UP_KEY in events:
+                random.choice(key_pickup_sounds).play()
             if level.PICKED_UP_KEY_SENSOR in events:
                 key_sensor_times[current_level] = cfg.key_sensor_time
             move_scores[current_level] += math.sqrt(
