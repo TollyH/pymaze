@@ -203,6 +203,78 @@ class ConfigEditorApp:
         self.gui_frame_rate_limit_label.pack(fill="x", anchor=tkinter.NW)
         self.gui_frame_rate_limit_slider.pack(fill="x", anchor=tkinter.NW)
 
+        self.gui_compass_time_label = tkinter.Label(
+            self.gui_basic_config_frame, anchor=tkinter.W,
+            text="Time before compass burnout (seconds) — "
+            + f"({self.parse_float('COMPASS_TIME', 10.0)})"
+        )
+        self.scale_labels['COMPASS_TIME'] = (
+            self.gui_compass_time_label,
+            "Time before compass burnout (seconds) — ({})"
+        )
+        self.gui_compass_time_slider = tkinter.ttk.Scale(
+            self.gui_basic_config_frame, from_=1.0, to=60.0,
+            value=self.parse_float('COMPASS_TIME', 10.0),
+            command=lambda x: self.on_scale_change('COMPASS_TIME', x, 1)
+        )
+        self.gui_compass_time_label.pack(fill="x", anchor=tkinter.NW)
+        self.gui_compass_time_slider.pack(fill="x", anchor=tkinter.NW)
+
+        self.gui_key_sensor_time_label = tkinter.Label(
+            self.gui_basic_config_frame, anchor=tkinter.W,
+            text="Time key sensor lasts after pickup (seconds) — "
+                 + f"({self.parse_float('KEY_SENSOR_TIME', 10.0)})"
+        )
+        self.scale_labels['KEY_SENSOR_TIME'] = (
+            self.gui_key_sensor_time_label,
+            "Time key sensor lasts after pickup (seconds) — ({})"
+        )
+        self.gui_key_sensor_time_slider = tkinter.ttk.Scale(
+            self.gui_basic_config_frame, from_=1.0, to=60.0,
+            value=self.parse_float('KEY_SENSOR_TIME', 10.0),
+            command=lambda x: self.on_scale_change('KEY_SENSOR_TIME', x, 1)
+        )
+        self.gui_key_sensor_time_label.pack(fill="x", anchor=tkinter.NW)
+        self.gui_key_sensor_time_slider.pack(fill="x", anchor=tkinter.NW)
+
+        self.gui_player_wall_time_label = tkinter.Label(
+            self.gui_basic_config_frame, anchor=tkinter.W,
+            text="Amount of time before player placed walls break (seconds) — "
+                 + f"({self.parse_float('PLAYER_WALL_TIME', 15.0)})"
+        )
+        self.scale_labels['PLAYER_WALL_TIME'] = (
+            self.gui_player_wall_time_label,
+            "Amount of time before player placed walls break (seconds) — ({})"
+        )
+        self.gui_player_wall_time_slider = tkinter.ttk.Scale(
+            self.gui_basic_config_frame, from_=1.0, to=120.0,
+            value=self.parse_float('PLAYER_WALL_TIME', 15.0),
+            command=lambda x: self.on_scale_change(
+                'PLAYER_WALL_TIME', x, 1
+            )
+        )
+        self.gui_player_wall_time_label.pack(fill="x", anchor=tkinter.NW)
+        self.gui_player_wall_time_slider.pack(fill="x", anchor=tkinter.NW)
+
+        self.gui_player_wall_cooldown_label = tkinter.Label(
+            self.gui_basic_config_frame, anchor=tkinter.W,
+            text="Cooldown before player can place another wall (seconds) — "
+                 + f"({self.parse_float('PLAYER_WALL_COOLDOWN', 20.0)})"
+        )
+        self.scale_labels['PLAYER_WALL_COOLDOWN'] = (
+            self.gui_player_wall_cooldown_label,
+            "Cooldown before player can place another wall (seconds) — ({})"
+        )
+        self.gui_player_wall_cooldown_slider = tkinter.ttk.Scale(
+            self.gui_basic_config_frame, from_=0.0, to=120.0,
+            value=self.parse_float('PLAYER_WALL_COOLDOWN', 20.0),
+            command=lambda x: self.on_scale_change(
+                'PLAYER_WALL_COOLDOWN', x, 1
+            )
+        )
+        self.gui_player_wall_cooldown_label.pack(fill="x", anchor=tkinter.NW)
+        self.gui_player_wall_cooldown_slider.pack(fill="x", anchor=tkinter.NW)
+
         self.checkbuttons['TEXTURES_ENABLED'] = tkinter.IntVar()
         self.gui_textures_check = tkinter.Checkbutton(
             self.gui_basic_config_frame, anchor=tkinter.W,
@@ -231,27 +303,6 @@ class ConfigEditorApp:
         )
         self.gui_sky_textures_check.pack(fill="x", anchor=tkinter.NW)
 
-        display_columns_default = self.parse_int(
-            'DISPLAY_COLUMNS', self.parse_int('VIEWPORT_WIDTH', 500)
-        )
-        self.gui_display_columns_label = tkinter.Label(
-            self.gui_basic_config_frame, anchor=tkinter.W,
-            text="Render Resolution (lower this to improve performance) — "
-            + f"({display_columns_default})"
-        )
-        self.scale_labels['DISPLAY_COLUMNS'] = (
-            self.gui_display_columns_label,
-            "Render Resolution (lower this to improve performance) — ({})"
-        )
-        self.gui_display_columns_slider = tkinter.ttk.Scale(
-            self.gui_basic_config_frame, from_=24,
-            to=self.parse_int('VIEWPORT_WIDTH', 500),
-            value=display_columns_default,
-            command=lambda x: self.on_scale_change('DISPLAY_COLUMNS', x, 0)
-        )
-        self.gui_display_columns_label.pack(fill="x", anchor=tkinter.NW)
-        self.gui_display_columns_slider.pack(fill="x", anchor=tkinter.NW)
-
         self.gui_turn_speed_label = tkinter.Label(
             self.gui_basic_config_frame, anchor=tkinter.W,
             text=f"Turn Sensitivity — ({self.parse_float('TURN_SPEED', 2.5)})"
@@ -266,6 +317,27 @@ class ConfigEditorApp:
         )
         self.gui_turn_speed_label.pack(fill="x", anchor=tkinter.NW)
         self.gui_turn_speed_slider.pack(fill="x", anchor=tkinter.NW)
+
+        display_columns_default = self.parse_int(
+            'DISPLAY_COLUMNS', self.parse_int('VIEWPORT_WIDTH', 500)
+        )
+        self.gui_display_columns_label = tkinter.Label(
+            self.gui_advanced_config_frame, anchor=tkinter.W,
+            text="Render Resolution (lower this to improve performance) — "
+            + f"({display_columns_default})"
+        )
+        self.scale_labels['DISPLAY_COLUMNS'] = (
+            self.gui_display_columns_label,
+            "Render Resolution (lower this to improve performance) — ({})"
+        )
+        self.gui_display_columns_slider = tkinter.ttk.Scale(
+            self.gui_advanced_config_frame, from_=24,
+            to=self.parse_int('VIEWPORT_WIDTH', 500),
+            value=display_columns_default,
+            command=lambda x: self.on_scale_change('DISPLAY_COLUMNS', x, 0)
+        )
+        self.gui_display_columns_label.pack(fill="x", anchor=tkinter.NW)
+        self.gui_display_columns_slider.pack(fill="x", anchor=tkinter.NW)
 
         monster_start_override_value = self.parse_optional_float(
             'MONSTER_START_OVERRIDE', None
@@ -366,23 +438,6 @@ class ConfigEditorApp:
             fill="x", anchor=tkinter.NW
         )
 
-        self.gui_compass_time_label = tkinter.Label(
-            self.gui_advanced_config_frame, anchor=tkinter.W,
-            text="Time before compass burnout (seconds) — "
-            + f"({self.parse_float('COMPASS_TIME', 10.0)})"
-        )
-        self.scale_labels['COMPASS_TIME'] = (
-            self.gui_compass_time_label,
-            "Time before compass burnout (seconds) — ({})"
-        )
-        self.gui_compass_time_slider = tkinter.ttk.Scale(
-            self.gui_advanced_config_frame, from_=1.0, to=60.0,
-            value=self.parse_float('COMPASS_TIME', 10.0),
-            command=lambda x: self.on_scale_change('COMPASS_TIME', x, 1)
-        )
-        self.gui_compass_time_label.pack(fill="x", anchor=tkinter.NW)
-        self.gui_compass_time_slider.pack(fill="x", anchor=tkinter.NW)
-
         self.gui_compass_norm_charge_label = tkinter.Label(
             self.gui_advanced_config_frame, anchor=tkinter.W,
             text="Normal compass recharge multiplier — "
@@ -439,61 +494,6 @@ class ConfigEditorApp:
         )
         self.gui_compass_charge_delay_label.pack(fill="x", anchor=tkinter.NW)
         self.gui_compass_charge_delay_slider.pack(fill="x", anchor=tkinter.NW)
-
-        self.gui_key_sensor_time_label = tkinter.Label(
-            self.gui_advanced_config_frame, anchor=tkinter.W,
-            text="Time key sensor lasts after pickup (seconds) — "
-                 + f"({self.parse_float('KEY_SENSOR_TIME', 10.0)})"
-        )
-        self.scale_labels['KEY_SENSOR_TIME'] = (
-            self.gui_key_sensor_time_label,
-            "Time key sensor lasts after pickup (seconds) — ({})"
-        )
-        self.gui_key_sensor_time_slider = tkinter.ttk.Scale(
-            self.gui_advanced_config_frame, from_=1.0, to=60.0,
-            value=self.parse_float('KEY_SENSOR_TIME', 10.0),
-            command=lambda x: self.on_scale_change('KEY_SENSOR_TIME', x, 1)
-        )
-        self.gui_key_sensor_time_label.pack(fill="x", anchor=tkinter.NW)
-        self.gui_key_sensor_time_slider.pack(fill="x", anchor=tkinter.NW)
-
-        self.gui_player_wall_time_label = tkinter.Label(
-            self.gui_advanced_config_frame, anchor=tkinter.W,
-            text="Amount of time before player placed walls break (seconds) — "
-                 + f"({self.parse_float('PLAYER_WALL_TIME', 15.0)})"
-        )
-        self.scale_labels['PLAYER_WALL_TIME'] = (
-            self.gui_player_wall_time_label,
-            "Amount of time before player placed walls break (seconds) — ({})"
-        )
-        self.gui_player_wall_time_slider = tkinter.ttk.Scale(
-            self.gui_advanced_config_frame, from_=1.0, to=120.0,
-            value=self.parse_float('PLAYER_WALL_TIME', 15.0),
-            command=lambda x: self.on_scale_change(
-                'PLAYER_WALL_TIME', x, 1
-            )
-        )
-        self.gui_player_wall_time_label.pack(fill="x", anchor=tkinter.NW)
-        self.gui_player_wall_time_slider.pack(fill="x", anchor=tkinter.NW)
-
-        self.gui_player_wall_cooldown_label = tkinter.Label(
-            self.gui_advanced_config_frame, anchor=tkinter.W,
-            text="Cooldown before player can place another wall (seconds) — "
-                 + f"({self.parse_float('PLAYER_WALL_COOLDOWN', 20.0)})"
-        )
-        self.scale_labels['PLAYER_WALL_COOLDOWN'] = (
-            self.gui_player_wall_cooldown_label,
-            "Cooldown before player can place another wall (seconds) — ({})"
-        )
-        self.gui_player_wall_cooldown_slider = tkinter.ttk.Scale(
-            self.gui_advanced_config_frame, from_=0.0, to=120.0,
-            value=self.parse_float('PLAYER_WALL_COOLDOWN', 20.0),
-            command=lambda x: self.on_scale_change(
-                'PLAYER_WALL_COOLDOWN', x, 1
-            )
-        )
-        self.gui_player_wall_cooldown_label.pack(fill="x", anchor=tkinter.NW)
-        self.gui_player_wall_cooldown_slider.pack(fill="x", anchor=tkinter.NW)
 
         self.gui_texture_scale_label = tkinter.Label(
             self.gui_advanced_config_frame, anchor=tkinter.W,
