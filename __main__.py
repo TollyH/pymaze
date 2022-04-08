@@ -221,6 +221,15 @@ def main():
                     pygame.mouse.set_visible(True)
                     pygame.event.set_grab(False)
                 elif not is_reset_prompt_shown:
+                    if monster_escape_clicks[current_level] >= 0:
+                        if event.key == pygame.K_w:
+                            monster_escape_clicks[current_level] += 1
+                            if (monster_escape_clicks[current_level]
+                                    >= cfg.monster_presses_to_escape):
+                                monster_escape_clicks[current_level] = -1
+                                levels[current_level].monster_coords = (
+                                    levels[current_level].monster_start
+                                )
                     if event.key == pygame.K_f:
                         grid_coords = level.floor_coordinates(
                             levels[current_level].player_coords
@@ -337,15 +346,6 @@ def main():
                         wall_place_cooldown[current_level] = 0.0
                     elif event.key == pygame.K_n:
                         is_reset_prompt_shown = False
-                if monster_escape_clicks[current_level] >= 0:
-                    if event.key == pygame.K_w:
-                        monster_escape_clicks[current_level] += 1
-                        if (monster_escape_clicks[current_level]
-                                >= cfg.monster_presses_to_escape):
-                            monster_escape_clicks[current_level] = -1
-                            levels[current_level].monster_coords = (
-                                levels[current_level].monster_start
-                            )
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_coords = pygame.mouse.get_pos()
                 if (mouse_coords[0] <= cfg.viewport_width
