@@ -228,16 +228,22 @@ class Level:
         Moves the monster one space in a random available direction, unless
         the player is in the unobstructed view of one of the cardinal
         directions, in which case move toward the player instead.
+        If the monster is not spawned in yet, it will be spawned when this
+        function is called IF the player is 2 or more units away.
         If the monster and the player occupy the same grid square, True will be
         returned, else False will be.
         """
+        import raycasting  # Import is here to prevent circular import
         last_monster_position = self.monster_coords
         player_grid_position = floor_coordinates(self.player_coords)
         if self.monster_start is None:
             return False
-        if self.monster_coords is None:
+        if (self.monster_coords is None and
+                raycasting.no_sqrt_coord_distance(
+                    floor_coordinates(self.player_coords), self.monster_start
+                ) >= 4):
             self.monster_coords = self.monster_start
-        else:
+        elif self.monster_coords is not None:
             # 0 - Not in line of sight
             # 1 - Line of sight on Y axis
             # 2 - Line of sight on X axis

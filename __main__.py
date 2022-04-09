@@ -242,9 +242,7 @@ def main():
                             if (monster_escape_clicks[current_level]
                                     >= cfg.monster_presses_to_escape):
                                 monster_escape_clicks[current_level] = -1
-                                levels[current_level].monster_coords = (
-                                    levels[current_level].monster_start
-                                )
+                                levels[current_level].monster_coords = None
                     if event.key == pygame.K_f:
                         grid_coords = level.floor_coordinates(
                             levels[current_level].player_coords
