@@ -44,6 +44,15 @@ def main():
 
     clock = pygame.time.Clock()
 
+    try:
+        placeholder_texture = pygame.image.load(
+            os.path.join("textures", "placeholder.png")
+        ).convert_alpha()
+    except FileNotFoundError:
+        placeholder_texture = pygame.Surface(
+            (cfg.texture_width, cfg.texture_height)
+        )
+
     # X+Y facing directions, times, moves, etc. are specific to each level,
     # so are each stored in a list
     facing_directions = [(0.0, 1.0)] * len(levels)
@@ -65,12 +74,15 @@ def main():
     darkener.fill(screen_drawing.BLACK)
     darkener.set_alpha(127)
     # {(level_indices, ...): (light_texture, dark_texture)}
-    wall_textures: Dict[Tuple[int], Tuple[pygame.Surface, pygame.Surface]] = {
+    wall_textures: Dict[
+        Tuple[int, ...], Tuple[pygame.Surface, pygame.Surface]
+    ] = {
         # Parse wall texture surfaces to tuples of integers
         tuple(int(y) for y in os.path.split(x)[-1].split(".")[0].split("-")):
         (pygame.image.load(x).convert(), pygame.image.load(x).convert())
         for x in glob(os.path.join("textures", "wall", "*.png"))
     }
+    wall_textures[(-1,)] = (placeholder_texture, placeholder_texture.copy())
     for _, (_, surface_to_dark) in wall_textures.items():
         surface_to_dark.blit(darkener, (0, 0))
     # {degradation_stage: (light_texture, dark_texture)}
@@ -80,81 +92,84 @@ def main():
             (pygame.image.load(x).convert(), pygame.image.load(x).convert())
         for x in glob(os.path.join("textures", "player_wall", "*.png"))
     }
+    if len(player_wall_textures) == 0:
+        player_wall_textures[0] = (
+            placeholder_texture, placeholder_texture.copy()
+        )
     for _, (_, surface_to_dark) in player_wall_textures.items():
         surface_to_dark.blit(darkener, (0, 0))
 
-    sky_texture = pygame.image.load(
-        os.path.join("textures", "sky.png")
-    ).convert_alpha()
-
-    sprite_textures = {
-        raycasting.KEY: pygame.image.load(
-            os.path.join("textures", "sprite", "key.png")
-        ).convert_alpha(),
-        raycasting.END_POINT: pygame.image.load(
-            os.path.join("textures", "sprite", "end_point.png")
-        ).convert_alpha(),
-        raycasting.MONSTER: pygame.image.load(
-            os.path.join("textures", "sprite", "monster.png")
-        ).convert_alpha(),
-        raycasting.START_POINT: pygame.image.load(
-            os.path.join("textures", "sprite", "start_point.png")
-        ).convert_alpha(),
-        raycasting.FLAG: pygame.image.load(
-            os.path.join("textures", "sprite", "flag.png")
-        ).convert_alpha(),
-        raycasting.END_POINT_ACTIVE: pygame.image.load(
-            os.path.join("textures", "sprite", "end_point_active.png")
-        ).convert_alpha(),
-        raycasting.KEY_SENSOR: pygame.image.load(
-            os.path.join("textures", "sprite", "key_sensor.png")
+    try:
+        sky_texture = pygame.image.load(
+            os.path.join("textures", "sky.png")
         ).convert_alpha()
+    except FileNotFoundError:
+        sky_texture = placeholder_texture
+
+    # {raycasting.CONSTANT_VALUE: sprite_texture}
+    sprite_textures = {
+        getattr(raycasting, os.path.split(x)[-1].split(".")[0].upper()):
+            pygame.image.load(x).convert_alpha()
+        for x in glob(os.path.join("textures", "sprite", "*.png"))
     }
 
-    jumpscare_monster_texture = pygame.transform.scale(
-        pygame.image.load(
-            os.path.join("textures", "death_monster.png")
-        ).convert_alpha(),
-        (cfg.viewport_width, cfg.viewport_height)
-    )
-    monster_jumpscare_sound = pygame.mixer.Sound(
-        os.path.join("sounds", "monster_jumpscare.wav")
-    )
-    monster_spotted_sound = pygame.mixer.Sound(
-        os.path.join("sounds", "monster_spotted.wav")
-    )
-
-    # {min_distance_to_play: Sound}
-    # Must be in ascending numerical order
-    breathing_sounds = {
-        0: pygame.mixer.Sound(
-            os.path.join("sounds", "player_breathe", "heavy.wav")
-        ),
-        5: pygame.mixer.Sound(
-            os.path.join("sounds", "player_breathe", "medium.wav")
-        ),
-        10: pygame.mixer.Sound(
-            os.path.join("sounds", "player_breathe", "light.wav")
+    try:
+        jumpscare_monster_texture = pygame.transform.scale(
+            pygame.image.load(
+                os.path.join("textures", "death_monster.png")
+            ).convert_alpha(),
+            (cfg.viewport_width, cfg.viewport_height)
         )
-    }
+    except FileNotFoundError:
+        jumpscare_monster_texture = pygame.transform.scale(
+            placeholder_texture,
+            (cfg.viewport_width, cfg.viewport_height)
+        )
+
+    audio_error_occurred = False
+    try:
+        monster_jumpscare_sound = pygame.mixer.Sound(
+            os.path.join("sounds", "monster_jumpscare.wav")
+        )
+        monster_spotted_sound = pygame.mixer.Sound(
+            os.path.join("sounds", "monster_spotted.wav")
+        )
+        # {min_distance_to_play: Sound}
+        # Must be in ascending numerical order
+        breathing_sounds = {
+            0: pygame.mixer.Sound(
+                os.path.join("sounds", "player_breathe", "heavy.wav")
+            ),
+            5: pygame.mixer.Sound(
+                os.path.join("sounds", "player_breathe", "medium.wav")
+            ),
+            10: pygame.mixer.Sound(
+                os.path.join("sounds", "player_breathe", "light.wav")
+            )
+        }
+        monster_roam_sounds = [
+            pygame.mixer.Sound(x)
+            for x in glob(os.path.join("sounds", "monster_roam", "*.wav"))
+        ]
+        key_pickup_sounds = [
+            pygame.mixer.Sound(x)
+            for x in glob(os.path.join("sounds", "key_pickup", "*.wav"))
+        ]
+        # Constant ambient sound - loops infinitely
+        pygame.mixer.music.load(os.path.join("sounds", "ambience.wav"))
+        light_flicker_sound = pygame.mixer.Sound(
+            os.path.join("sounds", "light_flicker.wav")
+        )
+    except (FileNotFoundError, pygame.error):
+        audio_error_occurred = True
+        monster_jumpscare_sound = None
+        monster_spotted_sound = None
+        breathing_sounds = None
+        monster_roam_sounds = None
+        key_pickup_sounds = None
+        light_flicker_sound = None
     time_to_breathing_finish = 0.0
-
-    monster_roam_sounds = [
-        pygame.mixer.Sound(x)
-        for x in glob(os.path.join("sounds", "monster_roam", "*.wav"))
-    ]
     time_to_next_roam_sound = 0.0
-
-    key_pickup_sounds = [
-        pygame.mixer.Sound(x)
-        for x in glob(os.path.join("sounds", "key_pickup", "*.wav"))
-    ]
-
-    # Constant ambient sound - loops infinitely
-    pygame.mixer.music.load(os.path.join("sounds", "ambience.wav"))
-    light_flicker_sound = pygame.mixer.Sound(
-        os.path.join("sounds", "light_flicker.wav")
-    )
 
     enable_mouse_control = False
     # Used to calculate how far mouse has travelled for mouse control
@@ -509,7 +524,7 @@ def main():
                 )
             if level.PICKUP in events:
                 pickup_flash_time_remaining = 0.4
-            if level.PICKED_UP_KEY in events:
+            if level.PICKED_UP_KEY in events and not audio_error_occurred:
                 random.choice(key_pickup_sounds).play()
             if level.PICKED_UP_KEY_SENSOR in events:
                 key_sensor_times[current_level] = cfg.key_sensor_time
@@ -524,7 +539,7 @@ def main():
 
         # Victory screen
         if levels[current_level].won:
-            if pygame.mixer.music.get_busy():
+            if not audio_error_occurred and pygame.mixer.music.get_busy():
                 pygame.mixer.music.stop()
             # Overwrite existing highscores if required
             highscores_updated = False
@@ -550,17 +565,18 @@ def main():
             )
         # Death screen
         elif levels[current_level].killed:
-            if pygame.mixer.music.get_busy():
+            if not audio_error_occurred and pygame.mixer.music.get_busy():
                 pygame.mixer.music.stop()
             if cfg.monster_sound_on_kill and has_started_level[current_level]:
-                monster_jumpscare_sound.play()
+                if not audio_error_occurred:
+                    monster_jumpscare_sound.play()
                 has_started_level[current_level] = False
             screen_drawing.draw_kill_screen(
                 screen, cfg, jumpscare_monster_texture
             )
         # Currently playing
         elif not is_reset_prompt_shown:
-            if not pygame.mixer.music.get_busy():
+            if not audio_error_occurred and not pygame.mixer.music.get_busy():
                 pygame.mixer.music.play()
             if has_started_level[current_level]:
                 # Progress time-based attributes and events
@@ -661,50 +677,53 @@ def main():
                             flicker_time_remaining[current_level] = (
                                 random.uniform(0.0, 0.5)
                             )
-                            light_flicker_sound.play()
+                            if not audio_error_occurred:
+                                light_flicker_sound.play()
 
             # Play background breathing if the previous breathing play has
             # finished
-            if time_to_breathing_finish > 0:
-                time_to_breathing_finish -= frame_time
-            if (time_to_breathing_finish <= 0
-                    and has_started_level[current_level]):
-                # There is no monster, so play the calmest breathing sound
-                selected_sound = breathing_sounds[max(breathing_sounds)]
-                if levels[current_level].monster_coords is not None:
+            if not audio_error_occurred:
+                if time_to_breathing_finish > 0:
+                    time_to_breathing_finish -= frame_time
+                if (time_to_breathing_finish <= 0
+                        and has_started_level[current_level]):
+                    # There is no monster, so play the calmest breathing sound
+                    selected_sound = breathing_sounds[max(breathing_sounds)]
+                    if levels[current_level].monster_coords is not None:
+                        distance = math.sqrt(raycasting.no_sqrt_coord_distance(
+                            levels[current_level].player_coords,
+                            levels[current_level].monster_coords
+                        ))
+                        for min_distance, sound in breathing_sounds.items():
+                            if distance >= min_distance:
+                                selected_sound = sound
+                            else:
+                                break
+                    time_to_breathing_finish = selected_sound.get_length()
+                    selected_sound.play()
+
+            if not audio_error_occurred:
+                # Play monster roaming sound if enough time has passed and
+                # monster is present
+                if time_to_next_roam_sound > 0:
+                    time_to_next_roam_sound -= frame_time
+                if (time_to_next_roam_sound <= 0
+                        and levels[current_level].monster_coords is not None
+                        and cfg.monster_sound_roaming):
+                    selected_sound = random.choice(monster_roam_sounds)
+                    time_to_next_roam_sound = (
+                            selected_sound.get_length()
+                            + cfg.monster_roam_sound_delay
+                    )
                     distance = math.sqrt(raycasting.no_sqrt_coord_distance(
                         levels[current_level].player_coords,
                         levels[current_level].monster_coords
                     ))
-                    for min_distance, sound in breathing_sounds.items():
-                        if distance >= min_distance:
-                            selected_sound = sound
-                        else:
-                            break
-                time_to_breathing_finish = selected_sound.get_length()
-                selected_sound.play()
-
-            # Play monster roaming sound if enough time has passed and monster
-            # is present
-            if time_to_next_roam_sound > 0:
-                time_to_next_roam_sound -= frame_time
-            if (time_to_next_roam_sound <= 0
-                    and levels[current_level].monster_coords is not None
-                    and cfg.monster_sound_roaming):
-                selected_sound = random.choice(monster_roam_sounds)
-                time_to_next_roam_sound = (
-                        selected_sound.get_length()
-                        + cfg.monster_roam_sound_delay
-                )
-                distance = math.sqrt(raycasting.no_sqrt_coord_distance(
-                    levels[current_level].player_coords,
-                    levels[current_level].monster_coords
-                ))
-                # Adjust volume based on monster distance
-                # (the further away the quieter) - tanh limits values between
-                # 0 and 1
-                selected_sound.set_volume(math.tanh(3 / distance))
-                selected_sound.play()
+                    # Adjust volume based on monster distance
+                    # (the further away the quieter) - tanh limits values
+                    # between 0 and 1
+                    selected_sound.set_volume(math.tanh(3 / distance))
+                    selected_sound.play()
 
             if not display_map or cfg.enable_cheat_map:
                 screen_drawing.draw_solid_background(screen, cfg)
@@ -748,18 +767,21 @@ def main():
                     # Sprites are just flat images scaled and blitted onto the
                     # 3D view.
                     coord, sprite_type, _ = sprites[index]
+                    selected_sprite = sprite_textures.get(
+                        sprite_type, placeholder_texture
+                    )
                     screen_drawing.draw_sprite(
                         screen, cfg, coord,
                         levels[current_level].player_coords,
                         camera_planes[current_level],
-                        facing_directions[current_level],
-                        sprite_textures[sprite_type]
+                        facing_directions[current_level], selected_sprite
                     )
                     if sprite_type == raycasting.MONSTER:
                         # If the monster has been rendered, play the jumpscare
                         # sound if enough time has passed since the last play.
                         # Also set the timer to 0 to reset it.
-                        if (cfg.monster_sound_on_spot and
+                        if (not audio_error_occurred and
+                                cfg.monster_sound_on_spot and
                                 monster_spotted[current_level]
                                 == cfg.monster_spot_timeout):
                             monster_spotted_sound.play()
@@ -781,7 +803,6 @@ def main():
                     # travelled.
                     column_height = round(cfg.viewport_height / distance)
                     # If a texture for the current level has been found or not
-                    texture_draw_successful = False
                     if cfg.textures_enabled:
                         both_textures = None
                         if (player_walls[current_level] is not None
@@ -803,19 +824,18 @@ def main():
                                 if current_level in indices:
                                     both_textures = images
                                     break
-                        if both_textures is not None:
-                            # Select either light or dark texture
-                            # depending on side
-                            texture = both_textures[int(side_was_ns)]
-                            screen_drawing.draw_textured_column(
-                                screen, cfg, coord, side_was_ns, column_height,
-                                index, facing_directions[current_level],
-                                texture
-                            )
-                            texture_draw_successful = True
-                    if not texture_draw_successful:
-                        # Fallback to drawing solid textureless walls if a
-                        # texture for the current level's walls was not found.
+                            if both_textures is None:
+                                # Placeholder texture
+                                both_textures = wall_textures[(-1,)]
+                        # Select either light or dark texture
+                        # depending on side
+                        texture = both_textures[int(side_was_ns)]
+                        screen_drawing.draw_textured_column(
+                            screen, cfg, coord, side_was_ns, column_height,
+                            index, facing_directions[current_level],
+                            texture
+                        )
+                    else:
                         screen_drawing.draw_untextured_column(
                             screen, cfg, index, side_was_ns, column_height
                         )
@@ -897,7 +917,7 @@ def main():
                     levels[current_level].killed = True
 
         if is_reset_prompt_shown:
-            if pygame.mixer.music.get_busy():
+            if not audio_error_occurred and pygame.mixer.music.get_busy():
                 pygame.mixer.music.stop()
             screen_drawing.draw_reset_prompt(
                 screen, cfg, last_level_frame[current_level]

@@ -35,14 +35,20 @@ os.chdir(os.path.dirname(__file__))
 pygame.font.init()
 FONT = pygame.font.SysFont('Tahoma', 24, True)
 
-# Used for the victory scene animations
-pygame.mixer.init()
-VICTORY_INCREMENT = pygame.mixer.Sound(
-    os.path.join("sounds", "victory_increment.wav")
-)
-VICTORY_NEXT_BLOCK = pygame.mixer.Sound(
-    os.path.join("sounds", "victory_next_block.wav")
-)
+audio_error_occurred = False
+try:
+    # Used for the victory scene animations
+    pygame.mixer.init()
+    VICTORY_INCREMENT = pygame.mixer.Sound(
+        os.path.join("sounds", "victory_increment.wav")
+    )
+    VICTORY_NEXT_BLOCK = pygame.mixer.Sound(
+        os.path.join("sounds", "victory_next_block.wav")
+    )
+except (FileNotFoundError, pygame.error):
+    audio_error_occurred = True
+    VICTORY_INCREMENT = None
+    VICTORY_NEXT_BLOCK = None
 
 total_time_on_screen = [0.0] * len(levels)
 victory_sounds_played = [0] * len(levels)
@@ -72,11 +78,13 @@ def draw_victory_screen(screen: pygame.Surface, cfg: Config,
     )
     if time_on_screen < 2 and victory_sounds_played[current_level] == 0:
         victory_sounds_played[current_level] = 1
-        VICTORY_INCREMENT.play()
+        if not audio_error_occurred:
+            VICTORY_INCREMENT.play()
     screen.blit(time_score_text, (10, 10))
     if time_on_screen >= 2 and victory_sounds_played[current_level] == 1:
         victory_sounds_played[current_level] = 2
-        VICTORY_NEXT_BLOCK.play()
+        if not audio_error_occurred:
+            VICTORY_NEXT_BLOCK.play()
     if time_on_screen >= 2.5:
         move_score_text = FONT.render(
             "Move Score: "
@@ -85,11 +93,13 @@ def draw_victory_screen(screen: pygame.Surface, cfg: Config,
         )
         if victory_sounds_played[current_level] == 2:
             victory_sounds_played[current_level] = 3
-            VICTORY_INCREMENT.play()
+            if not audio_error_occurred:
+                VICTORY_INCREMENT.play()
         screen.blit(move_score_text, (10, 40))
         if time_on_screen >= 4.5 and victory_sounds_played[current_level] == 3:
             victory_sounds_played[current_level] = 4
-            VICTORY_NEXT_BLOCK.play()
+            if not audio_error_occurred:
+                VICTORY_NEXT_BLOCK.play()
     if time_on_screen >= 5.5:
         best_time_score_text = FONT.render(
             f"Best Time Score: {highscores[current_level][0]:.1f}", True,
@@ -103,7 +113,8 @@ def draw_victory_screen(screen: pygame.Surface, cfg: Config,
         screen.blit(best_move_score_text, (10, 120))
         if victory_sounds_played[current_level] == 4:
             victory_sounds_played[current_level] = 5
-            VICTORY_NEXT_BLOCK.play()
+            if not audio_error_occurred:
+                VICTORY_NEXT_BLOCK.play()
     if time_on_screen >= 6.5:
         best_total_time_score_text = FONT.render(
             f"Best Game Time Score: {sum(x[0] for x in highscores):.1f}", True,
@@ -117,7 +128,8 @@ def draw_victory_screen(screen: pygame.Surface, cfg: Config,
         screen.blit(best_total_move_score_text, (10, 230))
         if victory_sounds_played[current_level] == 5:
             victory_sounds_played[current_level] = 6
-            VICTORY_NEXT_BLOCK.play()
+            if not audio_error_occurred:
+                VICTORY_NEXT_BLOCK.play()
     if time_on_screen >= 7.5 and current_level < len(levels) - 1:
         lower_hint_text = FONT.render(
             "Press `]` to go to next level", True, DARK_RED
@@ -125,7 +137,8 @@ def draw_victory_screen(screen: pygame.Surface, cfg: Config,
         screen.blit(lower_hint_text, (10, 280))
         if victory_sounds_played[current_level] == 6:
             victory_sounds_played[current_level] = 0  # Reset
-            VICTORY_NEXT_BLOCK.play()
+            if not audio_error_occurred:
+                VICTORY_NEXT_BLOCK.play()
 
 
 def draw_kill_screen(screen: pygame.Surface, cfg: Config,
