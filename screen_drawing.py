@@ -367,19 +367,21 @@ def draw_map(screen: pygame.Surface, cfg: Config, current_level: Level,
             elif (current_level.monster_coords == (x, y)
                     and cfg.enable_cheat_map):
                 colour = DARK_RED
+            elif player_wall is not None and player_wall == (x, y):
+                colour = PURPLE
             elif (x, y) in current_level.exit_keys and (
                     cfg.enable_cheat_map or has_key_sensor):
                 colour = GOLD
             elif (x, y) in current_level.key_sensors and cfg.enable_cheat_map:
                 colour = DARK_GOLD
+            elif current_level.monster_start == (x, y):
+                colour = DARK_GREEN
             elif (x, y) in current_level.player_flags:
                 colour = LIGHT_BLUE
             elif current_level.start_point == (x, y):
                 colour = RED
             elif current_level.end_point == (x, y) and cfg.enable_cheat_map:
                 colour = GREEN
-            elif player_wall is not None and player_wall == (x, y):
-                colour = PURPLE
             else:
                 colour = BLACK if point else WHITE
             pygame.draw.rect(

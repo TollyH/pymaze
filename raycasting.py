@@ -14,6 +14,7 @@ START_POINT = 3
 FLAG = 4
 END_POINT_ACTIVE = 5
 KEY_SENSOR = 6
+MONSTER_SPAWN = 7
 
 
 def get_first_collision(current_level: level.Level,
@@ -27,9 +28,8 @@ def get_first_collision(current_level: level.Level,
     (coordinate, tile, distance, euclidean_squared, side_was_ns) if a collision
     did occur. Side is False if a North/South wall was hit, or True if an
     East/West wall was. The second tuple item is a list of tuples of sprite
-    tile coordinates, their associated type, being either END_POINT, KEY,
-    MONSTER, START_POINT, FLAG, END_POINT_ACTIVE, or KEY_SENSOR - and the
-    euclidean distance to the sprite.
+    tile coordinates, their associated type, being one of the constants defined
+    in this file - and the euclidean distance to the sprite.
     """
     # Prevent divide by 0
     if direction[0] == 0:
@@ -125,6 +125,14 @@ def get_first_collision(current_level: level.Level,
                         (current_tile[0] + 0.5, current_tile[1] + 0.5)
                     )
                 ))
+            if current_level.monster_start == current_tile:
+                sprites.append((
+                    (current_tile[0] + 0.5, current_tile[1] + 0.5),
+                    MONSTER_SPAWN, no_sqrt_coord_distance(
+                        current_level.player_coords,
+                        (current_tile[0] + 0.5, current_tile[1] + 0.5)
+                    )
+                ))
             if current_level.monster_coords == current_tile:
                 sprites.append((
                     (current_tile[0] + 0.5, current_tile[1] + 0.5),
@@ -180,8 +188,7 @@ def get_columns_sprites(display_columns: int, current_level: level.Level,
     for a particular wall map by utilising raycasting. Tuples are in format
     (coordinate, tile, distance, euclidean_squared, side_was_ns). Also gets a
     list of visible sprites as tuples (coordinate, type, distance) where type
-    is either END_POINT, KEY, MONSTER, START_POINT, FLAG, END_POINT_ACTIVE,
-    or KEY_SENSOR.
+    is one of the constants defined in this file.
     """
     columns: List[
         Tuple[Tuple[float, float], Tuple[int, int], float, float, bool]

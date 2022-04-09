@@ -54,6 +54,7 @@ algorithm for raycasting.
 - Blue - Player tile
 - Green - End point
 - Gold - Keys
+- Dark green - Monster spawn
 - Dark red - Monster
 - Red - Start point
 - Turquoise - Flags
