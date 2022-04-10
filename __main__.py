@@ -177,6 +177,7 @@ def main():
             pygame.mixer.Sound(x)
             for x in glob(os.path.join("sounds", "key_pickup", "*.wav"))
         ]
+        gunshot = pygame.mixer.Sound(os.path.join("sounds", "gunshot.wav"))
         # Constant ambient sound - loops infinitely
         pygame.mixer.music.load(os.path.join("sounds", "ambience.wav"))
         light_flicker_sound = pygame.mixer.Sound(
@@ -189,6 +190,7 @@ def main():
         breathing_sounds = None
         monster_roam_sounds = None
         key_pickup_sounds = None
+        gunshot = None
         light_flicker_sound = None
     time_to_breathing_finish = 0.0
     time_to_next_roam_sound = 0.0
@@ -342,6 +344,7 @@ def main():
                                 # Monster was hit by gun
                                 levels[current_level].monster_coords = None
                                 break
+                        gunshot.play()
                     elif event.key in (pygame.K_r, pygame.K_ESCAPE):
                         is_reset_prompt_shown = True
                     elif event.key == pygame.K_SPACE:
