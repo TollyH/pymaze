@@ -1,11 +1,13 @@
 """
 Contains functions for performing most display related tasks, including
-drawing columns, sprites, and HUD elements.
+drawing columns, sprites, and HUD elements. Most audio and texture
+loading/selection is handled in __main__.py rather than here, apart from the
+victory screen audio, which is handled here.
 """
 import math
 import os
 import random
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import pygame
 
@@ -27,6 +29,15 @@ PURPLE = (0x87, 0x23, 0xD9)
 GREY = (0xAA, 0xAA, 0xAA)
 DARK_GREY = (0x20, 0x20, 0x20)
 LIGHT_GREY = (0xCD, 0xCD, 0xCD)
+
+# HUD icons
+COMPASS = 0
+FLAG = 1
+MAP = 2
+PAUSE = 3
+PLACE_WALL = 4
+STATS = 5
+KEY_SENSOR = 6
 
 # Change working directory to the directory where the script is located
 # Prevents issues with required files not being found
@@ -429,16 +440,21 @@ def draw_map(screen: pygame.Surface, cfg: Config, current_level: Level,
 
 def draw_stats(screen: pygame.Surface, cfg: Config, monster_spawned: bool,
                time_score: float, move_score: float, remaining_keys: int,
-               starting_keys: int):
+               starting_keys: int, hud_icons: Dict[int, pygame.Surface],
+               blank_icon: pygame.Surface, key_sensor_time: float,
+               compass_time: float, compass_burned: bool,
+               player_wall_time: Optional[float], wall_place_cooldown: float,
+               current_level_time: float):
     """
     Draw a time, move count, and key counts to the bottom left-hand corner of
     the screen with a transparent black background if the monster hasn't
-    spawned or a transparent red one if it has.
+    spawned or a transparent red one if it has. Also draw some control prompts
+    to the top left showing timeouts for wall placement, compass and sensor.
     """
-    background = pygame.Surface((225, 110))
-    background.fill(DARK_RED if monster_spawned else BLACK)
-    background.set_alpha(127)
-    screen.blit(background, (0, cfg.viewport_height - 110))
+    bottom_background = pygame.Surface((225, 110))
+    bottom_background.fill(DARK_RED if monster_spawned else BLACK)
+    bottom_background.set_alpha(127)
+    screen.blit(bottom_background, (0, cfg.viewport_height - 110))
 
     time_score_text = FONT.render(f"Time: {time_score:.1f}", True, WHITE)
     move_score_text = FONT.render(f"Moves: {move_score:.1f}", True, WHITE)
@@ -448,6 +464,49 @@ def draw_stats(screen: pygame.Surface, cfg: Config, monster_spawned: bool,
     screen.blit(time_score_text, (10, cfg.viewport_height - 100))
     screen.blit(move_score_text, (10, cfg.viewport_height - 70))
     screen.blit(keys_text, (10, cfg.viewport_height - 40))
+
+    top_background = pygame.Surface((260, 75))
+    top_background.fill(BLACK)
+    top_background.set_alpha(127)
+    screen.blit(top_background, (0, 0))
+
+    screen.blit(hud_icons.get(MAP, blank_icon), (5, 5))
+    screen.blit(FONT.render("‿", True, WHITE), (11, 36))
+    top_margin = round(32 * (1 - key_sensor_time / cfg.key_sensor_time))
+    cropped_key = hud_icons.get(KEY_SENSOR, blank_icon).subsurface(
+        (0, 0, 32, 32 - top_margin)
+    )
+    screen.blit(cropped_key, (5, 5))
+
+    screen.blit(hud_icons.get(FLAG, blank_icon), (47, 5))
+    screen.blit(FONT.render("F", True, WHITE), (54, 40))
+
+    pygame.draw.circle(
+        screen, DARK_GREEN if player_wall_time is None else RED, (106, 21),
+        round(16 * (
+            (1 - wall_place_cooldown / cfg.player_wall_cooldown)
+            if player_wall_time is None else
+            (
+                1 -
+                (current_level_time - player_wall_time) / cfg.player_wall_time
+            )
+        ))
+    )
+    screen.blit(hud_icons.get(PLACE_WALL, blank_icon), (89, 5))
+    screen.blit(FONT.render("Q", True, WHITE), (96, 40))
+
+    pygame.draw.circle(
+        screen, RED if compass_burned else DARK_GREEN, (148, 21),
+        round(15 * (compass_time / cfg.compass_time))
+    )
+    screen.blit(hud_icons.get(COMPASS, blank_icon), (131, 5))
+    screen.blit(FONT.render("C", True, WHITE), (139, 40))
+
+    screen.blit(hud_icons.get(PAUSE, blank_icon), (173, 5))
+    screen.blit(FONT.render("R", True, WHITE), (181, 40))
+
+    screen.blit(hud_icons.get(STATS, blank_icon), (215, 5))
+    screen.blit(FONT.render("E", True, WHITE), (223, 40))
 
 
 def draw_compass(screen: pygame.Surface, cfg: Config,

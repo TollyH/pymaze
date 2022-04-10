@@ -113,6 +113,16 @@ def main():
         for x in glob(os.path.join("textures", "sprite", "*.png"))
     }
 
+    blank_icon = pygame.Surface((32, 32))
+    # {screen_drawing.CONSTANT_VALUE: icon_texture}
+    hud_icons = {
+        getattr(screen_drawing, os.path.split(x)[-1].split(".")[0].upper()):
+            pygame.transform.scale(
+                pygame.image.load(x).convert_alpha(), (32, 32)
+            )
+        for x in glob(os.path.join('textures', 'hud_icons', '*.png'))
+    }
+
     try:
         jumpscare_monster_texture = pygame.transform.scale(
             pygame.image.load(
@@ -177,7 +187,7 @@ def main():
 
     display_map = False
     display_compass = False
-    display_stats = False
+    display_stats = True
     display_rays = False
 
     is_reset_prompt_shown = False
@@ -230,7 +240,7 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 # Never stop the user regaining control of their mouse with
                 # escape.
-                if event.key == pygame.K_ESCAPE:
+                if event.key == pygame.K_ESCAPE and enable_mouse_control:
                     enable_mouse_control = False
                     # Return the mouse to normal
                     pygame.mouse.set_visible(True)
@@ -307,7 +317,7 @@ def main():
                                 time_scores[current_level]
                             )
                             levels[current_level][target] = True
-                    elif event.key == pygame.K_r:
+                    elif event.key in (pygame.K_r, pygame.K_ESCAPE):
                         is_reset_prompt_shown = True
                     elif event.key == pygame.K_SPACE:
                         pressed = pygame.key.get_pressed()
@@ -901,7 +911,16 @@ def main():
                     time_score, move_score,
                     len(levels[current_level].original_exit_keys)
                     - len(levels[current_level].exit_keys),
-                    len(levels[current_level].original_exit_keys)
+                    len(levels[current_level].original_exit_keys),
+                    hud_icons, blank_icon,
+                    key_sensor_times[current_level],
+                    compass_times[current_level],
+                    compass_burned_out[current_level],
+                    None
+                    if player_walls[current_level] is None else
+                    player_walls[current_level][2],
+                    wall_place_cooldown[current_level],
+                    time_scores[current_level]
                 )
 
             last_level_frame[current_level] = screen.copy()

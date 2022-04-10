@@ -23,7 +23,7 @@ algorithm for raycasting.
 - `W` - Escape from monster (rapid click)
 - `F` - Place/pick up flag
 - `Q` - Place temporary barricade
-- `R` - Reset level
+- `R` (or `ESC` outside mouse control) - Pause menu (+`Y` reset level)
 - `Shift` - Run while held
 - `CTRL` - Crawl while held
 - `Space` - Toggle map
