@@ -6,14 +6,16 @@ import math
 import random
 from typing import Dict, List, Optional, Set, Tuple
 
+# Movement events
 MOVED = 0
 MOVED_GRID_DIAGONALLY = 1
 ALTERNATE_COORD_CHOSEN = 2
 PICKUP = 3
 PICKED_UP_KEY = 4
 PICKED_UP_KEY_SENSOR = 5
-WON = 6
-MONSTER_CAUGHT = 7
+PICKED_UP_GUN = 6
+WON = 7
+MONSTER_CAUGHT = 8
 
 
 def floor_coordinates(coord: Tuple[float, float]):
@@ -36,13 +38,9 @@ class Level:
     def __init__(self, dimensions: Tuple[int, int],
                  wall_map: List[List[bool]], start_point: Tuple[int, int],
                  end_point: Tuple[int, int], exit_keys: Set[Tuple[int, int]],
-                 key_sensors: Set[Tuple[int, int]],
+                 key_sensors: Set[Tuple[int, int]], guns: Set[Tuple[int, int]],
                  monster_start: Optional[Tuple[int, int]],
                  monster_wait: Optional[float]):
-        """
-        Create a level with a wall map, start and end points, and
-        collectable keys required to exit the level.
-        """
         self.dimensions = dimensions
 
         if (len(wall_map) != dimensions[1]
@@ -83,6 +81,15 @@ class Level:
         # Use a frozen set to prevent manipulation of original key sensors
         self.original_key_sensors = frozenset(key_sensors)
         self.key_sensors = key_sensors
+
+        for gun_pickup in guns:
+            if not self.is_coord_in_bounds(gun_pickup):
+                raise ValueError("Out of bounds gun coordinates")
+            if self[gun_pickup]:
+                raise ValueError("Gun cannot be inside wall")
+        # Use a frozen set to prevent manipulation of original guns
+        self.original_guns = frozenset(guns)
+        self.guns = guns
 
         self.monster_coords: Optional[Tuple[int, int]] = None
         if monster_start is not None:
@@ -152,12 +159,14 @@ class Level:
             raise ValueError("Target coordinates out of bounds")
         self.wall_map[index[1]][index[0]] = value
 
-    def move_player(self, vector: Tuple[float, float], relative: bool = True):
+    def move_player(self, vector: Tuple[float, float], has_gun: bool,
+                    relative: bool = True):
         """
         Moves the player either relative to their current position, or to an
-        absolute location. Key collection and victory checking will be
-        performed automatically. Fails without raising an error if the player
-        cannot move by the specified vector or to the specified position.
+        absolute location. Pickups and victory checking will be performed
+        automatically, and guns won't be picked up if has_gun is True.
+        Fails without raising an error if the player cannot move by the
+        specified vector or to the specified position.
         Returns a set of actions that took place as a result of the move,
         which may be empty if nothing changed. All events are included, so for
         example if MOVED_GRID_DIAGONALLY is returned, MOVED will also be.
@@ -215,6 +224,10 @@ class Level:
         if grid_coords in self.key_sensors:
             self.key_sensors.remove(grid_coords)
             events.add(PICKED_UP_KEY_SENSOR)
+            events.add(PICKUP)
+        if grid_coords in self.guns and not has_gun:
+            self.guns.remove(grid_coords)
+            events.add(PICKED_UP_GUN)
             events.add(PICKUP)
         if grid_coords == self.monster_coords:
             events.add(MONSTER_CAUGHT)
@@ -341,6 +354,7 @@ class Level:
         """
         self.exit_keys = set(self.original_exit_keys)
         self.key_sensors = set(self.original_key_sensors)
+        self.guns = set(self.original_guns)
         self.player_flags = set()
         self.player_coords = (
             self.start_point[0] + 0.5, self.start_point[1] + 0.5

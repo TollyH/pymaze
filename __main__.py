@@ -124,6 +124,18 @@ def main():
     }
 
     try:
+        first_person_gun = pygame.transform.scale(
+            pygame.image.load(
+                os.path.join('textures', 'gun_fp.png')
+            ).convert_alpha(),
+            (cfg.viewport_width, cfg.viewport_height)
+        )
+    except FileNotFoundError:
+        first_person_gun = pygame.Surface(
+            (cfg.viewport_width, cfg.viewport_height)
+        )
+
+    try:
         jumpscare_monster_texture = pygame.transform.scale(
             pygame.image.load(
                 os.path.join("textures", "death_monster.png")
@@ -204,6 +216,7 @@ def main():
     compass_burned_out = [False] * len(levels)
     compass_charge_delays = [cfg.compass_charge_delay] * len(levels)
     key_sensor_times = [0.0] * len(levels)
+    has_gun = [False] * len(levels)
     wall_place_cooldown = [0.0] * len(levels)
     flicker_time_remaining = [0.0] * len(levels)
     pickup_flash_time_remaining = 0.0
@@ -317,6 +330,18 @@ def main():
                                 time_scores[current_level]
                             )
                             levels[current_level][target] = True
+                    elif event.key == pygame.K_t and has_gun[current_level]:
+                        has_gun[current_level] = False
+                        _, hit_sprites = raycasting.get_first_collision(
+                            levels[current_level],
+                            facing_directions[current_level],
+                            cfg.draw_maze_edge_as_wall
+                        )
+                        for sprite in hit_sprites:
+                            if sprite[1] == raycasting.MONSTER:
+                                # Monster was hit by gun
+                                levels[current_level].monster_coords = None
+                                break
                     elif event.key in (pygame.K_r, pygame.K_ESCAPE):
                         is_reset_prompt_shown = True
                     elif event.key == pygame.K_SPACE:
@@ -356,6 +381,7 @@ def main():
                         flicker_time_remaining[current_level] = 0.0
                         time_scores[current_level] = 0.0
                         move_scores[current_level] = 0.0
+                        has_gun[current_level] = False
                         has_started_level[current_level] = False
                         screen_drawing.total_time_on_screen[current_level] = 0
                         display_compass = False
@@ -468,7 +494,7 @@ def main():
                         * move_multiplier,
                         facing_directions[current_level][1] * move_speed_mod
                         * move_multiplier
-                    )))
+                    ), has_gun[current_level]))
                     has_started_level[current_level] = True
             if pressed_keys[pygame.K_s] or pressed_keys[pygame.K_DOWN]:
                 if (not levels[current_level].won
@@ -478,7 +504,7 @@ def main():
                         * move_multiplier,
                         -facing_directions[current_level][1] * move_speed_mod
                         * move_multiplier
-                    )))
+                    ), has_gun[current_level]))
                     has_started_level[current_level] = True
             if pressed_keys[pygame.K_a]:
                 if (not levels[current_level].won
@@ -488,7 +514,7 @@ def main():
                         * move_multiplier,
                         -facing_directions[current_level][0] * move_speed_mod
                         * move_multiplier
-                    )))
+                    ), has_gun[current_level]))
                     has_started_level[current_level] = True
             if pressed_keys[pygame.K_d]:
                 if (not levels[current_level].won
@@ -498,7 +524,7 @@ def main():
                         * move_multiplier,
                         facing_directions[current_level][0] * move_speed_mod
                         * move_multiplier
-                    )))
+                    ), has_gun[current_level]))
                     has_started_level[current_level] = True
             if pressed_keys[pygame.K_RIGHT]:
                 old_direction = facing_directions[current_level]
@@ -536,6 +562,8 @@ def main():
                 random.choice(key_pickup_sounds).play()
             if level.PICKED_UP_KEY_SENSOR in events:
                 key_sensor_times[current_level] = cfg.key_sensor_time
+            if level.PICKED_UP_GUN in events:
+                has_gun[current_level] = True
             move_scores[current_level] += math.sqrt(
                 raycasting.no_sqrt_coord_distance(
                     old_position, levels[current_level].player_coords
@@ -717,6 +745,7 @@ def main():
                     time_to_next_roam_sound -= frame_time
                 if (time_to_next_roam_sound <= 0
                         and levels[current_level].monster_coords is not None
+                        and monster_escape_clicks[current_level] == -1
                         and cfg.monster_sound_roaming):
                     selected_sound = random.choice(monster_roam_sounds)
                     time_to_next_roam_sound = (
@@ -877,6 +906,9 @@ def main():
                             0.0, flicker_time_remaining[current_level]
                         )
 
+            if has_gun[current_level]:
+                screen_drawing.draw_gun(screen, cfg, first_person_gun)
+
             if display_compass and (not display_map or cfg.enable_cheat_map):
                 monster_coords = levels[current_level].monster_coords
                 if monster_coords is not None:
@@ -891,10 +923,7 @@ def main():
                     compass_times[current_level]
                 )
 
-            # Stats are always shown before the player begins a level to
-            # display highscores and the key count.
-            if ((display_stats or not has_started_level[current_level])
-                    and (not display_map or cfg.enable_cheat_map)):
+            if display_stats and (not display_map or cfg.enable_cheat_map):
                 time_score = (
                     time_scores[current_level]
                     if has_started_level[current_level] else
@@ -920,10 +949,8 @@ def main():
                     if player_walls[current_level] is None else
                     player_walls[current_level][2],
                     wall_place_cooldown[current_level],
-                    time_scores[current_level]
+                    time_scores[current_level], has_gun[current_level]
                 )
-
-            last_level_frame[current_level] = screen.copy()
 
             if monster_escape_clicks[current_level] >= 0:
                 screen_drawing.draw_escape_screen(
@@ -932,6 +959,8 @@ def main():
                 monster_escape_time[current_level] -= frame_time
                 if monster_escape_time[current_level] <= 0:
                     levels[current_level].killed = True
+
+            last_level_frame[current_level] = screen.copy()
 
         if is_reset_prompt_shown:
             if not audio_error_occurred and pygame.mixer.music.get_busy():

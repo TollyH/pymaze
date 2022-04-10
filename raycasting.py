@@ -15,6 +15,7 @@ FLAG = 4
 END_POINT_ACTIVE = 5
 KEY_SENSOR = 6
 MONSTER_SPAWN = 7
+GUN = 8
 
 
 def get_first_collision(current_level: level.Level,
@@ -111,6 +112,14 @@ def get_first_collision(current_level: level.Level,
                 sprites.append((
                     (current_tile[0] + 0.5, current_tile[1] + 0.5),
                     KEY_SENSOR, no_sqrt_coord_distance(
+                        current_level.player_coords,
+                        (current_tile[0] + 0.5, current_tile[1] + 0.5)
+                    )
+                ))
+            if current_tile in current_level.guns:
+                sprites.append((
+                    (current_tile[0] + 0.5, current_tile[1] + 0.5),
+                    GUN, no_sqrt_coord_distance(
                         current_level.player_coords,
                         (current_tile[0] + 0.5, current_tile[1] + 0.5)
                     )

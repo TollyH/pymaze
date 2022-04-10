@@ -18,11 +18,12 @@ algorithm for raycasting.
 
 - `WASD` or `Up` and `Down` - Move around
 - `Left` and `Right` or `Mouse` - Turn camera
-- `Click` - Toggle mouse control
+- `Left Click` - Toggle mouse control (`ESC` can also be used to leave)
 - `[` and `]` - Previous/Next Level Respectively
 - `W` - Escape from monster (rapid click)
 - `F` - Place/pick up flag
 - `Q` - Place temporary barricade
+- `T` (with gun) - Shoot
 - `R` (or `ESC` outside mouse control) - Pause menu (+`Y` reset level)
 - `Shift` - Run while held
 - `CTRL` - Crawl while held

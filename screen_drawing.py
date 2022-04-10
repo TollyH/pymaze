@@ -38,6 +38,7 @@ PAUSE = 3
 PLACE_WALL = 4
 STATS = 5
 KEY_SENSOR = 6
+GUN = 7
 
 # Change working directory to the directory where the script is located
 # Prevents issues with required files not being found
@@ -444,7 +445,7 @@ def draw_stats(screen: pygame.Surface, cfg: Config, monster_spawned: bool,
                blank_icon: pygame.Surface, key_sensor_time: float,
                compass_time: float, compass_burned: bool,
                player_wall_time: Optional[float], wall_place_cooldown: float,
-               current_level_time: float):
+               current_level_time: float, has_gun: bool):
     """
     Draw a time, move count, and key counts to the bottom left-hand corner of
     the screen with a transparent black background if the monster hasn't
@@ -507,6 +508,18 @@ def draw_stats(screen: pygame.Surface, cfg: Config, monster_spawned: bool,
 
     screen.blit(hud_icons.get(STATS, blank_icon), (215, 5))
     screen.blit(FONT.render("E", True, WHITE), (223, 40))
+
+    if has_gun:
+        gun_background = pygame.Surface((45, 75))
+        gun_background.fill(BLACK)
+        gun_background.set_alpha(127)
+        screen.blit(gun_background, (cfg.viewport_width - 45, 0))
+        screen.blit(
+            hud_icons.get(GUN, blank_icon), (cfg.viewport_width - 37, 5)
+        )
+        screen.blit(
+            FONT.render("T", True, WHITE), (cfg.viewport_width - 29, 40)
+        )
 
 
 def draw_compass(screen: pygame.Surface, cfg: Config,
@@ -584,4 +597,17 @@ def draw_reset_prompt(screen: pygame.Surface, cfg: Config,
             cfg.viewport_width // 2 - confirm_text.get_width() // 2,
             cfg.viewport_height // 2 - confirm_text.get_height() // 2,
         )
+    )
+
+
+def draw_gun(screen: pygame.Surface, cfg: Config, gun_texture: pygame.Surface):
+    """
+    Draw the third person gun on the screen with a crosshair in the centre.
+    """
+    screen.blit(gun_texture, (0, 0, cfg.viewport_width, cfg.viewport_height))
+    pygame.draw.circle(
+        screen, BLACK, (cfg.viewport_width // 2, cfg.viewport_height // 2), 5
+    )
+    pygame.draw.circle(
+        screen, WHITE, (cfg.viewport_width // 2, cfg.viewport_height // 2), 3
     )
