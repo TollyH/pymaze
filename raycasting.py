@@ -35,7 +35,7 @@ def get_first_collision(current_level: level.Level,
     (coordinate, tile, distance, euclidean_squared, side) if a collision
     did occur. Side is either NORTH, EAST, SOUTH, or WEST.
     The second tuple item is a list of tuples of sprite tile coordinates,
-    their associated type, being one of the constants defined in this file -
+    their associated type, being one of the constants defined in this file —
     and the euclidean distance to the sprite.
     """
     # Prevent divide by 0
@@ -82,7 +82,7 @@ def get_first_collision(current_level: level.Level,
         ) * step_size[1]
 
     distance = 0.0
-    # Stores whether a North/South or East/West wall was hit
+    # Stores whether a North/South or East/West wall was hit.
     side_was_ns = False
     tile_found = False
     sprites: List[Tuple[Tuple[float, float], int, float]] = []
@@ -100,7 +100,7 @@ def get_first_collision(current_level: level.Level,
             side_was_ns = True
 
         if not current_level.is_coord_in_bounds(current_tile):
-            # Edge of wall map has been reached, yet no wall in sight
+            # Edge of wall map has been reached, yet no wall in sight.
             if edge_is_wall:
                 tile_found = True
             else:
@@ -175,7 +175,7 @@ def get_first_collision(current_level: level.Level,
             # Collision check
             if current_level[current_tile]:
                 tile_found = True
-    # If this point is reached, a wall tile has been found
+    # If this point is reached, a wall tile has been found.
     collision_point = (
         current_level.player_coords[0] + direction[0] * distance,
         current_level.player_coords[1] + direction[1] * distance
@@ -236,6 +236,6 @@ def no_sqrt_coord_distance(coord_a: Tuple[float, float],
     Calculate the euclidean distance squared between two grid coordinates.
     """
     # Square root isn't performed because it's unnecessary for simply sorting
-    # (euclidean distance is never used for actual render distance - that would
+    # (euclidean distance is never used for actual render distance — that would
     # cause fisheye)
     return (coord_b[0] - coord_a[0]) ** 2 + (coord_b[1] - coord_a[1]) ** 2

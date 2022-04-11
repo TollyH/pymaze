@@ -28,15 +28,15 @@ def main():
     """
     Main function for the maze game. Manages all input, output, and timing.
     """
-    # Change working directory to the directory where the script is located
-    # Prevents issues with required files not being found
+    # Change working directory to the directory where the script is located.
+    # This prevents issues with required files not being found.
     os.chdir(os.path.dirname(__file__))
     pygame.init()
 
     last_config_edit = os.path.getmtime('config.ini')
     cfg = config_loader.Config()
 
-    # Minimum window resolution is 500x500
+    # Minimum window resolution is 500×500
     screen = pygame.display.set_mode((
         max(cfg.viewport_width, 500), max(cfg.viewport_height, 500)
     ))
@@ -54,7 +54,7 @@ def main():
         )
 
     # X+Y facing directions, times, moves, etc. are specific to each level,
-    # so are each stored in a list
+    # so are each stored in a list.
     facing_directions = [(0.0, 1.0)] * len(levels)
     # Camera planes are always perpendicular to facing directions
     camera_planes = [(-cfg.display_fov / 100, 0.0)] * len(levels)
@@ -157,7 +157,7 @@ def main():
             os.path.join("sounds", "monster_spotted.wav")
         )
         # {min_distance_to_play: Sound}
-        # Must be in ascending numerical order
+        # Must be in ascending numerical order.
         breathing_sounds = {
             0: pygame.mixer.Sound(
                 os.path.join("sounds", "player_breathe", "heavy.wav")
@@ -178,7 +178,7 @@ def main():
             for x in glob(os.path.join("sounds", "key_pickup", "*.wav"))
         ]
         gunshot = pygame.mixer.Sound(os.path.join("sounds", "gunshot.wav"))
-        # Constant ambient sound - loops infinitely
+        # Constant ambient sound — loops infinitely
         pygame.mixer.music.load(os.path.join("sounds", "ambience.wav"))
         light_flicker_sound = pygame.mixer.Sound(
             os.path.join("sounds", "light_flicker.wav")
@@ -196,7 +196,7 @@ def main():
     time_to_next_roam_sound = 0.0
 
     enable_mouse_control = False
-    # Used to calculate how far mouse has travelled for mouse control
+    # Used to calculate how far mouse has travelled for mouse control.
     old_mouse_pos = (cfg.viewport_width // 2, cfg.viewport_height // 2)
 
     display_map = False
@@ -212,7 +212,7 @@ def main():
     # "spotted" jumpscare sound playing repeatedly.
     monster_spotted = [cfg.monster_spot_timeout] * len(levels)
     monster_escape_time = [cfg.monster_time_to_escape] * len(levels)
-    # -1 means that the monster has not currently caught the player
+    # -1 means that the monster has not currently caught the player.
     monster_escape_clicks = [-1] * len(levels)
     compass_times = [cfg.compass_time] * len(levels)
     compass_burned_out = [False] * len(levels)
@@ -428,7 +428,7 @@ def main():
                     and (not display_map or cfg.enable_cheat_map)
                     and not is_reset_prompt_shown):
                 mouse_coords = pygame.mouse.get_pos()
-                # How far the mouse has actually moved since the last frame
+                # How far the mouse has actually moved since the last frame.
                 relative_pos = (
                     old_mouse_pos[0] - mouse_coords[0],
                     old_mouse_pos[1] - mouse_coords[1]
@@ -441,7 +441,7 @@ def main():
                 elif mouse_coords[0] >= cfg.viewport_width - 1:
                     pygame.mouse.set_pos((1, mouse_coords[1]))
                 # 0.0025 multiplier makes mouse speed more sensible while still
-                # using the same turn speed multiplier as the keyboard
+                # using the same turn speed multiplier as the keyboard.
                 turn_speed_mod = cfg.turn_speed * -relative_pos[0] * 0.0025
                 old_direction = facing_directions[current_level]
                 facing_directions[current_level] = (
@@ -460,7 +460,7 @@ def main():
                 old_mouse_pos = pygame.mouse.get_pos()
 
         target_screen_size = (
-            # Window must be at least 500x500
+            # Window must be at least 500×500
             max(
                 cfg.viewport_width *
                 (2 if cfg.enable_cheat_map and display_map else 1), 500
@@ -472,12 +472,12 @@ def main():
             screen = pygame.display.set_mode(target_screen_size)
 
         old_position = levels[current_level].player_coords
-        # Do not allow player to move while map is open if cheat map is not
-        # enabled - or if the reset prompt is open
+        # Do not allow the player to move while the map is open if cheat map is
+        # not enabled — or if the reset prompt is open.
         if ((cfg.enable_cheat_map or not display_map)
                 and not is_reset_prompt_shown
                 and monster_escape_clicks[current_level] == -1):
-            # Held down keys - movement and turning
+            # Held down keys — movement and turning
             pressed_keys = pygame.key.get_pressed()
             move_multiplier = 1
             if pressed_keys[pygame.K_RCTRL] or pressed_keys[pygame.K_LCTRL]:
@@ -623,7 +623,7 @@ def main():
                 monster_timeouts[current_level] += frame_time
                 if (monster_spotted[current_level]
                         < cfg.monster_spot_timeout):
-                    # Increment time since monster was last spotted
+                    # Increment time since the monster was last spotted
                     monster_spotted[current_level] += frame_time
                     if (monster_spotted[current_level]
                             > cfg.monster_spot_timeout):
@@ -676,14 +676,14 @@ def main():
                             compass_times[current_level] = cfg.compass_time
                             compass_burned_out[current_level] = False
                     elif compass_charge_delays[current_level] > 0.0:
-                        # Decrement delay before compass charging
+                        # Decrement delay before charging the compass
                         compass_charge_delays[current_level] -= frame_time
                         compass_charge_delays[current_level] = max(
                             0.0, compass_charge_delays[current_level]
                         )
                 monster_wait = levels[current_level].monster_wait
-                # Move monster if it is enabled and a sufficient amount of time
-                # has passed since last move/level start
+                # Move monster if it is enabled and enough time has passed
+                # since last move/level start.
                 if (cfg.monster_enabled and monster_wait is not None
                         and time_scores[current_level] > (
                             monster_wait
@@ -743,7 +743,7 @@ def main():
 
             if not audio_error_occurred:
                 # Play monster roaming sound if enough time has passed and
-                # monster is present
+                # monster is present.
                 if time_to_next_roam_sound > 0:
                     time_to_next_roam_sound -= frame_time
                 if (time_to_next_roam_sound <= 0
@@ -760,8 +760,8 @@ def main():
                         levels[current_level].monster_coords
                     ))
                     # Adjust volume based on monster distance
-                    # (the further away the quieter) - tanh limits values
-                    # between 0 and 1
+                    # (the further away the quieter) — tanh limits values
+                    # between 0 and 1.
                     selected_sound.set_volume(math.tanh(3 / distance))
                     selected_sound.play()
 
@@ -784,7 +784,7 @@ def main():
                 )
             else:
                 # Skip maze rendering if map is open as it will be obscuring
-                # entire viewport anyway
+                # entire viewport anyway.
                 columns = []
                 sprites = []
             type_column = 0
@@ -798,9 +798,9 @@ def main():
                 (i, type_sprite, x[2]) for i, x in enumerate(sprites)
             ]
             # Draw further away objects first so that closer walls obstruct
-            # sprites behind them
+            # sprites behind them.
             objects.sort(key=lambda x: x[2], reverse=True)
-            # Used for displaying rays on cheat map, not used in rendering
+            # Used for displaying rays on cheat map, not used in rendering.
             ray_end_coords: List[Tuple[float, float]] = []
             for index, object_type, _ in objects:
                 if object_type == type_sprite:
@@ -831,7 +831,7 @@ def main():
                     coord, tile, distance, _, side = columns[index]
                     side_was_ns = side in (raycasting.NORTH, raycasting.SOUTH)
                     # Edge of maze when drawing maze edges as walls is disabled
-                    # Entire ray will be skipped, revealing the horizon.
+                    # The entire ray will be skipped, revealing the horizon.
                     if distance == float('inf'):
                         continue
                     if display_rays:
@@ -843,7 +843,7 @@ def main():
                     # different heights depending on the distance a ray
                     # travelled.
                     column_height = round(cfg.viewport_height / distance)
-                    # If a texture for the current level has been found or not
+                    # If a texture for the current level has been found or not.
                     if cfg.textures_enabled:
                         if (player_walls[current_level] is not None
                                 and tile == player_walls[current_level][:2]):
@@ -866,7 +866,7 @@ def main():
                             )
                         else:
                             # Maze edge was hit and we should render maze edges
-                            # as walls at this point
+                            # as walls at this point.
                             both_textures = wall_textures.get(
                                 levels[current_level].edge_wall_texture_name,
                                 placeholder_texture

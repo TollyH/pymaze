@@ -58,7 +58,7 @@ class Level:
         if self[start_point]:
             raise ValueError("Start point cannot be inside wall")
         self.start_point = start_point
-        # Start in centre of tile
+        # Start in the centre of the tile
         self.player_coords = (start_point[0] + 0.5, start_point[1] + 0.5)
 
         if not self.is_coord_in_bounds(end_point):
@@ -72,7 +72,7 @@ class Level:
                 raise ValueError("Out of bounds key coordinates")
             if self[key]:
                 raise ValueError("Key cannot be inside wall")
-        # Use a frozen set to prevent manipulation of original exit keys
+        # Use a frozen set to prevent manipulation of original exit keys.
         self.original_exit_keys = frozenset(exit_keys)
         self.exit_keys = exit_keys
 
@@ -81,7 +81,7 @@ class Level:
                 raise ValueError("Out of bounds key sensor coordinates")
             if self[sensor]:
                 raise ValueError("Key sensor cannot be inside wall")
-        # Use a frozen set to prevent manipulation of original key sensors
+        # Use a frozen set to prevent manipulation of original key sensors.
         self.original_key_sensors = frozenset(key_sensors)
         self.key_sensors = key_sensors
 
@@ -108,7 +108,7 @@ class Level:
 
         self.player_flags: Set[Tuple[int, int]] = set()
 
-        # Used to prevent monster from backtracking
+        # Used to prevent the monster from backtracking
         self._last_monster_position = (-1, -1)
 
         # Maps coordinates to a list of lists of coordinates represented
@@ -183,14 +183,14 @@ class Level:
                 self.player_coords[0] + vector[0],
                 self.player_coords[1] + vector[1]
             )
-            # Try moving just in X or Y if primary target cannot be moved to
+            # Try moving just in X or Y if primary target cannot be moved to.
             alternate_targets = [
                 (self.player_coords[0] + vector[0], self.player_coords[1]),
                 (self.player_coords[0], self.player_coords[1] + vector[1])
             ]
         else:
             target = vector
-            # There are no alternate movements if we aren't moving relatively
+            # There are no alternate movements if we aren't moving relatively.
             alternate_targets = []
         if not self.is_coord_in_bounds(target) or self[target]:
             found_valid = False
@@ -207,7 +207,7 @@ class Level:
             grid_coords[0] - old_grid_coords[0],
             grid_coords[1] - old_grid_coords[1]
         )
-        # Moved diagonally therefore skipping a square, make sure that's valid
+        # Moved diagonally therefore skipping a square, make sure that's valid.
         if relative_grid_pos[0] and relative_grid_pos[1]:
             diagonal_path_free = False
             if not self[old_grid_coords[0] + relative_grid_pos[0],
@@ -261,9 +261,9 @@ class Level:
                 ) >= 4):
             self.monster_coords = self.monster_start
         elif self.monster_coords is not None:
-            # 0 - Not in line of sight
-            # 1 - Line of sight on Y axis
-            # 2 - Line of sight on X axis
+            # 0 — Not in line of sight.
+            # 1 — Line of sight on Y axis.
+            # 2 — Line of sight on X axis.
             line_of_sight = 0
             if player_grid_position[0] == self.monster_coords[0]:
                 min_y_coord = min(
@@ -313,7 +313,7 @@ class Level:
                     )
             else:
                 # Randomise order of each cardinal direction, then move to
-                # the first one available
+                # the first one available.
                 shuffled_vectors = [(0, 1), (0, -1), (1, 0), (-1, 0)]
                 random.shuffle(shuffled_vectors)
                 for vector in shuffled_vectors:

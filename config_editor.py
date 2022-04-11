@@ -23,7 +23,7 @@ class ConfigEditorApp:
         # Preserve the case of option names
         self.config.optionxform = str  # type: ignore
         # Looks for the config.ini file in the script directory regardless of
-        # working directory
+        # working directory.
         self.config.read(self.config_file_path)
         if 'OPTIONS' not in self.config:
             self.config['OPTIONS'] = {}
@@ -33,10 +33,10 @@ class ConfigEditorApp:
         self.window.wm_title("PyGame Maze Config")
 
         # Stores the labels above sliders along with their template strings
-        # so that their text values can be dynamically changed easily
+        # so that their text values can be dynamically changed easily.
         self.scale_labels: Dict[str, Tuple[tkinter.Label, str]] = {}
         # Stores the checkbox variables for each bool field so that their state
-        # can be dynamically retrieved easily
+        # can be dynamically retrieved easily.
         self.checkbuttons: Dict[str, tkinter.IntVar] = {}
 
         self.gui_restart_warning_label = tkinter.Label(
@@ -97,7 +97,7 @@ class ConfigEditorApp:
         )
         if self.parse_bool('ENABLE_CHEAT_MAP', False):
             self.gui_cheat_map_check.select()
-        # Set command after select to prevent it being called
+        # Set command after select to prevent it from being called
         self.gui_cheat_map_check.config(
             command=lambda: self.on_checkbutton_click('ENABLE_CHEAT_MAP')
         )
@@ -111,7 +111,7 @@ class ConfigEditorApp:
         )
         if self.parse_bool('MONSTER_ENABLED', True):
             self.gui_monster_check.select()
-        # Set command after select to prevent it being called
+        # Set command after select to prevent it from being called
         self.gui_monster_check.config(
             command=lambda: self.on_checkbutton_click('MONSTER_ENABLED')
         )
@@ -125,7 +125,7 @@ class ConfigEditorApp:
         )
         if self.parse_bool('MONSTER_SOUND_ON_KILL', True):
             self.gui_monster_kill_sound_check.select()
-        # Set command after select to prevent it being called
+        # Set command after select to prevent it from being called
         self.gui_monster_kill_sound_check.config(
             command=lambda: self.on_checkbutton_click('MONSTER_SOUND_ON_KILL')
         )
@@ -139,7 +139,7 @@ class ConfigEditorApp:
         )
         if self.parse_bool('MONSTER_SOUND_ON_SPOT', True):
             self.gui_monster_spot_sound_check.select()
-        # Set command after select to prevent it being called
+        # Set command after select to prevent it from being called
         self.gui_monster_spot_sound_check.config(
             command=lambda: self.on_checkbutton_click('MONSTER_SOUND_ON_SPOT')
         )
@@ -153,7 +153,7 @@ class ConfigEditorApp:
         )
         if self.parse_bool('MONSTER_FLICKER_LIGHTS', True):
             self.gui_monster_flicker_lights_check.select()
-        # Set command after select to prevent it being called
+        # Set command after select to prevent it from being called
         self.gui_monster_flicker_lights_check.config(
             command=lambda: self.on_checkbutton_click('MONSTER_FLICKER_LIGHTS')
         )
@@ -167,7 +167,7 @@ class ConfigEditorApp:
         )
         if self.parse_bool('MONSTER_SOUND_ROAMING', True):
             self.gui_monster_sound_roaming_check.select()
-        # Set command after select to prevent it being called
+        # Set command after select to prevent it from being called
         self.gui_monster_sound_roaming_check.config(
             command=lambda: self.on_checkbutton_click('MONSTER_SOUND_ROAMING')
         )
@@ -312,7 +312,7 @@ class ConfigEditorApp:
         )
         if self.parse_bool('TEXTURES_ENABLED', True):
             self.gui_textures_check.select()
-        # Set command after select to prevent it being called
+        # Set command after select to prevent it from being called
         self.gui_textures_check.config(
             command=lambda: self.on_checkbutton_click('TEXTURES_ENABLED')
         )
@@ -326,7 +326,7 @@ class ConfigEditorApp:
         )
         if self.parse_bool('SKY_TEXTURES_ENABLED', True):
             self.gui_sky_textures_check.select()
-        # Set command after select to prevent it being called
+        # Set command after select to prevent it from being called
         self.gui_sky_textures_check.config(
             command=lambda: self.on_checkbutton_click('SKY_TEXTURES_ENABLED')
         )
@@ -569,7 +569,7 @@ class ConfigEditorApp:
         )
         if self.parse_bool('DRAW_MAZE_EDGE_AS_WALL', True):
             self.gui_draw_maze_edge_check.select()
-        # Set command after select to prevent it being called
+        # Set command after select to prevent it from being called
         self.gui_draw_maze_edge_check.config(
             command=lambda: self.on_checkbutton_click('DRAW_MAZE_EDGE_AS_WALL')
         )
@@ -583,7 +583,7 @@ class ConfigEditorApp:
         )
         if self.parse_bool('ALLOW_REALTIME_EDITING', True):
             self.gui_realtime_edit_check.select()
-        # Set command after select to prevent it being called
+        # Set command after select to prevent it from being called
         self.gui_realtime_edit_check.config(
             command=lambda: self.on_checkbutton_click('ALLOW_REALTIME_EDITING')
         )
@@ -607,7 +607,7 @@ class ConfigEditorApp:
         """
         if field == "VIEWPORT_WIDTH":
             new_width = int(new_value.split(".")[0])
-            # Display columns must always be less than or equal to view width
+            # Display columns must always be less than or equal to view width.
             self.gui_display_columns_slider.config(to=new_width)
             if (int(self.gui_display_columns_slider.get())
                     >= self.parse_int('VIEWPORT_WIDTH', 500)):

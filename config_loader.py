@@ -16,7 +16,7 @@ class Config:
         # Preserve the case of option names
         self.config.optionxform = str  # type: ignore
         # Look for the config.ini file in the script directory regardless of
-        # working directory
+        # working directory.
         config_file_path = os.path.join(
             os.path.dirname(__file__), "config.ini"
         )
@@ -48,28 +48,28 @@ class Config:
         self.monster_movement_wait = self._parse_float(
             'MONSTER_MOVEMENT_WAIT', 0.5
         )
-        # Whether the scream sound should be played when the player is killed
+        # Whether the scream sound should be played when the player is killed.
         self.monster_sound_on_kill = self._parse_bool(
             'MONSTER_SOUND_ON_KILL', True
         )
         # Whether the spotted sound should be played when the monster enters
-        # the player's field of view
+        # the player's field of view.
         self.monster_sound_on_spot = self._parse_bool(
             'MONSTER_SOUND_ON_SPOT', True
         )
         # The amount of time in seconds that the monster must have been outside
         # the player's field of view before the spotted sound effect will
-        # play again
+        # play again.
         self.monster_spot_timeout = self._parse_float(
             'MONSTER_SPOT_TIMEOUT', 10.0
         )
         # Whether the "lights" should flicker based on the distance of the
-        # monster
+        # monster.
         self.monster_flicker_lights = self._parse_bool(
             'MONSTER_FLICKER_LIGHTS', True
         )
         # Whether a random monster roaming sound should play with volume
-        # dependent on monster distance
+        # dependent on monster distance.
         self.monster_sound_roaming = self._parse_bool(
             'MONSTER_SOUND_ROAMING', True
         )
@@ -79,7 +79,7 @@ class Config:
             'MONSTER_ROAM_SOUND_DELAY', 7.5
         )
         # The total amount of time in each level that can be spent in the
-        # "spam to escape" sequence with the monster
+        # "spam to escape" sequence with the monster.
         self.monster_time_to_escape = self._parse_float(
             'MONSTER_TIME_TO_ESCAPE', 5.0
         )
@@ -92,12 +92,12 @@ class Config:
         # burning out.
         self.compass_time = self._parse_float('COMPASS_TIME', 10.0)
         # The multiplier applied to COMPASS_TIME that it will take to recharge
-        # the compass if it isn't burned out
+        # the compass if it isn't burned out.
         self.compass_charge_norm_multiplier = self._parse_float(
             'COMPASS_CHARGE_NORM_MULTIPLIER', 0.5
         )
         # The multiplier applied to COMPASS_TIME that it will take to recharge
-        # the compass if it's burned out
+        # the compass if it's burned out.
         self.compass_charge_burn_multiplier = self._parse_float(
             'COMPASS_CHARGE_BURN_MULTIPLIER', 1.0
         )
@@ -111,7 +111,7 @@ class Config:
         # key sensor in seconds.
         self.key_sensor_time = self._parse_float('KEY_SENSOR_TIME', 10.0)
 
-        # Amount of time in seconds before player placed walls are broken.
+        # Amount of time in seconds before a player placed wall is broken.
         self.player_wall_time = self._parse_float('PLAYER_WALL_TIME', 15.0)
         # Amount of time the player must wait after a wall has been broken
         # before being able to place another one.

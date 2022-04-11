@@ -41,7 +41,7 @@ KEY_SENSOR = 6
 GUN = 7
 
 # Change working directory to the directory where the script is located
-# Prevents issues with required files not being found
+# Prevents issues with required files not being found.
 os.chdir(os.path.dirname(__file__))
 
 pygame.font.init()
@@ -167,7 +167,7 @@ def draw_kill_screen(screen: pygame.Surface, cfg: Config,
 def draw_escape_screen(screen: pygame.Surface, cfg: Config,
                        jumpscare_monster_texture: pygame.Surface):
     """
-    Draw the monster fullscreen and prompt the user to spam W to escape
+    Draw the monster fullscreen and prompt the user to spam W to escape.
     """
     screen.blit(jumpscare_monster_texture, (
         random.randint(-5, 5), random.randint(-5, 5),
@@ -216,7 +216,7 @@ def draw_textured_column(screen: pygame.Surface, cfg: Config,
     the required height before drawing it to the screen.
     """
     # Determines how far along the texture we need to go by keeping only the
-    # decimal part of the collision coordinate
+    # decimal part of the collision coordinate.
     display_column_width = cfg.viewport_width // cfg.display_columns
     position_along_wall = coord[int(not side_was_ns)] % 1
     texture_x = math.floor(position_along_wall * cfg.texture_width)
@@ -252,7 +252,8 @@ def draw_textured_column(screen: pygame.Surface, cfg: Config,
             column_height
         )
     )
-    # Ensure capped height pixel columns still render in the correct Y position
+    # Ensure capped height pixel columns still render in the correct Y
+    # position.
     if cfg.viewport_height < column_height <= cfg.texture_scale_limit:
         overlap = (column_height - cfg.viewport_height) // 2
         pixel_column = pixel_column.subsurface(
@@ -311,7 +312,8 @@ def draw_sprite(screen: pygame.Surface, cfg: Config,
 
 def draw_solid_background(screen: pygame.Surface, cfg: Config):
     """
-    Draw two rectangles stacked on top of each other horizontally on the screen
+    Draw two rectangles stacked on top of each other horizontally on the
+    screen.
     """
     display_column_width = cfg.viewport_width // cfg.display_columns
     filled_screen_width = display_column_width * cfg.display_columns
@@ -346,7 +348,7 @@ def draw_sky_texture(screen: pygame.Surface, cfg: Config,
         )
         angle = math.atan2(*cast_direction)
         texture_x = math.floor(angle / math.pi * cfg.texture_width)
-        # Creates a "mirror" effect preventing a seam when the texture repeats
+        # Creates a "mirror" effect preventing a seam when the texture repeats.
         texture_x = (
             texture_x % cfg.texture_width
             if angle >= 0 else
@@ -541,11 +543,11 @@ def draw_compass(screen: pygame.Surface, cfg: Config,
     pygame.draw.circle(screen, GREY, compass_centre, compass_outer_radius)
     pygame.draw.circle(screen, DARK_GREY, compass_centre, compass_inner_radius)
     if target is not None and not burned:
-        # The distance between the player and the monster in each axis
+        # The distance between the player and the monster in each axis.
         relative_pos = (source[0] - target[0], source[1] - target[1])
-        # The angle to the monster relative to the facing direction
+        # The angle to the monster relative to the facing direction.
         direction = math.atan2(*relative_pos) - math.atan2(*facing)
-        # Compass line gets shorter as it runs out of charge
+        # Compass line gets shorter as it runs out of charge.
         line_length = compass_inner_radius * time_active / cfg.compass_time
         line_end_coords = floor_coordinates((
             line_length * math.sin(direction) + compass_centre[0],

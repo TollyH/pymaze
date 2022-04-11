@@ -7,37 +7,37 @@ algorithm for raycasting.
 
 ## Installation
 
-*Python 3.6 or greater and a connected audio output device are required*
+*Python 3.6 or greater and a connected audio output device are required.*
 
-1. Download the files by pressing the green "Code" button above, followed by "Download ZIP" - extracting all the files once the download is complete.
+1. Download the files by pressing the green "Code" button above, followed by "Download ZIP" — extracting all the files once the download is complete.
    - Alternatively, if you have git installed, run `git clone https://github.com/TollyH/pygame_maze.git` in a terminal to download the repository.
 2. Install PyGame with the command `pip3 install pygame` on Linux or `pip install pygame` on Windows.
 3. Run `__main__.py` to start the game.
 
 ## Controls
 
-- `WASD` or `Up` and `Down` - Move around
-- `Left` and `Right` or `Mouse` - Turn camera
-- `Left Click` - Toggle mouse control (`ESC` can also be used to leave)
-- `[` and `]` - Previous/Next Level Respectively
-- `W` - Escape from monster (rapid click)
-- `F` - Place/pick up flag
-- `Q` - Place temporary barricade
-- `T` (with gun) - Shoot
-- `R` (or `ESC` outside mouse control) - Pause menu (+`Y` reset level)
-- `Shift` - Run while held
-- `CTRL` - Crawl while held
-- `Space` - Toggle map
-- `C` - Toggle monster compass
-- `E` - Toggle statistics (time, moves, key counts)
-- `CTRL` + `/` - Open config window
+- `WASD` or `Up` and `Down` — Move around
+- `Left` and `Right` or `Mouse` — Turn camera
+- `Left Click` — Toggle mouse control (`ESC` can also be used to leave)
+- `[` and `]` — Previous/Next Level Respectively
+- `W` — Escape from monster (rapid click)
+- `F` — Place/pick up flag
+- `Q` — Place temporary barricade
+- `T` (with gun) — Shoot
+- `R` (or `ESC` outside mouse control) — Pause menu (+`Y` reset level)
+- `Shift` — Run while held
+- `CTRL` — Crawl while held
+- `Space` — Toggle map
+- `C` — Toggle monster compass
+- `E` — Toggle statistics (time, moves, key counts)
+- `CTRL` + `/` — Open config window
 
 ## Cheat Map Controls
 
 *Requires the cheat map to be enabled in the configuration*
 
-- `Space` - Toggle cheat map display
-- `CTRL` + `Space` - Toggle displaying of field of view on map
+- `Space` — Toggle cheat map display
+- `CTRL` + `Space` — Toggle displaying of field of view on map
 
 ## Instructions
 
@@ -50,17 +50,17 @@ algorithm for raycasting.
 
 ## Map Colours
 
-- Black - Walls
-- White - Floor
-- Blue - Player tile
-- Green - End point
-- Gold - Keys
-- Dark green - Monster spawn
-- Dark red - Monster
-- Red - Start point
-- Turquoise - Flags
-- Purple - Player placed wall
-- Dark gold - Key sensors
+- Black — Walls
+- White — Floor
+- Blue — Player tile
+- Green — End point
+- Gold — Keys
+- Dark green — Monster spawn
+- Dark red — Monster
+- Red — Start point
+- Turquoise — Flags
+- Purple — Player placed wall
+- Dark gold — Key sensors
 
 ---
 
