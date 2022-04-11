@@ -575,20 +575,6 @@ class ConfigEditorApp:
         )
         self.gui_draw_maze_edge_check.pack(fill="x", anchor=tkinter.NW)
 
-        self.checkbuttons['ALLOW_REALTIME_EDITING'] = tkinter.IntVar()
-        self.gui_realtime_edit_check = tkinter.Checkbutton(
-            self.gui_advanced_config_frame, anchor=tkinter.W,
-            variable=self.checkbuttons['ALLOW_REALTIME_EDITING'],
-            text="Allow realtime editing on the cheat map (disables solutions)"
-        )
-        if self.parse_bool('ALLOW_REALTIME_EDITING', True):
-            self.gui_realtime_edit_check.select()
-        # Set command after select to prevent it from being called
-        self.gui_realtime_edit_check.config(
-            command=lambda: self.on_checkbutton_click('ALLOW_REALTIME_EDITING')
-        )
-        self.gui_realtime_edit_check.pack(fill="x", anchor=tkinter.NW)
-
         self.gui_save_button = tkinter.ttk.Button(
             self.window, command=self.save_config, text="Save"
         )

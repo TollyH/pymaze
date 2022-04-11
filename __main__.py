@@ -258,11 +258,6 @@ def main() -> None:
             cfg = config_loader.Config()
         # Limit FPS and record time last frame took to render
         frame_time = clock.tick(cfg.frame_rate_limit) / 1000
-        # Used for the 2D map
-        tile_width = cfg.viewport_width // levels[current_level].dimensions[0]
-        tile_height = (
-            cfg.viewport_height // levels[current_level].dimensions[1]
-        )
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -314,15 +309,6 @@ def main() -> None:
                             current_level += 1
                         else:
                             continue
-                        # Adjust tile width and height for new level
-                        tile_width = (
-                            cfg.viewport_width
-                            // levels[current_level].dimensions[0]
-                        )
-                        tile_height = (
-                            cfg.viewport_height
-                            // levels[current_level].dimensions[1]
-                        )
                         pygame.display.set_caption(
                             f"Maze - Level {current_level + 1}"
                         )
@@ -431,16 +417,6 @@ def main() -> None:
                     # mouse
                     pygame.mouse.set_visible(not enable_mouse_control)
                     pygame.event.set_grab(enable_mouse_control)
-                elif (cfg.allow_realtime_editing and cfg.enable_cheat_map
-                        and event.button == pygame.BUTTON_LEFT
-                        and mouse_coords[0] > cfg.viewport_width):
-                    clicked_tile = (
-                        (mouse_coords[0] - cfg.viewport_width) // tile_width,
-                        mouse_coords[1] // tile_height
-                    )
-                    levels[current_level][clicked_tile] = (
-                        not levels[current_level][clicked_tile]
-                    )
             elif (event.type == pygame.MOUSEMOTION and enable_mouse_control
                     and (not display_map or cfg.enable_cheat_map)
                     and not is_reset_prompt_shown):
@@ -889,14 +865,14 @@ def main() -> None:
                                 ].edge_wall_texture_name
                             both_textures = wall_textures.get(
                                 texture_name,
-                                (placeholder_texture, placeholder_texture)
+                                wall_textures["placeholder"]
                             )
                         else:
                             # Maze edge was hit and we should render maze edges
                             # as walls at this point.
                             both_textures = wall_textures.get(
                                 levels[current_level].edge_wall_texture_name,
-                                (placeholder_texture, placeholder_texture)
+                                wall_textures["placeholder"]
                             )
                         # Select either light or dark texture
                         # depending on side

@@ -172,13 +172,6 @@ class Config:
         self.run_multiplier = self._parse_float('RUN_MULTIPLIER', 2.0)
         self.crawl_multiplier = self._parse_float('CRAWL_MULTIPLIER', 0.5)
 
-        # Allow the presence of walls to be toggled by clicking on the map.
-        # Enabling this will disable the ability to view solutions.
-        # enable_cheat_map must be True for this to work.
-        self.allow_realtime_editing = self._parse_bool(
-            'ALLOW_REALTIME_EDITING', False
-        )
-
     def _parse_int(self, field_name: str, default_value: int) -> int:
         if field_name not in self.config_options:
             return default_value
