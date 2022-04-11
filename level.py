@@ -4,7 +4,7 @@ player movement, victory checking, and path finding.
 """
 import math
 import random
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, no_type_check, Optional, Set, Tuple, Union
 
 # Movement events
 MOVED = 0
@@ -125,6 +125,58 @@ class Level:
 
         self.won = False
         self.killed = False
+
+    @classmethod
+    @no_type_check
+    def from_json_dict(cls, json_dict: Dict[str, Any]) -> 'Level':
+        """
+        Create a Level instance from a valid deserialized JSON dictionary.
+        Converts lists (JSON arrays) back to tuples and sets where applicable.
+        """
+        return cls(
+            tuple(json_dict['dimensions']),
+            [
+                [None if x is None else tuple(x) for x in y]
+                for y in json_dict['wall_map']
+            ],
+            tuple(json_dict['start_point']), tuple(json_dict['end_point']),
+            {tuple(x) for x in json_dict['exit_keys']},
+            {tuple(x) for x in json_dict['key_sensors']},
+            {tuple(x) for x in json_dict['guns']},
+            None
+            if json_dict['monster_start'] is None else
+            tuple(json_dict['monster_start']),
+            json_dict['monster_wait'], json_dict['edge_wall_texture_name']
+        )
+
+    @no_type_check
+    def to_json_dict(self) -> Dict[str, Any]:
+        """
+        Convert this level into a JSON compatible dictionary. All tuples and
+        sets are converted to lists (JSON arrays).
+        """
+        return {
+            "dimensions": list(self.dimensions),
+            "wall_map": [
+                # 'x' is True when a player placed wall is in that position.
+                # These are only temporary and as such should be serialized as
+                # empty space.
+                [None if x is True or x is None else list(x) for x in y]
+                for y in self.wall_map
+            ],
+            "start_point": list(self.start_point),
+            "end_point": list(self.end_point),
+            "exit_keys": [list(x) for x in self.original_exit_keys],
+            "key_sensors": [list(x) for x in self.original_key_sensors],
+            "guns": [list(x) for x in self.original_guns],
+            "monster_start": (
+                None
+                if self.monster_start is None else
+                list(self.monster_start)
+            ),
+            "monster_wait": self.monster_wait,
+            "edge_wall_texture_name": self.edge_wall_texture_name
+        }
 
     def __str__(self) -> str:
         """

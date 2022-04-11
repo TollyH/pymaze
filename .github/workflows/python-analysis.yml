@@ -23,5 +23,5 @@ jobs:
         pip install flake8 mypy pygame==2.1.3.dev4
     - name: Analysing the code with flake8 and mypy
       run: |
-        flake8 --per-file-ignores="maze_levels.py:E501"
+        flake8
         mypy $(git ls-files '*.py') --disallow-untyped-defs

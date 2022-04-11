@@ -19,9 +19,9 @@ import pygame
 import config_editor
 import config_loader
 import level
+import maze_levels
 import raycasting
 import screen_drawing
-from maze_levels import levels
 
 
 def main() -> None:
@@ -35,6 +35,8 @@ def main() -> None:
 
     last_config_edit = os.path.getmtime('config.ini')
     cfg = config_loader.Config()
+
+    levels = maze_levels.load_level_json("maze_levels.json")
 
     # Minimum window resolution is 500×500
     screen = pygame.display.set_mode((
