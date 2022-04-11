@@ -15,7 +15,7 @@ class ConfigEditorApp:
     config file. While the app should still function if the file is erroneous
     or missing, unexpected behaviour may occur.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self.config_file_path = os.path.join(
             os.path.dirname(__file__), "config.ini"
         )
@@ -596,7 +596,8 @@ class ConfigEditorApp:
 
         self.window.mainloop()
 
-    def on_scale_change(self, field: str, new_value: str, decimal_places: int):
+    def on_scale_change(self, field: str, new_value: str, decimal_places: int
+                        ) -> None:
         """
         To be called when the user moves a slider. New_value will always be a
         floating point value represented as a str because of how Tkinter Scales
@@ -627,7 +628,7 @@ class ConfigEditorApp:
             )
         )
 
-    def on_checkbutton_click(self, field: str):
+    def on_checkbutton_click(self, field: str) -> None:
         """
         To be called when the user checks or unchecks a checkbutton. Toggles
         the boolean value current in the specified field.
@@ -635,14 +636,14 @@ class ConfigEditorApp:
         # INI files can only contain strings
         self.config_options[field] = str(self.checkbuttons[field].get())
 
-    def save_config(self):
+    def save_config(self) -> None:
         """
         Save the potentially modified configuration options to config.ini
         """
         with open(self.config_file_path, 'w', encoding="utf8") as file:
             self.config.write(file)
 
-    def parse_int(self, field_name: str, default_value: int):
+    def parse_int(self, field_name: str, default_value: int) -> int:
         """
         Get a value from the configuration with the specified field name as an
         integer. If the value is missing or invalid, default_value will be
@@ -655,7 +656,7 @@ class ConfigEditorApp:
             return default_value
         return int(field)
 
-    def parse_float(self, field_name: str, default_value: float):
+    def parse_float(self, field_name: str, default_value: float) -> float:
         """
         Get a value from the configuration with the specified field name as a
         float. If the value is missing or invalid, default_value will be
@@ -669,7 +670,8 @@ class ConfigEditorApp:
         return float(field)
 
     def parse_optional_float(self, field_name: str,
-                             default_value: Optional[float]):
+                             default_value: Optional[float]
+                             ) -> Optional[float]:
         """
         Get a value from the configuration with the specified field name as a
         float or None. If the value is missing or invalid, default_value will
@@ -684,7 +686,7 @@ class ConfigEditorApp:
             return default_value
         return float(field)
 
-    def parse_bool(self, field_name: str, default_value: bool):
+    def parse_bool(self, field_name: str, default_value: bool) -> bool:
         """
         Get a value from the configuration with the specified field name as a
         bool. If the value is missing or invalid, default_value will be

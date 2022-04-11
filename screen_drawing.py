@@ -2,12 +2,13 @@
 Contains functions for performing most display related tasks, including
 drawing columns, sprites, and HUD elements. Most audio and texture
 loading/selection is handled in __main__.py rather than here, apart from the
-victory screen audio, which is handled here.
+victory screen audio, which is handled here. Also contains the definition for
+'EmptySound'.
 """
 import math
 import os
 import random
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 import pygame
 
@@ -47,20 +48,53 @@ os.chdir(os.path.dirname(__file__))
 pygame.font.init()
 FONT = pygame.font.SysFont('Tahoma', 24, True)
 
+
+class EmptySound:
+    """
+    A sound to be assigned to a variable in the event that an audio error
+    occurs.
+    """
+    @staticmethod
+    def play() -> None:
+        """
+        Does nothing. Used to prevent error when trying to play sound after an
+        audio error occurred.
+        """
+        pass
+
+    @staticmethod
+    def get_length() -> float:
+        """
+        Always returns 0.0.
+        """
+        return 0.0
+
+    @staticmethod
+    def set_volume(_: float) -> None:
+        """
+        Does nothing.
+        """
+        pass
+
+
 audio_error_occurred = False
 try:
     # Used for the victory scene animations
     pygame.mixer.init()
-    VICTORY_INCREMENT = pygame.mixer.Sound(
+    VICTORY_INCREMENT: Union[
+        pygame.mixer.Sound, EmptySound
+    ] = pygame.mixer.Sound(
         os.path.join("sounds", "victory_increment.wav")
     )
-    VICTORY_NEXT_BLOCK = pygame.mixer.Sound(
+    VICTORY_NEXT_BLOCK: Union[
+        pygame.mixer.Sound, EmptySound
+    ] = pygame.mixer.Sound(
         os.path.join("sounds", "victory_next_block.wav")
     )
 except (FileNotFoundError, pygame.error):
     audio_error_occurred = True
-    VICTORY_INCREMENT = None
-    VICTORY_NEXT_BLOCK = None
+    VICTORY_INCREMENT = EmptySound()
+    VICTORY_NEXT_BLOCK = EmptySound()
 
 total_time_on_screen = [0.0] * len(levels)
 victory_sounds_played = [0] * len(levels)
@@ -70,7 +104,7 @@ def draw_victory_screen(screen: pygame.Surface, cfg: Config,
                         background: pygame.Surface,
                         highscores: List[Tuple[float, float]],
                         current_level: int, time_score: float,
-                        move_score: float, frame_time: float):
+                        move_score: float, frame_time: float) -> None:
     """
     Draw the victory screen seen after beating a level. Displays numerous
     scores to the player in a gradual animation.
@@ -154,7 +188,7 @@ def draw_victory_screen(screen: pygame.Surface, cfg: Config,
 
 
 def draw_kill_screen(screen: pygame.Surface, cfg: Config,
-                     jumpscare_monster_texture: pygame.Surface):
+                     jumpscare_monster_texture: pygame.Surface) -> None:
     """
     Draw the red kill screen with the monster fullscreen
     """
@@ -165,7 +199,7 @@ def draw_kill_screen(screen: pygame.Surface, cfg: Config,
 
 
 def draw_escape_screen(screen: pygame.Surface, cfg: Config,
-                       jumpscare_monster_texture: pygame.Surface):
+                       jumpscare_monster_texture: pygame.Surface) -> None:
     """
     Draw the monster fullscreen and prompt the user to spam W to escape.
     """
@@ -190,7 +224,7 @@ def draw_escape_screen(screen: pygame.Surface, cfg: Config,
 
 
 def draw_untextured_column(screen: pygame.Surface, cfg: Config, index: int,
-                           side_was_ns: bool, column_height: int):
+                           side_was_ns: bool, column_height: int) -> None:
     """
     Draw a single black/grey column to the screen. Designed for if textures
     are disabled or a texture wasn't found for the current level.
@@ -210,7 +244,8 @@ def draw_untextured_column(screen: pygame.Surface, cfg: Config, index: int,
 def draw_textured_column(screen: pygame.Surface, cfg: Config,
                          coord: Tuple[float, float], side_was_ns: bool,
                          column_height: int, index: int,
-                         facing: Tuple[float, float], texture: pygame.Surface):
+                         facing: Tuple[float, float], texture: pygame.Surface
+                         ) -> None:
     """
     Takes a single column of pixels from the given texture and scales it to
     the required height before drawing it to the screen.
@@ -265,7 +300,7 @@ def draw_textured_column(screen: pygame.Surface, cfg: Config,
 def draw_sprite(screen: pygame.Surface, cfg: Config,
                 coord: Tuple[float, float], player_coords: Tuple[float, float],
                 camera_plane: Tuple[float, float], facing: Tuple[float, float],
-                texture: pygame.Surface):
+                texture: pygame.Surface) -> None:
     """
     Draw a transformed 2D sprite onto the screen. Provides the illusion of
     an object being drawn in 3D space by scaling up and down.
@@ -310,7 +345,7 @@ def draw_sprite(screen: pygame.Surface, cfg: Config,
     )
 
 
-def draw_solid_background(screen: pygame.Surface, cfg: Config):
+def draw_solid_background(screen: pygame.Surface, cfg: Config) -> None:
     """
     Draw two rectangles stacked on top of each other horizontally on the
     screen.
@@ -334,7 +369,7 @@ def draw_solid_background(screen: pygame.Surface, cfg: Config):
 def draw_sky_texture(screen: pygame.Surface, cfg: Config,
                      facing: Tuple[float, float],
                      camera_plane: Tuple[float, float],
-                     sky_texture: pygame.Surface):
+                     sky_texture: pygame.Surface) -> None:
     """
     Draw textured sky based on facing direction. Player position does not
     affect sky, only direction.
@@ -365,7 +400,7 @@ def draw_sky_texture(screen: pygame.Surface, cfg: Config,
 def draw_map(screen: pygame.Surface, cfg: Config, current_level: Level,
              display_rays: bool, ray_end_coords: List[Tuple[float, float]],
              facing: Tuple[float, float], has_key_sensor: bool,
-             player_wall: Optional[Tuple[int, int]]):
+             player_wall: Optional[Tuple[int, int]]) -> None:
     """
     Draw a 2D map representing the current level. This will cover the screen
     unless enable_cheat_map is True in the config.
@@ -406,7 +441,7 @@ def draw_map(screen: pygame.Surface, cfg: Config, current_level: Level,
             )
     # Raycast rays
     if display_rays and cfg.enable_cheat_map:
-        for point in ray_end_coords:
+        for ray_end in ray_end_coords:
             pygame.draw.line(
                 screen, DARK_GOLD, (
                     current_level.player_coords[0]
@@ -415,8 +450,8 @@ def draw_map(screen: pygame.Surface, cfg: Config, current_level: Level,
                     * tile_height
                 ),
                 (
-                    point[0] * tile_width + x_offset,
-                    point[1] * tile_height
+                    ray_end[0] * tile_width + x_offset,
+                    ray_end[1] * tile_height
                 ), 1
             )
     # Player direction
@@ -447,7 +482,7 @@ def draw_stats(screen: pygame.Surface, cfg: Config, monster_spawned: bool,
                blank_icon: pygame.Surface, key_sensor_time: float,
                compass_time: float, compass_burned: bool,
                player_wall_time: Optional[float], wall_place_cooldown: float,
-               current_level_time: float, has_gun: bool):
+               current_level_time: float, has_gun: bool) -> None:
     """
     Draw a time, move count, and key counts to the bottom left-hand corner of
     the screen with a transparent black background if the monster hasn't
@@ -527,7 +562,7 @@ def draw_stats(screen: pygame.Surface, cfg: Config, monster_spawned: bool,
 def draw_compass(screen: pygame.Surface, cfg: Config,
                  target: Optional[Tuple[float, float]],
                  source: Tuple[float, float], facing: Tuple[float, float],
-                 burned: bool, time_active: float):
+                 burned: bool, time_active: float) -> None:
     """
     Draws a compass to the lower right-hand corner of the screen. Points to
     the target from the facing direction of the source, unless it is burned
@@ -566,7 +601,7 @@ def draw_compass(screen: pygame.Surface, cfg: Config,
 
 
 def flash_viewport(screen: pygame.Surface, cfg: Config, dark: bool,
-                   strength: float):
+                   strength: float) -> None:
     """
     Draw a transparent overlay over the entire viewport either lightening it or
     darkening it. The strength should be a float between 0.0 and 1.0.
@@ -580,7 +615,7 @@ def flash_viewport(screen: pygame.Surface, cfg: Config, dark: bool,
 
 
 def draw_reset_prompt(screen: pygame.Surface, cfg: Config,
-                      background: pygame.Surface):
+                      background: pygame.Surface) -> None:
     """
     Draw a transparent overlay over a given background asking the user if they
     are sure that they want to reset the level.
@@ -602,7 +637,8 @@ def draw_reset_prompt(screen: pygame.Surface, cfg: Config,
     )
 
 
-def draw_gun(screen: pygame.Surface, cfg: Config, gun_texture: pygame.Surface):
+def draw_gun(screen: pygame.Surface, cfg: Config, gun_texture: pygame.Surface
+             ) -> None:
     """
     Draw the third person gun on the screen with a crosshair in the centre.
     """

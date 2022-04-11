@@ -11,7 +11,7 @@ class Config:
     Contains the loaded configuration options. Options will be reloaded from
     the file every time a new instance of this class is created.
     """
-    def __init__(self):
+    def __init__(self) -> None:
         self.config = configparser.ConfigParser(allow_no_value=True)
         # Preserve the case of option names
         self.config.optionxform = str  # type: ignore
@@ -25,7 +25,7 @@ class Config:
             self.config_options: Dict[str, str] = dict(self.config['OPTIONS'])
         else:
             # Will cause every config option to resort to default values
-            self.config_options: Dict[str, str] = {}
+            self.config_options = {}
 
         # The dimensions used for the 3D view and the map
         # (not including the HUD).
@@ -179,7 +179,7 @@ class Config:
             'ALLOW_REALTIME_EDITING', False
         )
 
-    def _parse_int(self, field_name: str, default_value: int):
+    def _parse_int(self, field_name: str, default_value: int) -> int:
         if field_name not in self.config_options:
             return default_value
         field = self.config_options[field_name]
@@ -187,7 +187,7 @@ class Config:
             return default_value
         return int(field)
 
-    def _parse_float(self, field_name: str, default_value: float):
+    def _parse_float(self, field_name: str, default_value: float) -> float:
         if field_name not in self.config_options:
             return default_value
         field = self.config_options[field_name]
@@ -196,7 +196,8 @@ class Config:
         return float(field)
 
     def _parse_optional_float(self, field_name: str,
-                              default_value: Optional[float]):
+                              default_value: Optional[float]
+                              ) -> Optional[float]:
         if field_name not in self.config_options:
             return default_value
         field = self.config_options[field_name]
@@ -207,7 +208,7 @@ class Config:
         return float(field)
 
     def _parse_bool(self, field_name: str,
-                    default_value: bool):
+                    default_value: bool) -> bool:
         if field_name not in self.config_options:
             return default_value
         field = self.config_options[field_name]

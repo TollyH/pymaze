@@ -12,7 +12,7 @@ import random
 import sys
 import threading
 from glob import glob
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 import pygame
 
@@ -24,7 +24,7 @@ import screen_drawing
 from maze_levels import levels
 
 
-def main():
+def main() -> None:
     """
     Main function for the maze game. Manages all input, output, and timing.
     """
@@ -67,7 +67,7 @@ def main():
             if len(highscores) < len(levels):
                 highscores += [(0.0, 0.0)] * (len(levels) - len(highscores))
     else:
-        highscores: List[Tuple[float, float]] = [(0.0, 0.0)] * len(levels)
+        highscores = [(0.0, 0.0)] * len(levels)
 
     # Used to create the darker versions of each texture
     darkener = pygame.Surface((cfg.texture_width, cfg.texture_height))
@@ -150,15 +150,21 @@ def main():
 
     audio_error_occurred = False
     try:
-        monster_jumpscare_sound = pygame.mixer.Sound(
+        monster_jumpscare_sound: Union[
+            pygame.mixer.Sound, screen_drawing.EmptySound
+        ] = pygame.mixer.Sound(
             os.path.join("sounds", "monster_jumpscare.wav")
         )
-        monster_spotted_sound = pygame.mixer.Sound(
+        monster_spotted_sound: Union[
+            pygame.mixer.Sound, screen_drawing.EmptySound
+        ] = pygame.mixer.Sound(
             os.path.join("sounds", "monster_spotted.wav")
         )
         # {min_distance_to_play: Sound}
         # Must be in ascending numerical order.
-        breathing_sounds = {
+        breathing_sounds: Dict[int, Union[
+            pygame.mixer.Sound, screen_drawing.EmptySound
+        ]] = {
             0: pygame.mixer.Sound(
                 os.path.join("sounds", "player_breathe", "heavy.wav")
             ),
@@ -169,29 +175,37 @@ def main():
                 os.path.join("sounds", "player_breathe", "light.wav")
             )
         }
-        monster_roam_sounds = [
+        monster_roam_sounds: List[Union[
+            pygame.mixer.Sound, screen_drawing.EmptySound
+        ]] = [
             pygame.mixer.Sound(x)
             for x in glob(os.path.join("sounds", "monster_roam", "*.wav"))
         ]
-        key_pickup_sounds = [
+        key_pickup_sounds: List[Union[
+            pygame.mixer.Sound, screen_drawing.EmptySound
+        ]] = [
             pygame.mixer.Sound(x)
             for x in glob(os.path.join("sounds", "key_pickup", "*.wav"))
         ]
-        gunshot = pygame.mixer.Sound(os.path.join("sounds", "gunshot.wav"))
+        gunshot: Union[
+            pygame.mixer.Sound, screen_drawing.EmptySound
+        ] = pygame.mixer.Sound(os.path.join("sounds", "gunshot.wav"))
         # Constant ambient sound — loops infinitely
         pygame.mixer.music.load(os.path.join("sounds", "ambience.wav"))
-        light_flicker_sound = pygame.mixer.Sound(
+        light_flicker_sound: Union[
+            pygame.mixer.Sound, screen_drawing.EmptySound
+        ] = pygame.mixer.Sound(
             os.path.join("sounds", "light_flicker.wav")
         )
     except (FileNotFoundError, pygame.error):
         audio_error_occurred = True
-        monster_jumpscare_sound = None
-        monster_spotted_sound = None
-        breathing_sounds = None
-        monster_roam_sounds = None
-        key_pickup_sounds = None
-        gunshot = None
-        light_flicker_sound = None
+        monster_jumpscare_sound = screen_drawing.EmptySound()
+        monster_spotted_sound = screen_drawing.EmptySound()
+        breathing_sounds = {0: screen_drawing.EmptySound()}
+        monster_roam_sounds = [screen_drawing.EmptySound()]
+        key_pickup_sounds = [screen_drawing.EmptySound()]
+        gunshot = screen_drawing.EmptySound()
+        light_flicker_sound = screen_drawing.EmptySound()
     time_to_breathing_finish = 0.0
     time_to_next_roam_sound = 0.0
 
@@ -390,9 +404,10 @@ def main():
                         display_compass = False
                         if not cfg.enable_cheat_map:
                             display_map = False
-                        if player_walls[current_level] is not None:
+                        current_player_wall = player_walls[current_level]
+                        if current_player_wall is not None:
                             levels[current_level][
-                                player_walls[current_level][:2]
+                                current_player_wall[:2]
                             ] = None
                             player_walls[current_level] = None
                         wall_place_cooldown[current_level] = 0.0
@@ -479,7 +494,7 @@ def main():
                 and monster_escape_clicks[current_level] == -1):
             # Held down keys — movement and turning
             pressed_keys = pygame.key.get_pressed()
-            move_multiplier = 1
+            move_multiplier = 1.0
             if pressed_keys[pygame.K_RCTRL] or pressed_keys[pygame.K_LCTRL]:
                 move_multiplier *= cfg.crawl_multiplier
             if pressed_keys[pygame.K_RSHIFT] or pressed_keys[pygame.K_LSHIFT]:
@@ -640,13 +655,13 @@ def main():
                     wall_place_cooldown[current_level] = max(
                         0.0, wall_place_cooldown[current_level]
                     )
-                if (player_walls[current_level] is not None
+                current_player_wall = player_walls[current_level]
+                if (current_player_wall is not None
                         and time_scores[current_level]
-                        >= player_walls[current_level][2]
-                        + cfg.player_wall_time):
+                        >= current_player_wall[2] + cfg.player_wall_time):
                     # Remove player placed wall if enough time has passed
                     levels[current_level][
-                        player_walls[current_level][:2]
+                        current_player_wall[:2]
                     ] = None
                     player_walls[current_level] = None
                     wall_place_cooldown[current_level] = (
@@ -709,7 +724,7 @@ def main():
                         # Flicker on every monster movement when close.
                         # Also don't divide by anything less than 1, it will
                         # have no more effect than just 1.
-                        distance = max(1, distance - 10)
+                        distance = max(1.0, distance - 10)
                         # < 1 exponent makes probability decay less with
                         # distance
                         if random.random() < 1 / distance ** 0.6:
@@ -728,10 +743,10 @@ def main():
                         and has_started_level[current_level]):
                     # There is no monster, so play the calmest breathing sound
                     selected_sound = breathing_sounds[max(breathing_sounds)]
-                    if levels[current_level].monster_coords is not None:
+                    monster_coords = levels[current_level].monster_coords
+                    if monster_coords is not None:
                         distance = math.sqrt(raycasting.no_sqrt_coord_distance(
-                            levels[current_level].player_coords,
-                            levels[current_level].monster_coords
+                            levels[current_level].player_coords, monster_coords
                         ))
                         for min_distance, sound in breathing_sounds.items():
                             if distance >= min_distance:
@@ -746,8 +761,9 @@ def main():
                 # monster is present.
                 if time_to_next_roam_sound > 0:
                     time_to_next_roam_sound -= frame_time
+                monster_coords = levels[current_level].monster_coords
                 if (time_to_next_roam_sound <= 0
-                        and levels[current_level].monster_coords is not None
+                        and monster_coords is not None
                         and monster_escape_clicks[current_level] == -1
                         and cfg.monster_sound_roaming):
                     selected_sound = random.choice(monster_roam_sounds)
@@ -756,8 +772,7 @@ def main():
                             + cfg.monster_roam_sound_delay
                     )
                     distance = math.sqrt(raycasting.no_sqrt_coord_distance(
-                        levels[current_level].player_coords,
-                        levels[current_level].monster_coords
+                        levels[current_level].player_coords, monster_coords
                     ))
                     # Adjust volume based on monster distance
                     # (the further away the quieter) — tanh limits values
@@ -845,31 +860,41 @@ def main():
                     column_height = round(cfg.viewport_height / distance)
                     # If a texture for the current level has been found or not.
                     if cfg.textures_enabled:
-                        if (player_walls[current_level] is not None
-                                and tile == player_walls[current_level][:2]):
+                        current_player_wall = player_walls[current_level]
+                        if (current_player_wall is not None
+                                and tile == current_player_wall[:2]):
                             # Select appropriate player wall texture depending
                             # on how long the wall has left until breaking.
                             both_textures = player_wall_textures[
                                 math.floor(
                                     (
                                         time_scores[current_level]
-                                        - player_walls[current_level][2]
+                                        - current_player_wall[2]
                                     ) / cfg.player_wall_time * len(
                                         player_wall_textures
                                     )
                                 )
                             ]
                         elif levels[current_level].is_coord_in_bounds(tile):
+                            point = levels[current_level][tile]
+                            if isinstance(point, tuple):
+                                texture_name = point[side]
+                            else:
+                                # This should logically never happen,
+                                # but just in case — default to edge texture.
+                                texture_name = levels[
+                                    current_level
+                                ].edge_wall_texture_name
                             both_textures = wall_textures.get(
-                                levels[current_level][tile][side],
-                                placeholder_texture
+                                texture_name,
+                                (placeholder_texture, placeholder_texture)
                             )
                         else:
                             # Maze edge was hit and we should render maze edges
                             # as walls at this point.
                             both_textures = wall_textures.get(
                                 levels[current_level].edge_wall_texture_name,
-                                placeholder_texture
+                                (placeholder_texture, placeholder_texture)
                             )
                         # Select either light or dark texture
                         # depending on side
@@ -884,12 +909,14 @@ def main():
                             screen, cfg, index, side_was_ns, column_height
                         )
             if display_map:
+                current_player_wall = player_walls[current_level]
                 screen_drawing.draw_map(
                     screen, cfg, levels[current_level], display_rays,
                     ray_end_coords, facing_directions[current_level],
                     key_sensor_times[current_level] > 0,
-                    None if player_walls[current_level] is None else
-                    player_walls[current_level][:2]
+                    None
+                    if current_player_wall is None else
+                    current_player_wall[:2]
                 )
 
             if pickup_flash_time_remaining > 0:
@@ -919,11 +946,13 @@ def main():
             if display_compass and (not display_map or cfg.enable_cheat_map):
                 monster_coords = levels[current_level].monster_coords
                 if monster_coords is not None:
-                    monster_coords = (
+                    compass_target: Optional[Tuple[float, float]] = (
                         monster_coords[0] + 0.5, monster_coords[1] + 0.5
                     )
+                else:
+                    compass_target = None
                 screen_drawing.draw_compass(
-                    screen, cfg, monster_coords,
+                    screen, cfg, compass_target,
                     levels[current_level].player_coords,
                     facing_directions[current_level],
                     compass_burned_out[current_level],
@@ -941,6 +970,7 @@ def main():
                     if has_started_level[current_level] else
                     highscores[current_level][1]
                 )
+                current_player_wall = player_walls[current_level]
                 screen_drawing.draw_stats(
                     screen, cfg,
                     levels[current_level].monster_coords is not None,
@@ -953,8 +983,8 @@ def main():
                     compass_times[current_level],
                     compass_burned_out[current_level],
                     None
-                    if player_walls[current_level] is None else
-                    player_walls[current_level][2],
+                    if current_player_wall is None else
+                    current_player_wall[2],
                     wall_place_cooldown[current_level],
                     time_scores[current_level], has_gun[current_level]
                 )

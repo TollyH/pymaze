@@ -2,7 +2,7 @@
 Contains functions related to the raycast rendering used to generate pseudo-3D
 graphics.
 """
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import level
 
@@ -26,7 +26,11 @@ WEST = 3
 
 def get_first_collision(current_level: level.Level,
                         direction: Tuple[float, float],
-                        edge_is_wall: bool):
+                        edge_is_wall: bool
+                        ) -> Tuple[Optional[Tuple[
+                                Tuple[float, float], Tuple[int, int],
+                                float, float, int
+                             ]], List[Tuple[Tuple[float, float], int, float]]]:
     """
     Find the first intersection of a wall tile by a ray travelling at the
     specified direction from a particular origin. The result will always be a
@@ -197,7 +201,11 @@ def get_first_collision(current_level: level.Level,
 
 def get_columns_sprites(display_columns: int, current_level: level.Level,
                         edge_is_wall: bool, direction: Tuple[float, float],
-                        camera_plane: Tuple[float, float]):
+                        camera_plane: Tuple[float, float]
+                        ) -> Tuple[List[Tuple[
+                                Tuple[float, float], Tuple[int, int], float,
+                                float, int
+                             ]], List[Tuple[Tuple[float, float], int, float]]]:
     """
     Get a list of the intersection positions and distances of each column's ray
     for a particular wall map by utilising raycasting. Tuples are in format
@@ -206,7 +214,7 @@ def get_columns_sprites(display_columns: int, current_level: level.Level,
     is one of the constants defined in this file.
     """
     columns: List[
-        Tuple[Tuple[float, float], Tuple[int, int], float, float, bool]
+        Tuple[Tuple[float, float], Tuple[int, int], float, float, int]
     ] = []
     sprites: List[Tuple[Tuple[float, float], int, float]] = []
     for index in range(display_columns):
@@ -231,7 +239,7 @@ def get_columns_sprites(display_columns: int, current_level: level.Level,
 
 
 def no_sqrt_coord_distance(coord_a: Tuple[float, float],
-                           coord_b: Tuple[float, float]):
+                           coord_b: Tuple[float, float]) -> float:
     """
     Calculate the euclidean distance squared between two grid coordinates.
     """

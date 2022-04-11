@@ -4,7 +4,7 @@ player movement, victory checking, and path finding.
 """
 import math
 import random
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple, Union
 
 # Movement events
 MOVED = 0
@@ -18,7 +18,7 @@ WON = 7
 MONSTER_CAUGHT = 8
 
 
-def floor_coordinates(coord: Tuple[float, float]):
+def floor_coordinates(coord: Tuple[float, float]) -> Tuple[int, int]:
     """
     Convert a precise coordinate to one representing whole tile position.
     """
@@ -35,10 +35,13 @@ class Level:
     Monster start and wait can be set to None if you do not wish the level
     to have a monster. This class will not automatically move or spawn
     the monster by itself, however does provide the method required to do so.
+    Note that the wall map may also contain 'True' values. These represent
+    player placed walls and are only temporary.
     """
     def __init__(self, dimensions: Tuple[int, int],
-                 wall_map: List[List[Optional[Tuple[str, str, str, str]]]],
-                 start_point: Tuple[int, int], end_point: Tuple[int, int],
+                 wall_map: List[
+                     List[Optional[Union[Tuple[str, str, str, str], bool]]]
+                 ], start_point: Tuple[int, int], end_point: Tuple[int, int],
                  exit_keys: Set[Tuple[int, int]],
                  key_sensors: Set[Tuple[int, int]], guns: Set[Tuple[int, int]],
                  monster_start: Optional[Tuple[int, int]],
@@ -51,7 +54,9 @@ class Level:
             raise ValueError(
                 f"Wall map must be {dimensions[0]}x{dimensions[1]} points"
             )
-        self.wall_map = wall_map
+        self.wall_map: List[
+            List[Optional[Union[Tuple[str, str, str, str], bool]]]
+        ] = wall_map
 
         if not self.is_coord_in_bounds(start_point):
             raise ValueError("Out of bounds start point coordinates")
@@ -100,8 +105,8 @@ class Level:
                 raise ValueError("Out of bounds monster start coordinates")
             if self[monster_start]:
                 raise ValueError("Monster start cannot be inside wall")
-            self.monster_start = monster_start
-            self.monster_wait = monster_wait
+            self.monster_start: Optional[Tuple[int, int]] = monster_start
+            self.monster_wait: Optional[float] = monster_wait
         else:
             self.monster_start = None
             self.monster_wait = None
@@ -109,7 +114,7 @@ class Level:
         self.player_flags: Set[Tuple[int, int]] = set()
 
         # Used to prevent the monster from backtracking
-        self._last_monster_position = (-1, -1)
+        self._last_monster_position: Optional[Tuple[int, int]] = None
 
         # Maps coordinates to a list of lists of coordinates represented
         # possible paths from a previous player position. Saves on unnecessary
@@ -121,7 +126,7 @@ class Level:
         self.won = False
         self.killed = False
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Returns a string representation of the maze. '██' is a wall,
         '  ' is empty space, 'PP' is the player, 'KK' are keys, 'SS' is the
@@ -145,7 +150,8 @@ class Level:
             string += "\n"
         return string[:-1]
 
-    def __getitem__(self, index: Tuple[float, float]):
+    def __getitem__(self, index: Tuple[float, float]
+                    ) -> Optional[Union[Tuple[str, str, str, str], bool]]:
         """
         Get the north, south, east, and west textures for the wall at the
         specified coordinates, or None if there is no wall.
@@ -155,7 +161,9 @@ class Level:
         grid_index = floor_coordinates(index)
         return self.wall_map[grid_index[1]][grid_index[0]]
 
-    def __setitem__(self, index: Tuple[int, int], value: Optional[str]):
+    def __setitem__(self, index: Tuple[int, int],
+                    value: Optional[Union[Tuple[str, str, str, str], bool]]
+                    ) -> None:
         """
         Change the texture of a wall or remove the wall entirely.
         """
@@ -164,7 +172,7 @@ class Level:
         self.wall_map[index[1]][index[0]] = value
 
     def move_player(self, vector: Tuple[float, float], has_gun: bool,
-                    relative: bool = True):
+                    relative: bool = True) -> Set[int]:
         """
         Moves the player either relative to their current position, or to an
         absolute location. Pickups and victory checking will be performed
@@ -240,7 +248,7 @@ class Level:
             events.add(WON)
         return events
 
-    def move_monster(self):
+    def move_monster(self) -> bool:
         """
         Moves the monster one space in a random available direction, unless
         the player is in the unobstructed view of one of the cardinal
@@ -330,7 +338,7 @@ class Level:
             self.player_flags.remove(self.monster_coords)
         return self.monster_coords == player_grid_position
 
-    def find_possible_paths(self):
+    def find_possible_paths(self) -> List[List[Tuple[int, int]]]:
         """
         Finds all possible paths to the current target(s) from the player's
         current position. The returned result is sorted by path length in
@@ -338,7 +346,7 @@ class Level:
         computationally expensive.
         """
         targets = (
-            [self.end_point] if len(self.exit_keys) == 0 else self.exit_keys
+            {self.end_point} if len(self.exit_keys) == 0 else self.exit_keys
         )
         grid_coords = floor_coordinates(self.player_coords)
         if grid_coords in self._solution_cache:
@@ -352,7 +360,7 @@ class Level:
         self._solution_cache[grid_coords] = result
         return result
 
-    def reset(self):
+    def reset(self) -> None:
         """
         Reset this level to its original state
         """
@@ -367,17 +375,18 @@ class Level:
         self.won = False
         self.killed = False
 
-    def is_coord_in_bounds(self, coord: Tuple[float, float]):
+    def is_coord_in_bounds(self, coord: Tuple[float, float]) -> bool:
         """
         Checks if a coordinate in within the boundaries of the maze.
         """
         return (
-                0 <= coord[0] < self.dimensions[0]
-                and 0 <= coord[1] < self.dimensions[1]
+            0 <= coord[0] < self.dimensions[0]
+            and 0 <= coord[1] < self.dimensions[1]
         )
 
     def _path_search(self, current_path: List[Tuple[int, int]],
-                     targets: List[Tuple[int, int]]):
+                     targets: Set[Tuple[int, int]]
+                     ) -> List[List[Tuple[int, int]]]:
         """
         Recursively find all possible paths to a list of targets. Use the
         find_possible_paths method instead of this one for finding paths
