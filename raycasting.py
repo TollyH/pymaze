@@ -17,6 +17,12 @@ KEY_SENSOR = 6
 MONSTER_SPAWN = 7
 GUN = 8
 
+# Wall directions
+NORTH = 0
+EAST = 1
+SOUTH = 2
+WEST = 3
+
 
 def get_first_collision(current_level: level.Level,
                         direction: Tuple[float, float],
@@ -26,11 +32,11 @@ def get_first_collision(current_level: level.Level,
     specified direction from a particular origin. The result will always be a
     tuple, of which the first item will be None if no collision occurs before
     the edge of the wall map, or a tuple
-    (coordinate, tile, distance, euclidean_squared, side_was_ns) if a collision
-    did occur. Side is False if a North/South wall was hit, or True if an
-    East/West wall was. The second tuple item is a list of tuples of sprite
-    tile coordinates, their associated type, being one of the constants defined
-    in this file - and the euclidean distance to the sprite.
+    (coordinate, tile, distance, euclidean_squared, side) if a collision
+    did occur. Side is either NORTH, EAST, SOUTH, or WEST.
+    The second tuple item is a list of tuples of sprite tile coordinates,
+    their associated type, being one of the constants defined in this file -
+    and the euclidean distance to the sprite.
     """
     # Prevent divide by 0
     if direction[0] == 0:
@@ -179,13 +185,13 @@ def get_first_collision(current_level: level.Level,
             collision_point, current_tile,
             dimension_ray_length[0] - step_size[0], no_sqrt_coord_distance(
                 current_level.player_coords, collision_point
-            ), side_was_ns
+            ), EAST if step[0] < 0 else WEST
         ), sprites
     return (
         collision_point, current_tile, dimension_ray_length[1] - step_size[1],
         no_sqrt_coord_distance(
             current_level.player_coords, collision_point
-        ), side_was_ns
+        ), SOUTH if step[1] < 0 else NORTH
     ), sprites
 
 
@@ -195,7 +201,7 @@ def get_columns_sprites(display_columns: int, current_level: level.Level,
     """
     Get a list of the intersection positions and distances of each column's ray
     for a particular wall map by utilising raycasting. Tuples are in format
-    (coordinate, tile, distance, euclidean_squared, side_was_ns). Also gets a
+    (coordinate, tile, distance, euclidean_squared, side). Also gets a
     list of visible sprites as tuples (coordinate, type, distance) where type
     is one of the constants defined in this file.
     """

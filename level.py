@@ -28,20 +28,23 @@ def floor_coordinates(coord: Tuple[float, float]):
 class Level:
     """
     A class representing a single maze level. Contains a wall map
-    as a 2D array, with True representing the maze walls, and False
-    representing occupy-able space. Also keeps track of the current player
-    coordinates within the level and can calculate possible solutions.
+    as a 2D array, with strings representing the north, east, south, and west
+    texture names for maze walls, and None representing occupy-able space.
+    Also keeps track of the current player coordinates within the level and can
+    calculate possible solutions.
     Monster start and wait can be set to None if you do not wish the level
     to have a monster. This class will not automatically move or spawn
     the monster by itself, however does provide the method required to do so.
     """
     def __init__(self, dimensions: Tuple[int, int],
-                 wall_map: List[List[bool]], start_point: Tuple[int, int],
-                 end_point: Tuple[int, int], exit_keys: Set[Tuple[int, int]],
+                 wall_map: List[List[Optional[Tuple[str, str, str, str]]]],
+                 start_point: Tuple[int, int], end_point: Tuple[int, int],
+                 exit_keys: Set[Tuple[int, int]],
                  key_sensors: Set[Tuple[int, int]], guns: Set[Tuple[int, int]],
                  monster_start: Optional[Tuple[int, int]],
-                 monster_wait: Optional[float]):
+                 monster_wait: Optional[float], edge_wall_texture_name: str):
         self.dimensions = dimensions
+        self.edge_wall_texture_name = edge_wall_texture_name
 
         if (len(wall_map) != dimensions[1]
                 or sum(1 for x in wall_map if len(x) != dimensions[0]) != 0):
@@ -138,22 +141,23 @@ class Level:
                 elif self.end_point == (x, y):
                     string += "EE"
                 else:
-                    string += "██" if point else "  "
+                    string += "██" if point is not None else "  "
             string += "\n"
         return string[:-1]
 
     def __getitem__(self, index: Tuple[float, float]):
         """
-        Returns True if the specified tile is a wall.
+        Get the north, south, east, and west textures for the wall at the
+        specified coordinates, or None if there is no wall.
         """
         if not self.is_coord_in_bounds(index):
             raise ValueError("Target coordinates out of bounds")
         grid_index = floor_coordinates(index)
         return self.wall_map[grid_index[1]][grid_index[0]]
 
-    def __setitem__(self, index: Tuple[int, int], value: bool):
+    def __setitem__(self, index: Tuple[int, int], value: Optional[str]):
         """
-        Change whether a particular tile is considered a wall.
+        Change the texture of a wall or remove the wall entirely.
         """
         if not self.is_coord_in_bounds(index):
             raise ValueError("Target coordinates out of bounds")

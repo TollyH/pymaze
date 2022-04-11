@@ -73,18 +73,18 @@ def main():
     darkener = pygame.Surface((cfg.texture_width, cfg.texture_height))
     darkener.fill(screen_drawing.BLACK)
     darkener.set_alpha(127)
-    # {(level_indices, ...): (light_texture, dark_texture)}
-    wall_textures: Dict[
-        Tuple[int, ...], Tuple[pygame.Surface, pygame.Surface]
-    ] = {
-        # Parse wall texture surfaces to tuples of integers
-        tuple(int(y) for y in os.path.split(x)[-1].split(".")[0].split("-")):
-        (pygame.image.load(x).convert(), pygame.image.load(x).convert())
+    # {texture_name: (light_texture, dark_texture)}
+    wall_textures: Dict[str, Tuple[pygame.Surface, pygame.Surface]] = {
+        os.path.split(x)[-1].split(".")[0]:
+            (pygame.image.load(x).convert(), pygame.image.load(x).convert())
         for x in glob(os.path.join("textures", "wall", "*.png"))
     }
-    wall_textures[(-1,)] = (placeholder_texture, placeholder_texture.copy())
+    wall_textures["placeholder"] = (
+        placeholder_texture, placeholder_texture.copy()
+    )
     for _, (_, surface_to_dark) in wall_textures.items():
         surface_to_dark.blit(darkener, (0, 0))
+
     # {degradation_stage: (light_texture, dark_texture)}
     player_wall_textures: Dict[int, Tuple[pygame.Surface, pygame.Surface]] = {
         # Parse player wall texture surfaces to integer
@@ -393,7 +393,7 @@ def main():
                         if player_walls[current_level] is not None:
                             levels[current_level][
                                 player_walls[current_level][:2]
-                            ] = False
+                            ] = None
                             player_walls[current_level] = None
                         wall_place_cooldown[current_level] = 0.0
                     elif event.key == pygame.K_n:
@@ -647,7 +647,7 @@ def main():
                     # Remove player placed wall if enough time has passed
                     levels[current_level][
                         player_walls[current_level][:2]
-                    ] = False
+                    ] = None
                     player_walls[current_level] = None
                     wall_place_cooldown[current_level] = (
                         cfg.player_wall_cooldown
@@ -828,7 +828,8 @@ def main():
                         monster_spotted[current_level] = 0.0
                 elif object_type == type_column:
                     # A column is a portion of a wall that was hit by a ray.
-                    coord, tile, distance, _, side_was_ns = columns[index]
+                    coord, tile, distance, _, side = columns[index]
+                    side_was_ns = side in (raycasting.NORTH, raycasting.SOUTH)
                     # Edge of maze when drawing maze edges as walls is disabled
                     # Entire ray will be skipped, revealing the horizon.
                     if distance == float('inf'):
@@ -844,7 +845,6 @@ def main():
                     column_height = round(cfg.viewport_height / distance)
                     # If a texture for the current level has been found or not
                     if cfg.textures_enabled:
-                        both_textures = None
                         if (player_walls[current_level] is not None
                                 and tile == player_walls[current_level][:2]):
                             # Select appropriate player wall texture depending
@@ -859,14 +859,18 @@ def main():
                                     )
                                 )
                             ]
+                        elif levels[current_level].is_coord_in_bounds(tile):
+                            both_textures = wall_textures.get(
+                                levels[current_level][tile][side],
+                                placeholder_texture
+                            )
                         else:
-                            for indices, images in wall_textures.items():
-                                if current_level in indices:
-                                    both_textures = images
-                                    break
-                            if both_textures is None:
-                                # Placeholder texture
-                                both_textures = wall_textures[(-1,)]
+                            # Maze edge was hit and we should render maze edges
+                            # as walls at this point
+                            both_textures = wall_textures.get(
+                                levels[current_level].edge_wall_texture_name,
+                                placeholder_texture
+                            )
                         # Select either light or dark texture
                         # depending on side
                         texture = both_textures[int(side_was_ns)]

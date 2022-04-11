@@ -395,7 +395,7 @@ def draw_map(screen: pygame.Surface, cfg: Config, current_level: Level,
             elif current_level.end_point == (x, y) and cfg.enable_cheat_map:
                 colour = GREEN
             else:
-                colour = BLACK if point else WHITE
+                colour = BLACK if point is not None else WHITE
             pygame.draw.rect(
                 screen, colour, (
                     tile_width * x + x_offset,
