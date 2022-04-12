@@ -1,0 +1,8 @@
+SELECT|Empty Space: There's nothing here. How boring.
+WALL|Wall: Blocks the player from moving through. Each of the four sides can have its own texture.
+START|Start Point: Where the player will be placed when the level starts and upon resetting. The player will always be facing south when spawned.
+END|End/Exit Point: The point the player must reach to complete the level after collecting all the keys.
+KEY|Key: Levels can have as many of these as you see fit, and can even be left out entirely. The player must collect every key before being allowed to exit the level.
+SENSOR|Key Sensor: When picked up by the player, will show all remaining keys on the map for a short period.
+GUN|Gun: A gun with a single bullet. Can be fired by the player at will after being picked up, and, if the monster is hit, will cause it to be sent back to its spawn point.
+MONSTER|Monster Spawn: Where the monster will appear after the given delay has elapsed. This is optional and can be left out to have no monster in the level. The monster will never spawn while the player is within two map units of this point.
