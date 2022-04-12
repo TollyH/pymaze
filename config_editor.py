@@ -31,6 +31,9 @@ class ConfigEditorApp:
 
         self.window = tkinter.Tk()
         self.window.wm_title("PyGame Maze Config")
+        self.window.wm_iconbitmap(
+            self, os.path.join("window_icons", "config.ico")
+        )
 
         # Stores the labels above sliders along with their template strings
         # so that their text values can be dynamically changed easily.

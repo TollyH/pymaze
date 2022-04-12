@@ -43,6 +43,9 @@ def main() -> None:
         max(cfg.viewport_width, 500), max(cfg.viewport_height, 500)
     ))
     pygame.display.set_caption("Maze - Level 1")
+    pygame.display.set_icon(
+        pygame.image.load(os.path.join("window_icons", "main.png")).convert()
+    )
 
     clock = pygame.time.Clock()
 
