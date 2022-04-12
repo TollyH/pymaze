@@ -425,6 +425,8 @@ def draw_map(screen: pygame.Surface, cfg: Config, current_level: Level,
                 colour = GOLD
             elif (x, y) in current_level.key_sensors and cfg.enable_cheat_map:
                 colour = DARK_GOLD
+            elif (x, y) in current_level.guns and cfg.enable_cheat_map:
+                colour = GREY
             elif current_level.monster_start == (x, y):
                 colour = DARK_GREEN
             elif (x, y) in current_level.player_flags:
