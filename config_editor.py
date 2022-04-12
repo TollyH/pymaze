@@ -16,15 +16,16 @@ class ConfigEditorApp:
     or missing, unexpected behaviour may occur.
     """
     def __init__(self) -> None:
-        self.config_file_path = os.path.join(
-            os.path.dirname(__file__), "config.ini"
-        )
+        # Change working directory to the directory where the script is located
+        # This prevents issues with required files not being found.
+        os.chdir(os.path.dirname(__file__))
+
         self.config = configparser.ConfigParser(allow_no_value=True)
         # Preserve the case of option names
         self.config.optionxform = str  # type: ignore
         # Looks for the config.ini file in the script directory regardless of
         # working directory.
-        self.config.read(self.config_file_path)
+        self.config.read("config.ini")
         if 'OPTIONS' not in self.config:
             self.config['OPTIONS'] = {}
         self.config_options = self.config['OPTIONS']
@@ -629,7 +630,7 @@ class ConfigEditorApp:
         """
         Save the potentially modified configuration options to config.ini
         """
-        with open(self.config_file_path, 'w', encoding="utf8") as file:
+        with open("config.ini", 'w', encoding="utf8") as file:
             self.config.write(file)
 
     def parse_int(self, field_name: str, default_value: int) -> int:
