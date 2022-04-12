@@ -70,6 +70,9 @@ class LevelDesigner:
         # [(current_level, [Level, ...]), ...]
         self.undo_stack: List[Tuple[int, List[Level]]] = []
         self.unsaved_changes = False
+        # Used to prevent dimension slider command being called when
+        # programmatically setting the slider values.
+        self.do_dimension_update = True
 
         self.window = tkinter.Tk()
         self.window.wm_title("Level Designer - No File")
@@ -111,7 +114,7 @@ class LevelDesigner:
         )
         self.gui_properties_frame = tkinter.Frame(self.window)
         self.gui_properties_frame.pack(
-            side=tkinter.LEFT, fill=tkinter.BOTH, expand=True, padx=5, pady=5
+            side=tkinter.LEFT, fill=tkinter.Y, padx=5, pady=5
         )
         self.gui_operation_frame = tkinter.Frame(self.window)
         self.gui_operation_frame.pack(
@@ -183,7 +186,7 @@ class LevelDesigner:
 
         self.gui_map_canvas = tkinter.Canvas(
             self.gui_map_frame, width=self._cfg.viewport_width + 1,
-            height=self._cfg.viewport_height + 1, bg='black'
+            height=self._cfg.viewport_height + 1
         )
         self.gui_map_canvas.bind("<Button-1>", self.on_map_canvas_click)
         self.gui_map_canvas.pack()
@@ -196,8 +199,22 @@ class LevelDesigner:
             image=self.blank_photo_image, width=150, height=150
             # PhotoImage is so that width and height are given in pixels.
         )
-        self.gui_selected_square_description.grid(
-            column=0, row=0, padx=2, pady=2
+        self.gui_selected_square_description.pack(padx=2, pady=2)
+
+        # These are left unpacked deliberately
+        self.gui_dimension_width_label = tkinter.Label(
+            self.gui_properties_frame, text="Level width", anchor=tkinter.W
+        )
+        self.gui_dimension_width_slider = tkinter.ttk.Scale(
+            self.gui_properties_frame, from_=2, to=50,
+            command=self.dimensions_changed
+        )
+        self.gui_dimension_height_label = tkinter.Label(
+            self.gui_properties_frame, text="Level height", anchor=tkinter.W
+        )
+        self.gui_dimension_height_slider = tkinter.ttk.Scale(
+            self.gui_properties_frame, from_=2, to=50,
+            command=self.dimensions_changed
         )
 
         self.gui_undo_button = tkinter.Button(
@@ -407,13 +424,30 @@ class LevelDesigner:
     def update_properties_frame(self) -> None:
         """
         Update the properties frame with information about the selected tile.
+        Also updates the width and height sliders.
         """
-        if -1 in self.current_tile or self.current_level < 0:
+        if self.current_level < 0:
+            if self.gui_dimension_width_slider.winfo_ismapped():
+                self.gui_dimension_width_label.forget()
+                self.gui_dimension_width_slider.forget()
+                self.gui_dimension_height_label.forget()
+                self.gui_dimension_height_slider.forget()
+            return
+        if not self.gui_dimension_width_slider.winfo_ismapped():
+            self.gui_dimension_width_label.pack(padx=2, pady=2, fill="x")
+            self.gui_dimension_width_slider.pack(padx=2, pady=2, fill="x")
+            self.gui_dimension_height_label.pack(padx=2, pady=2, fill="x")
+            self.gui_dimension_height_slider.pack(padx=2, pady=2, fill="x")
+        current_level = self.levels[self.current_level]
+        self.do_dimension_update = False
+        self.gui_dimension_width_slider.set(current_level.dimensions[0])
+        self.gui_dimension_height_slider.set(current_level.dimensions[1])
+        self.do_dimension_update = True
+        if -1 in self.current_tile:
             self.gui_selected_square_description.config(
                 bg="#f0f0f0", fg="black", text="Nothing is currently selected"
             )
             return
-        current_level = self.levels[self.current_level]
         if self.current_tile in current_level.original_exit_keys:
             self.gui_selected_square_description.config(
                 text=self.descriptions[KEY],
@@ -599,6 +633,41 @@ class LevelDesigner:
                     current_level.monster_wait = 10.0
         self.update_map_canvas()
         self.update_properties_frame()
+
+    def dimensions_changed(self, _: str) -> None:
+        """
+        Called when the user updates the dimensions of the level.
+        """
+        if self.current_level < 0 or not self.do_dimension_update:
+            return
+        new_dimensions = (
+            round(self.gui_dimension_width_slider.get()),
+            round(self.gui_dimension_height_slider.get())
+        )
+        current_level = self.levels[self.current_level]
+        if new_dimensions == current_level.dimensions:
+            return
+        self.add_to_undo()
+        current_level.dimensions = new_dimensions
+        # Remove excess rows
+        current_level.wall_map = (
+            current_level.wall_map[:current_level.dimensions[1]]
+        )
+        # Pad new rows with empty space
+        for __ in range(
+                current_level.dimensions[1] - len(current_level.wall_map)):
+            current_level.wall_map.append([None] * current_level.dimensions[0])
+        for index, row in enumerate(current_level.wall_map):
+            # Remove excess columns
+            current_level.wall_map[index] = row[:current_level.dimensions[0]]
+            # Pad new columns with empty space
+            for __ in range(current_level.dimensions[0] - len(row)):
+                current_level.wall_map[index].append(None)
+        if not current_level.is_coord_in_bounds(self.current_tile):
+            self.current_tile = (-1, -1)
+        self.update_properties_frame()
+        self.update_level_list()
+        self.update_map_canvas()
 
     def new_level(self) -> None:
         """
