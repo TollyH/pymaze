@@ -13,6 +13,7 @@ from typing import Dict, List, Optional, Tuple
 
 import config_loader
 import maze_levels
+import raycasting
 import screen_drawing
 from level import Level
 
@@ -70,9 +71,9 @@ class LevelDesignerApp:
         # [(current_level, [Level, ...]), ...]
         self.undo_stack: List[Tuple[int, List[Level]]] = []
         self.unsaved_changes = False
-        # Used to prevent the slider commands being called when
-        # programmatically setting the slider values.
-        self.do_slider_update = True
+        # Used to prevent methods from being called when programmatically
+        # setting widget values.
+        self.do_updates = True
 
         self.window = tkinter.Tk()
         self.window.wm_title("Level Designer - No File")
@@ -193,36 +194,94 @@ class LevelDesignerApp:
 
         self.blank_photo_image = tkinter.PhotoImage()
         self.gui_selected_square_description = tkinter.Label(
-            self.gui_properties_frame, wraplength=150, borderwidth=1,
+            self.gui_properties_frame, wraplength=160, borderwidth=1,
             relief=tkinter.SOLID, compound=tkinter.CENTER, anchor=tkinter.NW,
             text="Nothing is currently selected", justify=tkinter.LEFT,
-            image=self.blank_photo_image, width=150, height=150
+            image=self.blank_photo_image, width=160, height=160
             # PhotoImage is so that width and height are given in pixels.
         )
         self.gui_selected_square_description.pack(padx=2, pady=2)
 
         # These are left unpacked deliberately
+        self.gui_dimension_frame = tkinter.Frame(self.gui_properties_frame)
+        self.gui_monster_wait_frame = tkinter.Frame(self.gui_properties_frame)
+        self.gui_texture_frame = tkinter.Frame(
+            self.gui_properties_frame
+        )
+
         self.gui_dimension_width_label = tkinter.Label(
-            self.gui_properties_frame, anchor=tkinter.W
+            self.gui_dimension_frame, anchor=tkinter.W
         )
+        self.gui_dimension_width_label.pack(padx=2, pady=2, fill="x")
         self.gui_dimension_width_slider = tkinter.ttk.Scale(
-            self.gui_properties_frame, from_=2, to=50,
+            self.gui_dimension_frame, from_=2, to=50,
             command=self.dimensions_changed
         )
+        self.gui_dimension_width_slider.pack(padx=2, pady=2, fill="x")
         self.gui_dimension_height_label = tkinter.Label(
-            self.gui_properties_frame, anchor=tkinter.W
+            self.gui_dimension_frame, anchor=tkinter.W
         )
+        self.gui_dimension_height_label.pack(padx=2, pady=2, fill="x")
         self.gui_dimension_height_slider = tkinter.ttk.Scale(
-            self.gui_properties_frame, from_=2, to=50,
+            self.gui_dimension_frame, from_=2, to=50,
             command=self.dimensions_changed
         )
+        self.gui_dimension_height_slider.pack(padx=2, pady=2, fill="x")
+
         self.gui_monster_wait_label = tkinter.Label(
-            self.gui_properties_frame, anchor=tkinter.W
+            self.gui_monster_wait_frame, anchor=tkinter.W
         )
+        self.gui_monster_wait_label.pack(padx=2, pady=2, fill="x")
         self.gui_monster_wait_slider = tkinter.ttk.Scale(
-            self.gui_properties_frame, from_=0, to=60,
+            self.gui_monster_wait_frame, from_=0, to=60,
             command=self.monster_time_change
         )
+        self.gui_monster_wait_slider.pack(padx=2, pady=2, fill="x")
+
+        self.texture_direction_variable = tkinter.IntVar(
+            value=raycasting.NORTH
+        )
+        self.gui_texture_direction_north = tkinter.ttk.Radiobutton(
+            self.gui_texture_frame, text="North",
+            variable=self.texture_direction_variable,
+            value=raycasting.NORTH, command=self.update_properties_frame
+        )
+        self.gui_texture_direction_north.grid(column=1, row=0)
+        self.gui_texture_direction_east = tkinter.ttk.Radiobutton(
+            self.gui_texture_frame, text="East",
+            variable=self.texture_direction_variable,
+            value=raycasting.EAST, command=self.update_properties_frame
+        )
+        self.gui_texture_direction_east.grid(column=2, row=1)
+        self.gui_texture_direction_south = tkinter.ttk.Radiobutton(
+            self.gui_texture_frame, text="South",
+            variable=self.texture_direction_variable,
+            value=raycasting.SOUTH, command=self.update_properties_frame
+        )
+        self.gui_texture_direction_south.grid(column=1, row=2)
+        self.gui_texture_direction_west = tkinter.ttk.Radiobutton(
+            self.gui_texture_frame, text="West",
+            variable=self.texture_direction_variable,
+            value=raycasting.WEST, command=self.update_properties_frame
+        )
+        self.gui_texture_direction_west.grid(column=0, row=1)
+
+        self.gui_texture_dropdown = tkinter.ttk.Combobox(
+            self.gui_texture_frame, values=list(self.textures),
+            exportselection=False
+        )
+        self.gui_texture_dropdown.bind(
+            "<<ComboboxSelected>>", self.texture_change
+        )
+        self.gui_texture_dropdown.grid(column=0, row=3, columnspan=3, pady=1)
+        self.gui_texture_preview = tkinter.Label(self.gui_texture_frame)
+        self.gui_texture_preview.grid(column=0, row=4, columnspan=3)
+
+        # Ensure applicable columns are the same width
+        for i in range(3):
+            self.gui_texture_frame.grid_columnconfigure(
+                i, uniform="true", weight=1
+            )
 
         self.gui_undo_button = tkinter.Button(
             self.gui_operation_frame, text="Undo",
@@ -256,7 +315,7 @@ class LevelDesignerApp:
         )
 
         self.gui_level_select = tkinter.Listbox(
-            self.gui_operation_frame
+            self.gui_operation_frame, exportselection=False
         )
         self.gui_level_select.bind(
             '<<ListboxSelect>>', self.selected_level_changed
@@ -369,6 +428,8 @@ class LevelDesignerApp:
         """
         Draw the current level to the map canvas.
         """
+        if not self.do_updates:
+            return
         self.gui_map_canvas.delete(tkinter.ALL)
         if self.current_level < 0:
             return
@@ -419,6 +480,9 @@ class LevelDesignerApp:
         """
         Update level ListBox with the current state of all the levels.
         """
+        if not self.do_updates:
+            return
+        self.do_updates = False
         self.gui_level_select.delete(0, tkinter.END)
         for index, level in enumerate(self.levels):
             self.gui_level_select.insert(
@@ -427,29 +491,30 @@ class LevelDesignerApp:
             )
         if 0 <= self.current_level < len(self.levels):
             self.gui_level_select.selection_set(self.current_level)
+        self.do_updates = True
 
     def update_properties_frame(self) -> None:
         """
         Update the properties frame with information about the selected tile.
         Also updates the width and height sliders.
         """
-        if self.current_level < 0:
-            if self.gui_dimension_width_slider.winfo_ismapped():
-                self.gui_dimension_width_label.forget()
-                self.gui_dimension_width_slider.forget()
-                self.gui_dimension_height_label.forget()
-                self.gui_dimension_height_slider.forget()
-            if self.gui_monster_wait_slider.winfo_ismapped():
-                self.gui_monster_wait_label.forget()
-                self.gui_monster_wait_slider.forget()
+        if not self.do_updates:
             return
-        if not self.gui_dimension_width_slider.winfo_ismapped():
-            self.gui_dimension_width_label.pack(padx=2, pady=2, fill="x")
-            self.gui_dimension_width_slider.pack(padx=2, pady=2, fill="x")
-            self.gui_dimension_height_label.pack(padx=2, pady=2, fill="x")
-            self.gui_dimension_height_slider.pack(padx=2, pady=2, fill="x")
+        if self.current_level < 0:
+            self.gui_selected_square_description.config(
+                bg="#f0f0f0", fg="black", text="Nothing is currently selected"
+            )
+            if self.gui_dimension_frame.winfo_ismapped():
+                self.gui_dimension_frame.forget()
+            if self.gui_monster_wait_frame.winfo_ismapped():
+                self.gui_monster_wait_frame.forget()
+            if self.gui_texture_frame.winfo_ismapped():
+                self.gui_texture_frame.forget()
+            return
+        if not self.gui_dimension_frame.winfo_ismapped():
+            self.gui_dimension_frame.pack(padx=2, pady=2, fill="x")
         current_level = self.levels[self.current_level]
-        self.do_slider_update = False
+        self.do_updates = False
         self.gui_dimension_width_label.config(
             text=f"Level width - ({current_level.dimensions[0]})"
         )
@@ -458,10 +523,13 @@ class LevelDesignerApp:
             text=f"Level height - ({current_level.dimensions[1]})"
         )
         self.gui_dimension_height_slider.set(current_level.dimensions[1])
-        self.do_slider_update = True
-        if self.gui_monster_wait_slider.winfo_ismapped():
-            self.gui_monster_wait_label.forget()
-            self.gui_monster_wait_slider.forget()
+        self.do_updates = True
+        # Remove all property widgets that apply to only a certain type of
+        # grid square.
+        if self.gui_monster_wait_frame.winfo_ismapped():
+            self.gui_monster_wait_frame.forget()
+        if self.gui_texture_frame.winfo_ismapped():
+            self.gui_texture_frame.forget()
         if -1 in self.current_tile:
             self.gui_selected_square_description.config(
                 bg="#f0f0f0", fg="black", text="Nothing is currently selected"
@@ -486,10 +554,9 @@ class LevelDesignerApp:
                 text=self.descriptions[MONSTER],
                 bg=rgb_to_hex(*screen_drawing.DARK_RED), fg="white"
             )
-            self.gui_monster_wait_label.pack(padx=2, pady=2, fill="x")
-            self.gui_monster_wait_slider.pack(padx=2, pady=2, fill="x")
+            self.gui_monster_wait_frame.pack(padx=2, pady=2, fill="x")
             if current_level.monster_wait is not None:
-                self.do_slider_update = False
+                self.do_updates = False
                 self.gui_monster_wait_label.config(
                     text="Monster spawn time - "
                     + f"({round(current_level.monster_wait)})"
@@ -497,7 +564,7 @@ class LevelDesignerApp:
                 self.gui_monster_wait_slider.set(
                     current_level.monster_wait // 5
                 )
-                self.do_slider_update = True
+                self.do_updates = True
         elif current_level.start_point == self.current_tile:
             self.gui_selected_square_description.config(
                 text=self.descriptions[START],
@@ -514,6 +581,22 @@ class LevelDesignerApp:
                     text=self.descriptions[WALL],
                     bg=rgb_to_hex(*screen_drawing.BLACK), fg="white"
                 )
+                if not self.gui_texture_frame.winfo_ismapped():
+                    self.gui_texture_frame.pack(
+                        padx=2, pady=2, fill="x"
+                    )
+                current_tile = current_level[self.current_tile]
+                if isinstance(current_tile, tuple):
+                    self.do_updates = False
+                    self.gui_texture_dropdown.set(
+                        current_tile[self.texture_direction_variable.get()]
+                    )
+                    self.do_updates = True
+                    self.gui_texture_preview.config(
+                        image=self.textures[
+                            current_tile[self.texture_direction_variable.get()]
+                        ]
+                    )
             else:
                 self.gui_selected_square_description.config(
                     text=self.descriptions[SELECT],
@@ -555,12 +638,14 @@ class LevelDesignerApp:
         """
         Called when the selection in the level ListBox is changed.
         """
-        self.add_to_undo()
         selection = self.gui_level_select.curselection()
-        self.current_level = selection[0] if len(selection) > 0 else -1
-        self.current_tile = (-1, -1)
-        self.update_map_canvas()
-        self.update_properties_frame()
+        new_level = selection[0] if len(selection) > 0 else -1
+        if new_level != self.current_level:
+            self.add_to_undo()
+            self.current_level = new_level
+            self.current_tile = (-1, -1)
+            self.update_map_canvas()
+            self.update_properties_frame()
 
     def on_map_canvas_click(self, event: tkinter.Event) -> None:
         """
@@ -668,7 +753,7 @@ class LevelDesignerApp:
         """
         Called when the user updates the dimensions of the level.
         """
-        if self.current_level < 0 or not self.do_slider_update:
+        if self.current_level < 0 or not self.do_updates:
             return
         new_dimensions = (
             round(self.gui_dimension_width_slider.get()),
@@ -704,7 +789,7 @@ class LevelDesignerApp:
         Called when the user updates the monster spawn delay. Due to how
         tkinter scales work, new_time is given as a string.
         """
-        if self.current_level < 0 or not self.do_slider_update:
+        if self.current_level < 0 or not self.do_updates:
             return
         rounded_time = round(float(new_time)) * 5
         current_level = self.levels[self.current_level]
@@ -712,6 +797,23 @@ class LevelDesignerApp:
             return
         self.add_to_undo()
         current_level.monster_wait = rounded_time
+        self.update_properties_frame()
+
+    def texture_change(self, _: tkinter.Event) -> None:
+        """
+        Called when the user changes the texture for a wall side.
+        """
+        if (self.current_level < 0 or -1 in self.current_tile
+                or not self.do_updates):
+            return
+        current_level = self.levels[self.current_level]
+        current_tile = current_level[self.current_tile]
+        if isinstance(current_tile, tuple):
+            new_tile = list(current_tile)
+            new_tile[self.texture_direction_variable.get()] = (
+                self.gui_texture_dropdown.get()
+            )
+            current_level[self.current_tile] = tuple(new_tile)  # type: ignore
         self.update_properties_frame()
 
     def new_level(self) -> None:
