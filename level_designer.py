@@ -70,9 +70,9 @@ class LevelDesigner:
         # [(current_level, [Level, ...]), ...]
         self.undo_stack: List[Tuple[int, List[Level]]] = []
         self.unsaved_changes = False
-        # Used to prevent dimension slider command being called when
+        # Used to prevent the slider commands being called when
         # programmatically setting the slider values.
-        self.do_dimension_update = True
+        self.do_slider_update = True
 
         self.window = tkinter.Tk()
         self.window.wm_title("Level Designer - No File")
@@ -203,18 +203,25 @@ class LevelDesigner:
 
         # These are left unpacked deliberately
         self.gui_dimension_width_label = tkinter.Label(
-            self.gui_properties_frame, text="Level width", anchor=tkinter.W
+            self.gui_properties_frame, anchor=tkinter.W
         )
         self.gui_dimension_width_slider = tkinter.ttk.Scale(
             self.gui_properties_frame, from_=2, to=50,
             command=self.dimensions_changed
         )
         self.gui_dimension_height_label = tkinter.Label(
-            self.gui_properties_frame, text="Level height", anchor=tkinter.W
+            self.gui_properties_frame, anchor=tkinter.W
         )
         self.gui_dimension_height_slider = tkinter.ttk.Scale(
             self.gui_properties_frame, from_=2, to=50,
             command=self.dimensions_changed
+        )
+        self.gui_monster_wait_label = tkinter.Label(
+            self.gui_properties_frame, anchor=tkinter.W
+        )
+        self.gui_monster_wait_slider = tkinter.ttk.Scale(
+            self.gui_properties_frame, from_=0, to=60,
+            command=self.monster_time_change
         )
 
         self.gui_undo_button = tkinter.Button(
@@ -432,6 +439,9 @@ class LevelDesigner:
                 self.gui_dimension_width_slider.forget()
                 self.gui_dimension_height_label.forget()
                 self.gui_dimension_height_slider.forget()
+            if self.gui_monster_wait_slider.winfo_ismapped():
+                self.gui_monster_wait_label.forget()
+                self.gui_monster_wait_slider.forget()
             return
         if not self.gui_dimension_width_slider.winfo_ismapped():
             self.gui_dimension_width_label.pack(padx=2, pady=2, fill="x")
@@ -439,16 +449,24 @@ class LevelDesigner:
             self.gui_dimension_height_label.pack(padx=2, pady=2, fill="x")
             self.gui_dimension_height_slider.pack(padx=2, pady=2, fill="x")
         current_level = self.levels[self.current_level]
-        self.do_dimension_update = False
+        self.do_slider_update = False
+        self.gui_dimension_width_label.config(
+            text=f"Level width - ({current_level.dimensions[0]})"
+        )
         self.gui_dimension_width_slider.set(current_level.dimensions[0])
+        self.gui_dimension_height_label.config(
+            text=f"Level height - ({current_level.dimensions[1]})"
+        )
         self.gui_dimension_height_slider.set(current_level.dimensions[1])
-        self.do_dimension_update = True
+        self.do_slider_update = True
+        if self.gui_monster_wait_slider.winfo_ismapped():
+            self.gui_monster_wait_label.forget()
+            self.gui_monster_wait_slider.forget()
         if -1 in self.current_tile:
             self.gui_selected_square_description.config(
                 bg="#f0f0f0", fg="black", text="Nothing is currently selected"
             )
-            return
-        if self.current_tile in current_level.original_exit_keys:
+        elif self.current_tile in current_level.original_exit_keys:
             self.gui_selected_square_description.config(
                 text=self.descriptions[KEY],
                 bg=rgb_to_hex(*screen_drawing.GOLD), fg="black"
@@ -468,6 +486,18 @@ class LevelDesigner:
                 text=self.descriptions[MONSTER],
                 bg=rgb_to_hex(*screen_drawing.DARK_RED), fg="white"
             )
+            self.gui_monster_wait_label.pack(padx=2, pady=2, fill="x")
+            self.gui_monster_wait_slider.pack(padx=2, pady=2, fill="x")
+            if current_level.monster_wait is not None:
+                self.do_slider_update = False
+                self.gui_monster_wait_label.config(
+                    text="Monster spawn time - "
+                    + f"({round(current_level.monster_wait)})"
+                )
+                self.gui_monster_wait_slider.set(
+                    current_level.monster_wait // 5
+                )
+                self.do_slider_update = True
         elif current_level.start_point == self.current_tile:
             self.gui_selected_square_description.config(
                 text=self.descriptions[START],
@@ -638,7 +668,7 @@ class LevelDesigner:
         """
         Called when the user updates the dimensions of the level.
         """
-        if self.current_level < 0 or not self.do_dimension_update:
+        if self.current_level < 0 or not self.do_slider_update:
             return
         new_dimensions = (
             round(self.gui_dimension_width_slider.get()),
@@ -668,6 +698,21 @@ class LevelDesigner:
         self.update_properties_frame()
         self.update_level_list()
         self.update_map_canvas()
+
+    def monster_time_change(self, new_time: str) -> None:
+        """
+        Called when the user updates the monster spawn delay. Due to how
+        tkinter scales work, new_time is given as a string.
+        """
+        if self.current_level < 0 or not self.do_slider_update:
+            return
+        rounded_time = round(float(new_time)) * 5
+        current_level = self.levels[self.current_level]
+        if rounded_time == current_level.monster_wait:
+            return
+        self.add_to_undo()
+        current_level.monster_wait = rounded_time
+        self.update_properties_frame()
 
     def new_level(self) -> None:
         """
