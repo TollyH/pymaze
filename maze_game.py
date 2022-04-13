@@ -156,19 +156,19 @@ def main() -> None:
     audio_error_occurred = False
     try:
         monster_jumpscare_sound: Union[
-            pygame.mixer.Sound, screen_drawing.EmptySound
+            pygame.mixer.Sound, EmptySound
         ] = pygame.mixer.Sound(
             os.path.join("sounds", "monster_jumpscare.wav")
         )
         monster_spotted_sound: Union[
-            pygame.mixer.Sound, screen_drawing.EmptySound
+            pygame.mixer.Sound, EmptySound
         ] = pygame.mixer.Sound(
             os.path.join("sounds", "monster_spotted.wav")
         )
         # {min_distance_to_play: Sound}
         # Must be in ascending numerical order.
         breathing_sounds: Dict[int, Union[
-            pygame.mixer.Sound, screen_drawing.EmptySound
+            pygame.mixer.Sound, EmptySound
         ]] = {
             0: pygame.mixer.Sound(
                 os.path.join("sounds", "player_breathe", "heavy.wav")
@@ -181,36 +181,36 @@ def main() -> None:
             )
         }
         monster_roam_sounds: List[Union[
-            pygame.mixer.Sound, screen_drawing.EmptySound
+            pygame.mixer.Sound, EmptySound
         ]] = [
             pygame.mixer.Sound(x)
             for x in glob(os.path.join("sounds", "monster_roam", "*.wav"))
         ]
         key_pickup_sounds: List[Union[
-            pygame.mixer.Sound, screen_drawing.EmptySound
+            pygame.mixer.Sound, EmptySound
         ]] = [
             pygame.mixer.Sound(x)
             for x in glob(os.path.join("sounds", "key_pickup", "*.wav"))
         ]
         gunshot: Union[
-            pygame.mixer.Sound, screen_drawing.EmptySound
+            pygame.mixer.Sound, EmptySound
         ] = pygame.mixer.Sound(os.path.join("sounds", "gunshot.wav"))
         # Constant ambient sound — loops infinitely
         pygame.mixer.music.load(os.path.join("sounds", "ambience.wav"))
         light_flicker_sound: Union[
-            pygame.mixer.Sound, screen_drawing.EmptySound
+            pygame.mixer.Sound, EmptySound
         ] = pygame.mixer.Sound(
             os.path.join("sounds", "light_flicker.wav")
         )
     except (FileNotFoundError, pygame.error):
         audio_error_occurred = True
-        monster_jumpscare_sound = screen_drawing.EmptySound()
-        monster_spotted_sound = screen_drawing.EmptySound()
-        breathing_sounds = {0: screen_drawing.EmptySound()}
-        monster_roam_sounds = [screen_drawing.EmptySound()]
-        key_pickup_sounds = [screen_drawing.EmptySound()]
-        gunshot = screen_drawing.EmptySound()
-        light_flicker_sound = screen_drawing.EmptySound()
+        monster_jumpscare_sound = EmptySound()
+        monster_spotted_sound = EmptySound()
+        breathing_sounds = {0: EmptySound()}
+        monster_roam_sounds = [EmptySound()]
+        key_pickup_sounds = [EmptySound()]
+        gunshot = EmptySound()
+        light_flicker_sound = EmptySound()
     time_to_breathing_finish = 0.0
     time_to_next_roam_sound = 0.0
 
@@ -998,6 +998,34 @@ def main() -> None:
             end="", flush=True
         )
         pygame.display.update()
+
+
+class EmptySound:
+    """
+    A sound to be assigned to a variable in the event that an audio error
+    occurs.
+    """
+    @staticmethod
+    def play() -> None:
+        """
+        Does nothing. Used to prevent error when trying to play sound after an
+        audio error occurred.
+        """
+        pass
+
+    @staticmethod
+    def get_length() -> float:
+        """
+        Always returns 0.0.
+        """
+        return 0.0
+
+    @staticmethod
+    def set_volume(_: float) -> None:
+        """
+        Does nothing.
+        """
+        pass
 
 
 if __name__ == "__main__":

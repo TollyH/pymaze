@@ -1,9 +1,8 @@
 """
 Contains functions for performing most display related tasks, including
 drawing columns, sprites, and HUD elements. Most audio and texture
-loading/selection is handled in __main__.py rather than here, apart from the
-victory screen audio, which is handled here. Also contains the definition for
-'EmptySound'.
+loading/selection is handled in maze_game.py rather than here, apart from the
+victory screen audio, which is handled here.
 """
 import math
 import os
@@ -15,6 +14,7 @@ import pygame
 import maze_levels
 from config_loader import Config
 from level import floor_coordinates, Level
+from maze_game import EmptySound
 
 WHITE = (0xFF, 0xFF, 0xFF)
 BLACK = (0x00, 0x00, 0x00)
@@ -49,35 +49,6 @@ level_count = len(maze_levels.load_level_json("maze_levels.json"))
 
 pygame.font.init()
 FONT = pygame.font.SysFont('Tahoma', 24, True)
-
-
-class EmptySound:
-    """
-    A sound to be assigned to a variable in the event that an audio error
-    occurs.
-    """
-    @staticmethod
-    def play() -> None:
-        """
-        Does nothing. Used to prevent error when trying to play sound after an
-        audio error occurred.
-        """
-        pass
-
-    @staticmethod
-    def get_length() -> float:
-        """
-        Always returns 0.0.
-        """
-        return 0.0
-
-    @staticmethod
-    def set_volume(_: float) -> None:
-        """
-        Does nothing.
-        """
-        pass
-
 
 audio_error_occurred = False
 try:
