@@ -772,18 +772,18 @@ class LevelDesignerApp:
             self.perform_undo()
             return
         # Remove out of bounds keys, sensors, and guns.
-        current_level.original_exit_keys = {
+        current_level.original_exit_keys = frozenset(
             x for x in current_level.original_exit_keys
             if current_level.is_coord_in_bounds(x)
-        }
-        current_level.original_key_sensors = {
+        )
+        current_level.original_key_sensors = frozenset(
             x for x in current_level.original_key_sensors
             if current_level.is_coord_in_bounds(x)
-        }
-        current_level.original_guns = {
+        )
+        current_level.original_guns = frozenset(
             x for x in current_level.original_guns
             if current_level.is_coord_in_bounds(x)
-        }
+        )
         # Remove excess rows
         current_level.wall_map = (
             current_level.wall_map[:current_level.dimensions[1]]

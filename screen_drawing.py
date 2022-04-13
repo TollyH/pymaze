@@ -45,7 +45,7 @@ GUN = 7
 # Prevents issues with required files not being found.
 os.chdir(os.path.dirname(__file__))
 
-level_count = len(maze_levels.load_level_json("maze_levels.json"))
+_level_count = len(maze_levels.load_level_json("maze_levels.json"))
 
 pygame.font.init()
 FONT = pygame.font.SysFont('Tahoma', 24, True)
@@ -69,8 +69,8 @@ except (FileNotFoundError, pygame.error):
     VICTORY_INCREMENT = EmptySound()
     VICTORY_NEXT_BLOCK = EmptySound()
 
-total_time_on_screen = [0.0] * level_count
-victory_sounds_played = [0] * level_count
+total_time_on_screen = [0.0] * _level_count
+victory_sounds_played = [0] * _level_count
 
 
 def draw_victory_screen(screen: pygame.Surface, cfg: Config,
@@ -82,6 +82,11 @@ def draw_victory_screen(screen: pygame.Surface, cfg: Config,
     Draw the victory screen seen after beating a level. Displays numerous
     scores to the player in a gradual animation.
     """
+    level_count = len(maze_levels.load_level_json("maze_levels.json"))
+    while len(total_time_on_screen) < level_count:
+        total_time_on_screen.append(0.0)
+    while len(victory_sounds_played) < level_count:
+        total_time_on_screen.append(0)
     total_time_on_screen[current_level] += frame_time
     time_on_screen = total_time_on_screen[current_level]
     screen.blit(background, (0, 0))
