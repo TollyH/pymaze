@@ -1,6 +1,4 @@
 """
-PyGame Maze - Copyright © 2022  Ptolemy Hill and Finlay Griffiths
-
 The main script for the game. Creates the game window, receives and interprets
 player input, and records time and movement scores. Also handles time-based
 events such as monster movement and spawning.
@@ -24,7 +22,7 @@ import raycasting
 import screen_drawing
 
 
-def main() -> None:
+def maze_game() -> None:
     """
     Main function for the maze game. Manages all input, output, and timing.
     """
@@ -1029,4 +1027,4 @@ class EmptySound:
 
 
 if __name__ == "__main__":
-    main()
+    maze_game()

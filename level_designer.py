@@ -1,5 +1,5 @@
 """
-Contains the definition for LevelDesigner, a GUI for editing the game's
+Contains the definition for LevelDesignerApp, a GUI for editing the game's
 level JSON files easily.
 """
 import copy
@@ -50,7 +50,7 @@ def is_tile_free(level: Level, tile: Tuple[int, int]) -> bool:
     return True
 
 
-class LevelDesigner:
+class LevelDesignerApp:
     """
     A tkinter GUI providing a user-friendly way to easily edit the game's
     level JSON files. The game will always load from 'maze_levels.json',
@@ -766,4 +766,4 @@ class LevelDesigner:
 
 
 if __name__ == "__main__":
-    LevelDesigner()
+    LevelDesignerApp()
