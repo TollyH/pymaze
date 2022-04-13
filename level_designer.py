@@ -208,6 +208,9 @@ class LevelDesignerApp:
         self.gui_texture_frame = tkinter.Frame(
             self.gui_properties_frame
         )
+        self.gui_edge_texture_frame = tkinter.Frame(
+            self.gui_properties_frame
+        )
 
         self.gui_dimension_width_label = tkinter.Label(
             self.gui_dimension_frame, anchor=tkinter.W
@@ -276,6 +279,24 @@ class LevelDesignerApp:
         self.gui_texture_dropdown.grid(column=0, row=3, columnspan=3, pady=1)
         self.gui_texture_preview = tkinter.Label(self.gui_texture_frame)
         self.gui_texture_preview.grid(column=0, row=4, columnspan=3)
+
+        self.gui_edge_texture_label = tkinter.Label(
+            self.gui_edge_texture_frame, text="Level edge texture",
+            anchor=tkinter.W
+        )
+        self.gui_edge_texture_label.pack(pady=2, fill=tkinter.X)
+        self.gui_edge_texture_dropdown = tkinter.ttk.Combobox(
+            self.gui_edge_texture_frame, values=list(self.textures),
+            exportselection=False
+        )
+        self.gui_edge_texture_dropdown.bind(
+            "<<ComboboxSelected>>", self.edge_texture_change
+        )
+        self.gui_edge_texture_dropdown.pack(pady=1)
+        self.gui_edge_texture_preview = tkinter.Label(
+            self.gui_edge_texture_frame
+        )
+        self.gui_edge_texture_preview.pack()
 
         # Ensure applicable columns are the same width
         for i in range(3):
@@ -510,6 +531,8 @@ class LevelDesignerApp:
                 self.gui_monster_wait_frame.forget()
             if self.gui_texture_frame.winfo_ismapped():
                 self.gui_texture_frame.forget()
+            if self.gui_edge_texture_frame.winfo_ismapped():
+                self.gui_edge_texture_frame.forget()
             return
         if not self.gui_dimension_frame.winfo_ismapped():
             self.gui_dimension_frame.pack(padx=2, pady=2, fill="x")
@@ -530,6 +553,8 @@ class LevelDesignerApp:
             self.gui_monster_wait_frame.forget()
         if self.gui_texture_frame.winfo_ismapped():
             self.gui_texture_frame.forget()
+        if self.gui_edge_texture_frame.winfo_ismapped():
+            self.gui_edge_texture_frame.forget()
         if -1 in self.current_tile:
             self.gui_selected_square_description.config(
                 bg="#f0f0f0", fg="black", text="Nothing is currently selected"
@@ -601,6 +626,20 @@ class LevelDesignerApp:
                 self.gui_selected_square_description.config(
                     text=self.descriptions[SELECT],
                     bg=rgb_to_hex(*screen_drawing.WHITE), fg="black"
+                )
+                if not self.gui_edge_texture_frame.winfo_ismapped():
+                    self.gui_edge_texture_frame.pack(
+                        padx=2, pady=2, fill="x"
+                    )
+                self.do_updates = False
+                self.gui_edge_texture_dropdown.set(
+                    current_level.edge_wall_texture_name
+                )
+                self.do_updates = True
+                self.gui_edge_texture_preview.config(
+                    image=self.textures[
+                        current_level.edge_wall_texture_name
+                    ]
                 )
 
     def select_tool(self, new_tool: int) -> None:
@@ -826,6 +865,7 @@ class LevelDesignerApp:
         if (self.current_level < 0 or -1 in self.current_tile
                 or not self.do_updates):
             return
+        self.add_to_undo()
         current_level = self.levels[self.current_level]
         current_tile = current_level[self.current_tile]
         if isinstance(current_tile, tuple):
@@ -834,6 +874,18 @@ class LevelDesignerApp:
                 self.gui_texture_dropdown.get()
             )
             current_level[self.current_tile] = tuple(new_tile)  # type: ignore
+        self.update_properties_frame()
+
+    def edge_texture_change(self, _: tkinter.Event) -> None:
+        """
+        Called when the user changes the texture for the maze edge.
+        """
+        if self.current_level < 0 or not self.do_updates:
+            return
+        self.add_to_undo()
+        self.levels[self.current_level].edge_wall_texture_name = (
+            self.gui_edge_texture_dropdown.get()
+        )
         self.update_properties_frame()
 
     def new_level(self) -> None:
