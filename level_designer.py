@@ -798,16 +798,33 @@ class LevelDesignerApp:
         if new_dimensions == current_level.dimensions:
             return
         self.add_to_undo()
+        old_dimensions = current_level.dimensions
         current_level.dimensions = new_dimensions
         if (not current_level.is_coord_in_bounds(current_level.start_point) or
                 not current_level.is_coord_in_bounds(current_level.end_point)):
             # Don't allow the user to shrink start/end points out of bounds.
-            self.perform_undo()
-            return
-        if (current_level.monster_start is not None
-                and not current_level.is_coord_in_bounds(
-                    current_level.monster_start)):
-            # Don't allow the user to shrink monster spawn out of bounds.
+            current_level.dimensions = (
+                max(
+                    current_level.start_point[0] + 1,
+                    current_level.end_point[0] + 1, current_level.dimensions[0]
+                ),
+                max(
+                    current_level.start_point[1] + 1,
+                    current_level.end_point[1] + 1, current_level.dimensions[1]
+                )
+            )
+        monster_start = current_level.monster_start
+        if (monster_start is not None
+                and not current_level.is_coord_in_bounds(monster_start)):
+            current_level.dimensions = (
+                max(
+                    monster_start[0] + 1, current_level.dimensions[0]
+                ),
+                max(
+                    monster_start[1] + 1, current_level.dimensions[1]
+                )
+            )
+        if old_dimensions == current_level.dimensions:
             self.perform_undo()
             return
         # Remove out of bounds keys, sensors, and guns.
