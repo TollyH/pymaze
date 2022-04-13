@@ -86,7 +86,7 @@ def draw_victory_screen(screen: pygame.Surface, cfg: Config,
     while len(total_time_on_screen) < level_count:
         total_time_on_screen.append(0.0)
     while len(victory_sounds_played) < level_count:
-        total_time_on_screen.append(0)
+        victory_sounds_played.append(0)
     total_time_on_screen[current_level] += frame_time
     time_on_screen = total_time_on_screen[current_level]
     screen.blit(background, (0, 0))
