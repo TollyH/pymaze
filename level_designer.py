@@ -615,7 +615,9 @@ class LevelDesignerApp:
     def add_to_undo(self) -> None:
         """
         Add the state of all the current levels to the undo stack.
+        Also marks the file as having unsaved changes.
         """
+        self.unsaved_changes = True
         self.undo_stack.append(
             (self.current_level, copy.deepcopy(self.levels))
         )
@@ -673,21 +675,18 @@ class LevelDesignerApp:
                 if isinstance(current_level[clicked_tile], tuple) else
                 (current_level.edge_wall_texture_name,) * 4
             )
-            self.unsaved_changes = True
         elif self.current_tool == START:
             if current_level[clicked_tile] or not is_tile_free(
                     current_level, clicked_tile):
                 return
             self.add_to_undo()
             current_level.start_point = clicked_tile
-            self.unsaved_changes = True
         elif self.current_tool == END:
             if current_level[clicked_tile] or not is_tile_free(
                     current_level, clicked_tile):
                 return
             self.add_to_undo()
             current_level.end_point = clicked_tile
-            self.unsaved_changes = True
         elif self.current_tool == KEY:
             if clicked_tile in current_level.original_exit_keys:
                 self.add_to_undo()
@@ -702,7 +701,6 @@ class LevelDesignerApp:
                 current_level.original_exit_keys = (
                         current_level.original_exit_keys | {clicked_tile}
                 )
-            self.unsaved_changes = True
         elif self.current_tool == SENSOR:
             if clicked_tile in current_level.original_key_sensors:
                 self.add_to_undo()
@@ -717,7 +715,6 @@ class LevelDesignerApp:
                 current_level.original_key_sensors = (
                         current_level.original_key_sensors | {clicked_tile}
                 )
-            self.unsaved_changes = True
         elif self.current_tool == GUN:
             if clicked_tile in current_level.original_guns:
                 self.add_to_undo()
@@ -732,7 +729,6 @@ class LevelDesignerApp:
                 current_level.original_guns = (
                         current_level.original_guns | {clicked_tile}
                 )
-            self.unsaved_changes = True
         elif self.current_tool == MONSTER:
             if clicked_tile == current_level.monster_start:
                 self.add_to_undo()
@@ -825,7 +821,6 @@ class LevelDesignerApp:
             (10, 10), [[None] * 10 for _ in range(10)], (0, 0), (1, 0), set(),
             set(), set(), None, None, next(iter(self.textures))  # First key
         ))
-        self.unsaved_changes = True
         self.update_level_list()
         self.update_map_canvas()
         self.update_properties_frame()
@@ -844,7 +839,6 @@ class LevelDesignerApp:
         self.add_to_undo()
         self.levels.pop(self.current_level)
         self.current_level = -1
-        self.unsaved_changes = True
         self.update_level_list()
         self.update_map_canvas()
         self.update_properties_frame()
