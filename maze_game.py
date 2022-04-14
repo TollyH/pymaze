@@ -264,6 +264,7 @@ def maze_game() -> None:
                 if __name__ == "__main__":
                     pygame.quit()
                     sys.exit()
+                pygame.mixer.music.unload()
                 return
             # Standard "press-once" keys
             elif event.type == pygame.KEYDOWN:
