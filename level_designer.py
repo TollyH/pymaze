@@ -912,7 +912,7 @@ class LevelDesignerApp:
         self.add_to_undo()
         self.levels.insert(self.current_level + 1, Level(
             (10, 10), [[None] * 10 for _ in range(10)], (0, 0), (1, 0), set(),
-            set(), set(), None, None, next(iter(self.textures))  # First key
+            set(), set(), None, next(iter(self.textures))  # First key
         ))
         self.update_level_list()
         self.update_map_canvas()

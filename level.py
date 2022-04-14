@@ -32,8 +32,9 @@ class Level:
     texture names for maze walls, and None representing occupy-able space.
     Also keeps track of the current player coordinates within the level and can
     calculate possible solutions.
-    Monster start and wait can be set to None if you do not wish the level
-    to have a monster. This class will not automatically move or spawn
+    Monster can be set to None if you do not wish the level
+    to have a monster, or if you do it should be a Tuple of (x, y, spawn_delay)
+    This class will not automatically move or spawn
     the monster by itself, however does provide the method required to do so.
     Note that the wall map may also contain 'True' values. These represent
     player placed walls and are only temporary.
@@ -44,8 +45,8 @@ class Level:
                  ], start_point: Tuple[int, int], end_point: Tuple[int, int],
                  exit_keys: Set[Tuple[int, int]],
                  key_sensors: Set[Tuple[int, int]], guns: Set[Tuple[int, int]],
-                 monster_start: Optional[Tuple[int, int]],
-                 monster_wait: Optional[float], edge_wall_texture_name: str):
+                 monster: Optional[Tuple[int, int, float]],
+                 edge_wall_texture_name: str):
         self.dimensions = dimensions
         self.edge_wall_texture_name = edge_wall_texture_name
 
@@ -100,7 +101,8 @@ class Level:
         self.guns = guns
 
         self.monster_coords: Optional[Tuple[int, int]] = None
-        if monster_start is not None:
+        if monster is not None:
+            monster_start, monster_wait = monster[:2], monster[2]
             if not self.is_coord_in_bounds(monster_start):
                 raise ValueError("Out of bounds monster start coordinates")
             if self[monster_start]:
@@ -145,8 +147,8 @@ class Level:
             {tuple(x) for x in json_dict['guns']},
             None
             if json_dict['monster_start'] is None else
-            tuple(json_dict['monster_start']),
-            json_dict['monster_wait'], json_dict['edge_wall_texture_name']
+            tuple(json_dict['monster_start'] + [json_dict['monster_wait']]),
+            json_dict['edge_wall_texture_name']
         )
 
     @no_type_check
