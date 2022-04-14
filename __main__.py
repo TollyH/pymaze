@@ -35,32 +35,16 @@ def main() -> None:
     button_font = pygame.font.SysFont('Tahoma', 28, True)
     title_font = pygame.font.SysFont('Tahoma', 36, True)
 
-    screen.fill(GREEN)
     title_text = title_font.render("PyGame Maze", True, BLUE)
-    screen.blit(title_text, (250 - title_text.get_width() // 2, 5))
     copyright_text = normal_font.render(
         "Copyright © 2022  Ptolemy Hill and Finlay Griffiths", True, BLUE
     )
-    screen.blit(copyright_text, (250 - copyright_text.get_width() // 2, 450))
     play_text = button_font.render("Play", True, WHITE)
     config_text = button_font.render("Settings", True, WHITE)
     design_text = button_font.render("Designer", True, WHITE)
     button_width = max(
         x.get_width() for x in (play_text, config_text, design_text)
     ) + 10
-    pygame.draw.rect(
-        screen, BLUE, (250 - button_width // 2, 108, button_width, 50)
-    )
-    pygame.draw.rect(
-        screen, BLUE, (250 - button_width // 2, 224, button_width, 50)
-    )
-    pygame.draw.rect(
-        screen, BLUE, (250 - button_width // 2, 340, button_width, 50)
-    )
-    screen.blit(play_text, (250 - play_text.get_width() // 2, 113))
-    screen.blit(config_text, (250 - config_text.get_width() // 2, 229))
-    screen.blit(design_text, (250 - design_text.get_width() // 2, 345))
-    pygame.display.update()
 
     while True:
         for event in pygame.event.get():
@@ -75,9 +59,30 @@ def main() -> None:
                         if 108 <= clicked_pos[1] <= 158:
                             maze_game()
                         elif 224 <= clicked_pos[1] <= 274:
+                            screen.fill(BLUE)
+                            pygame.display.update()
                             ConfigEditorApp()
                         elif 340 <= clicked_pos[1] <= 390:
+                            screen.fill(BLUE)
+                            pygame.display.update()
                             LevelDesignerApp()
+        screen.fill(GREEN)
+        screen.blit(title_text, (250 - title_text.get_width() // 2, 5))
+        screen.blit(copyright_text,
+                    (250 - copyright_text.get_width() // 2, 450))
+        pygame.draw.rect(
+            screen, BLUE, (250 - button_width // 2, 108, button_width, 50)
+        )
+        pygame.draw.rect(
+            screen, BLUE, (250 - button_width // 2, 224, button_width, 50)
+        )
+        pygame.draw.rect(
+            screen, BLUE, (250 - button_width // 2, 340, button_width, 50)
+        )
+        screen.blit(play_text, (250 - play_text.get_width() // 2, 113))
+        screen.blit(config_text, (250 - config_text.get_width() // 2, 229))
+        screen.blit(design_text, (250 - design_text.get_width() // 2, 345))
+        pygame.display.update()
 
 
 if __name__ == "__main__":

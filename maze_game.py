@@ -261,8 +261,10 @@ def maze_game() -> None:
         frame_time = clock.tick(cfg.frame_rate_limit) / 1000
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+                if __name__ == "__main__":
+                    pygame.quit()
+                    sys.exit()
+                return
             # Standard "press-once" keys
             elif event.type == pygame.KEYDOWN:
                 # Never stop the user regaining control of their mouse with
