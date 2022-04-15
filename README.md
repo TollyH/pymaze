@@ -51,18 +51,23 @@ algorithm for raycasting.
 
 ## Map Colours
 
+### Game and Designer
+
 - Black — Walls
 - White — Floor
-- Blue — Player tile
 - Green — End point
 - Gold — Keys
-- Dark green — Monster spawn
-- Dark red — Monster
+- Dark green (dark red in designer) — Monster spawn
 - Red — Start point
-- Turquoise — Flags
-- Purple — Player placed wall
 - Dark gold — Key sensors
 - Grey — Guns
+
+### Game Only
+
+- Blue — Player tile
+- Dark red — Monster
+- Turquoise — Flags
+- Purple — Player placed wall
 
 ---
 
