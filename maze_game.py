@@ -346,7 +346,7 @@ def maze_game() -> None:
                             cfg.draw_maze_edge_as_wall
                         )
                         for sprite in hit_sprites:
-                            if sprite[1] == raycasting.MONSTER:
+                            if sprite.type == raycasting.MONSTER:
                                 # Monster was hit by gun
                                 levels[current_level].monster_coords = None
                                 break
@@ -784,36 +784,29 @@ def maze_game() -> None:
                 # entire viewport anyway.
                 columns = []
                 sprites = []
-            type_column = 0
-            type_sprite = 1
-            # A generic combination of both wall columns and sprites
-            # [(index, type, euclidean_squared), ...]
-            objects: List[Tuple[int, int, float]] = [
-                (i, type_column, x[3]) for i, x in enumerate(columns)
-            ]
-            objects += [
-                (i, type_sprite, x[2]) for i, x in enumerate(sprites)
-            ]
+            # A combination of both wall columns and sprites
+            objects: List[raycasting.Collision] = (
+                columns + sprites  # type: ignore
+            )
             # Draw further away objects first so that closer walls obstruct
             # sprites behind them.
-            objects.sort(key=lambda x: x[2], reverse=True)
+            objects.sort(key=lambda x: x.euclidean_squared, reverse=True)
             # Used for displaying rays on cheat map, not used in rendering.
             ray_end_coords: List[Tuple[float, float]] = []
-            for index, object_type, _ in objects:
-                if object_type == type_sprite:
+            for collision_object in objects:
+                if isinstance(collision_object, raycasting.SpriteCollision):
                     # Sprites are just flat images scaled and blitted onto the
                     # 3D view.
-                    coord, sprite_type, _ = sprites[index]
                     selected_sprite = sprite_textures.get(
-                        sprite_type, placeholder_texture
+                        collision_object.type, placeholder_texture
                     )
                     screen_drawing.draw_sprite(
-                        screen, cfg, coord,
+                        screen, cfg, collision_object.coordinate,
                         levels[current_level].player_coords,
                         camera_planes[current_level],
                         facing_directions[current_level], selected_sprite
                     )
-                    if sprite_type == raycasting.MONSTER:
+                    if collision_object.type == raycasting.MONSTER:
                         # If the monster has been rendered, play the jumpscare
                         # sound if enough time has passed since the last play.
                         # Also set the timer to 0 to reset it.
@@ -823,19 +816,20 @@ def maze_game() -> None:
                                 == cfg.monster_spot_timeout):
                             monster_spotted_sound.play()
                         monster_spotted[current_level] = 0.0
-                elif object_type == type_column:
+                elif isinstance(collision_object, raycasting.WallCollision):
                     # A column is a portion of a wall that was hit by a ray.
-                    coord, tile, distance, _, side = columns[index]
-                    side_was_ns = side in (raycasting.NORTH, raycasting.SOUTH)
+                    side_was_ns = collision_object.side in (
+                        raycasting.NORTH, raycasting.SOUTH
+                    )
                     # Edge of maze when drawing maze edges as walls is disabled
                     # The entire ray will be skipped, revealing the horizon.
-                    if distance == float('inf'):
+                    if collision_object.draw_distance == float('inf'):
                         continue
                     if display_rays:
                         # For cheat map only
-                        ray_end_coords.append(coord)
+                        ray_end_coords.append(collision_object.coordinate)
                     # Prevent division by 0
-                    distance = max(1e-5, distance)
+                    distance = max(1e-5, collision_object.draw_distance)
                     # An illusion of distance is achieved by drawing lines at
                     # different heights depending on the distance a ray
                     # travelled.
@@ -844,7 +838,8 @@ def maze_game() -> None:
                     if cfg.textures_enabled:
                         current_player_wall = player_walls[current_level]
                         if (current_player_wall is not None
-                                and tile == current_player_wall[:2]):
+                                and collision_object.tile
+                                == current_player_wall[:2]):
                             # Select appropriate player wall texture depending
                             # on how long the wall has left until breaking.
                             both_textures = player_wall_textures[
@@ -857,10 +852,13 @@ def maze_game() -> None:
                                     )
                                 )
                             ]
-                        elif levels[current_level].is_coord_in_bounds(tile):
-                            point = levels[current_level][tile]
+                        elif levels[current_level].is_coord_in_bounds(
+                                collision_object.tile):
+                            point = levels[current_level][
+                                collision_object.tile
+                            ]
                             if isinstance(point, tuple):
-                                texture_name = point[side]
+                                texture_name = point[collision_object.side]
                             else:
                                 # This should logically never happen,
                                 # but just in case — default to edge texture.
@@ -882,13 +880,15 @@ def maze_game() -> None:
                         # depending on side
                         texture = both_textures[int(side_was_ns)]
                         screen_drawing.draw_textured_column(
-                            screen, cfg, coord, side_was_ns, column_height,
-                            index, facing_directions[current_level],
-                            texture
+                            screen, cfg, collision_object.coordinate,
+                            side_was_ns, column_height,
+                            collision_object.index,
+                            facing_directions[current_level], texture
                         )
                     else:
                         screen_drawing.draw_untextured_column(
-                            screen, cfg, index, side_was_ns, column_height
+                            screen, cfg, collision_object.index, side_was_ns,
+                            column_height
                         )
             if display_map:
                 current_player_wall = player_walls[current_level]
