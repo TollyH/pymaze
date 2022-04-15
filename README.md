@@ -55,19 +55,23 @@ algorithm for raycasting.
 
 - Black — Walls
 - White — Floor
-- Green — End point
-- Gold — Keys
+- Green — End point (Cheat map only)
+- Gold — Keys (Always with cheat map, otherwise only with key sensor)
 - Dark green (dark red in designer) — Monster spawn
 - Red — Start point
-- Dark gold — Key sensors
-- Grey — Guns
+- Dark gold — Key sensors (Cheat map only)
+- Grey — Guns (Cheat map only)
 
 ### Game Only
 
 - Blue — Player tile
-- Dark red — Monster
+- Dark red — Monster (Cheat map only)
 - Turquoise — Flags
 - Purple — Player placed wall
+
+### Designer Only
+
+- Purple — Decorations
 
 ---
 

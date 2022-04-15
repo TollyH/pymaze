@@ -26,6 +26,7 @@ KEY = 4
 SENSOR = 5
 GUN = 6
 MONSTER = 7
+DECORATION = 8
 
 
 def rgb_to_hex(red: int, green: int, blue: int) -> str:
@@ -46,7 +47,7 @@ def is_tile_free(level: Level, tile: Tuple[int, int]) -> bool:
         return False
     if tile in (
             level.original_exit_keys | level.original_key_sensors
-            | level.original_guns):
+            | level.original_guns | level.decorations.keys()):
         return False
     return True
 
@@ -92,6 +93,17 @@ class LevelDesignerApp:
             for x in glob(os.path.join("textures", "wall", "*.png"))
         }
         self.textures["placeholder"] = (
+            tkinter.PhotoImage(
+                file=os.path.join("textures", "placeholder.png")
+            )
+        )
+
+        self.decoration_textures: Dict[str, tkinter.PhotoImage] = {
+            os.path.split(x)[-1].split(".")[0]: tkinter.PhotoImage(file=x)
+            for x in glob(os.path.join(
+                "textures", "sprite", "decoration", "*.png"))
+        }
+        self.decoration_textures["placeholder"] = (
             tkinter.PhotoImage(
                 file=os.path.join("textures", "placeholder.png")
             )
@@ -179,10 +191,18 @@ class LevelDesignerApp:
         )
         self.gui_tool_monster.pack(pady=2)
 
+        self.gui_tool_decoration = tkinter.Button(
+            self.gui_tools_frame, image=self.tool_icons.get(
+                DECORATION, self.tool_icons[-1]  # Placeholder
+            ), width=24, height=24,
+            command=lambda: self.select_tool(DECORATION)
+        )
+        self.gui_tool_decoration.pack(pady=2)
+
         self.tool_buttons = [
             self.gui_tool_select, self.gui_tool_wall, self.gui_tool_start,
             self.gui_tool_end, self.gui_tool_key, self.gui_tool_sensor,
-            self.gui_tool_gun, self.gui_tool_monster
+            self.gui_tool_gun, self.gui_tool_monster, self.gui_tool_decoration
         ]
 
         self.gui_map_canvas = tkinter.Canvas(
@@ -209,6 +229,9 @@ class LevelDesignerApp:
             self.gui_properties_frame
         )
         self.gui_edge_texture_frame = tkinter.Frame(
+            self.gui_properties_frame
+        )
+        self.gui_decoration_texture_frame = tkinter.Frame(
             self.gui_properties_frame
         )
 
@@ -297,6 +320,19 @@ class LevelDesignerApp:
             self.gui_edge_texture_frame
         )
         self.gui_edge_texture_preview.pack()
+
+        self.gui_decoration_texture_dropdown = tkinter.ttk.Combobox(
+            self.gui_decoration_texture_frame,
+            values=list(self.decoration_textures), exportselection=False
+        )
+        self.gui_decoration_texture_dropdown.bind(
+            "<<ComboboxSelected>>", self.decoration_texture_change
+        )
+        self.gui_decoration_texture_dropdown.pack(pady=1)
+        self.gui_decoration_texture_preview = tkinter.Label(
+            self.gui_decoration_texture_frame
+        )
+        self.gui_decoration_texture_preview.pack()
 
         # Ensure applicable columns are the same width
         for i in range(3):
@@ -466,6 +502,8 @@ class LevelDesignerApp:
                     colour = screen_drawing.DARK_GOLD
                 elif (x, y) in current_level.original_guns:
                     colour = screen_drawing.GREY
+                elif (x, y) in current_level.decorations:
+                    colour = screen_drawing.PURPLE
                 elif current_level.monster_start == (x, y):
                     colour = screen_drawing.DARK_RED
                 elif current_level.start_point == (x, y):
@@ -533,6 +571,8 @@ class LevelDesignerApp:
                 self.gui_texture_frame.forget()
             if self.gui_edge_texture_frame.winfo_ismapped():
                 self.gui_edge_texture_frame.forget()
+            if self.gui_decoration_texture_frame.winfo_ismapped():
+                self.gui_decoration_texture_frame.forget()
             return
         if not self.gui_dimension_frame.winfo_ismapped():
             self.gui_dimension_frame.pack(padx=2, pady=2, fill="x")
@@ -555,6 +595,8 @@ class LevelDesignerApp:
             self.gui_texture_frame.forget()
         if self.gui_edge_texture_frame.winfo_ismapped():
             self.gui_edge_texture_frame.forget()
+        if self.gui_decoration_texture_frame.winfo_ismapped():
+            self.gui_decoration_texture_frame.forget()
         if -1 in self.current_tile:
             self.gui_selected_square_description.config(
                 bg="#f0f0f0", fg="black", text="Nothing is currently selected"
@@ -573,6 +615,25 @@ class LevelDesignerApp:
             self.gui_selected_square_description.config(
                 text=self.descriptions[GUN],
                 bg=rgb_to_hex(*screen_drawing.GREY), fg="black"
+            )
+        elif self.current_tile in current_level.decorations:
+            self.gui_selected_square_description.config(
+                text=self.descriptions[DECORATION],
+                bg=rgb_to_hex(*screen_drawing.PURPLE), fg="white"
+            )
+            if not self.gui_decoration_texture_frame.winfo_ismapped():
+                self.gui_decoration_texture_frame.pack(
+                    padx=2, pady=2, fill="x"
+                )
+            self.do_updates = False
+            self.gui_decoration_texture_dropdown.set(
+                current_level.decorations[self.current_tile]
+            )
+            self.do_updates = True
+            self.gui_decoration_texture_preview.config(
+                image=self.decoration_textures[
+                    current_level.decorations[self.current_tile]
+                ]
             )
         elif current_level.monster_start == self.current_tile:
             self.gui_selected_square_description.config(
@@ -738,13 +799,13 @@ class LevelDesignerApp:
                     return
                 self.add_to_undo()
                 current_level.original_exit_keys = (
-                        current_level.original_exit_keys | {clicked_tile}
+                    current_level.original_exit_keys | {clicked_tile}
                 )
         elif self.current_tool == SENSOR:
             if clicked_tile in current_level.original_key_sensors:
                 self.add_to_undo()
                 current_level.original_key_sensors = (
-                        current_level.original_key_sensors - {clicked_tile}
+                    current_level.original_key_sensors - {clicked_tile}
                 )
             else:
                 if current_level[clicked_tile] or not is_tile_free(
@@ -752,13 +813,13 @@ class LevelDesignerApp:
                     return
                 self.add_to_undo()
                 current_level.original_key_sensors = (
-                        current_level.original_key_sensors | {clicked_tile}
+                    current_level.original_key_sensors | {clicked_tile}
                 )
         elif self.current_tool == GUN:
             if clicked_tile in current_level.original_guns:
                 self.add_to_undo()
                 current_level.original_guns = (
-                        current_level.original_guns - {clicked_tile}
+                    current_level.original_guns - {clicked_tile}
                 )
             else:
                 if current_level[clicked_tile] or not is_tile_free(
@@ -766,7 +827,7 @@ class LevelDesignerApp:
                     return
                 self.add_to_undo()
                 current_level.original_guns = (
-                        current_level.original_guns | {clicked_tile}
+                    current_level.original_guns | {clicked_tile}
                 )
         elif self.current_tool == MONSTER:
             if clicked_tile == current_level.monster_start:
@@ -781,6 +842,18 @@ class LevelDesignerApp:
                 current_level.monster_start = clicked_tile
                 if current_level.monster_wait is None:
                     current_level.monster_wait = 10.0
+        elif self.current_tool == DECORATION:
+            if clicked_tile in current_level.decorations:
+                self.add_to_undo()
+                current_level.decorations.pop(clicked_tile)
+            else:
+                if current_level[clicked_tile] or not is_tile_free(
+                        current_level, clicked_tile):
+                    return
+                self.add_to_undo()
+                current_level.decorations[clicked_tile] = (
+                    next(iter(self.decoration_textures))  # First key
+                )
         self.update_map_canvas()
         self.update_properties_frame()
 
@@ -905,6 +978,19 @@ class LevelDesignerApp:
         )
         self.update_properties_frame()
 
+    def decoration_texture_change(self, _: tkinter.Event) -> None:
+        """
+        Called when the user changes the texture for a decoration.
+        """
+        if (self.current_level < 0 or -1 in self.current_tile
+                or not self.do_updates):
+            return
+        self.add_to_undo()
+        self.levels[self.current_level].decorations[self.current_tile] = (
+            self.gui_decoration_texture_dropdown.get()
+        )
+        self.update_properties_frame()
+
     def new_level(self) -> None:
         """
         Create an empty level after the currently selected level.
@@ -912,7 +998,7 @@ class LevelDesignerApp:
         self.add_to_undo()
         self.levels.insert(self.current_level + 1, Level(
             (10, 10), [[None] * 10 for _ in range(10)], (0, 0), (1, 0), set(),
-            set(), set(), None, next(iter(self.textures))  # First key
+            set(), set(), {}, None, next(iter(self.textures))  # First key
         ))
         self.update_level_list()
         self.update_map_canvas()

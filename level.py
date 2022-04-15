@@ -32,10 +32,11 @@ class Level:
     texture names for maze walls, and None representing occupy-able space.
     Also keeps track of the current player coordinates within the level and can
     calculate possible solutions.
+    Decorations are a dictionary of coordinates to a decoration texture name.
     Monster can be set to None if you do not wish the level
     to have a monster, or if you do it should be a Tuple of (x, y, spawn_delay)
-    This class will not automatically move or spawn
-    the monster by itself, however does provide the method required to do so.
+    This class will not automatically move or spawn the monster by itself,
+    however does provide the method required to do so.
     Note that the wall map may also contain 'True' values. These represent
     player placed walls and are only temporary.
     """
@@ -45,6 +46,7 @@ class Level:
                  ], start_point: Tuple[int, int], end_point: Tuple[int, int],
                  exit_keys: Set[Tuple[int, int]],
                  key_sensors: Set[Tuple[int, int]], guns: Set[Tuple[int, int]],
+                 decorations: Dict[Tuple[int, int], str],
                  monster: Optional[Tuple[int, int, float]],
                  edge_wall_texture_name: str):
         self.dimensions = dimensions
@@ -100,6 +102,13 @@ class Level:
         self.original_guns = frozenset(guns)
         self.guns = guns
 
+        for decor in decorations:
+            if not self.is_coord_in_bounds(decor[:2]):
+                raise ValueError("Out of bounds decoration coordinates")
+            if self[decor[:2]]:
+                raise ValueError("Decoration cannot be inside wall")
+        self.decorations = decorations
+
         self.monster_coords: Optional[Tuple[int, int]] = None
         if monster is not None:
             monster_start, monster_wait = monster[:2], monster[2]
@@ -133,7 +142,8 @@ class Level:
     def from_json_dict(cls, json_dict: Dict[str, Any]) -> 'Level':
         """
         Create a Level instance from a valid deserialized JSON dictionary.
-        Converts lists (JSON arrays) back to tuples and sets where applicable.
+        Converts lists (JSON arrays) back to tuples and sets, and converts
+        applicable string keys back to tuples.
         """
         return cls(
             tuple(json_dict['dimensions']),
@@ -145,6 +155,10 @@ class Level:
             {tuple(x) for x in json_dict['exit_keys']},
             {tuple(x) for x in json_dict['key_sensors']},
             {tuple(x) for x in json_dict['guns']},
+            {
+                tuple(int(x) for x in y.split(",")): z
+                for y, z in json_dict['decorations'].items()
+            },
             None
             if json_dict['monster_start'] is None else
             tuple(json_dict['monster_start'] + [json_dict['monster_wait']]),
@@ -155,7 +169,8 @@ class Level:
     def to_json_dict(self) -> Dict[str, Any]:
         """
         Convert this level into a JSON compatible dictionary. All tuples and
-        sets are converted to lists (JSON arrays).
+        sets are converted to lists (JSON arrays), and all tuple dictionary
+        keys are converted to strings.
         """
         return {
             "dimensions": list(self.dimensions),
@@ -171,6 +186,9 @@ class Level:
             "exit_keys": [list(x) for x in self.original_exit_keys],
             "key_sensors": [list(x) for x in self.original_key_sensors],
             "guns": [list(x) for x in self.original_guns],
+            "decorations": {
+                f"{x[0]},{x[1]}": y for x, y in self.decorations.items()
+            },
             "monster_start": (
                 None
                 if self.monster_start is None else

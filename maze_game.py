@@ -88,6 +88,15 @@ def maze_game() -> None:
     for _, (_, surface_to_dark) in wall_textures.items():
         surface_to_dark.blit(darkener, (0, 0))
 
+    # {texture_name: texture}
+    decoration_textures: Dict[str, pygame.Surface] = {
+        os.path.split(x)[-1].split(".")[0]:
+            pygame.image.load(x).convert_alpha()
+        for x in glob(
+            os.path.join("textures", "sprite", "decoration", "*.png"))
+    }
+    decoration_textures["placeholder"] = placeholder_texture
+
     # {degradation_stage: (light_texture, dark_texture)}
     player_wall_textures: Dict[int, Tuple[pygame.Surface, pygame.Surface]] = {
         # Parse player wall texture surfaces to integer
@@ -797,9 +806,16 @@ def maze_game() -> None:
                 if isinstance(collision_object, raycasting.SpriteCollision):
                     # Sprites are just flat images scaled and blitted onto the
                     # 3D view.
-                    selected_sprite = sprite_textures.get(
-                        collision_object.type, placeholder_texture
-                    )
+                    if collision_object.type == raycasting.DECORATION:
+                        selected_sprite = decoration_textures.get(
+                            levels[current_level].decorations[
+                                collision_object.tile
+                            ], placeholder_texture
+                        )
+                    else:
+                        selected_sprite = sprite_textures.get(
+                            collision_object.type, placeholder_texture
+                        )
                     screen_drawing.draw_sprite(
                         screen, cfg, collision_object.coordinate,
                         levels[current_level].player_coords,

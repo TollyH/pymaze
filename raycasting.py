@@ -17,6 +17,7 @@ FLAG = 5
 KEY_SENSOR = 6
 MONSTER_SPAWN = 7
 GUN = 8
+DECORATION = 9
 
 # Wall directions
 NORTH = 0
@@ -35,6 +36,7 @@ class Collision:
     """
     coordinate: Tuple[float, float]
     euclidean_squared: float
+    tile: Tuple[int, int]
 
 
 @dataclass
@@ -45,9 +47,8 @@ class WallCollision(Collision):
     EAST, or WEST depending on which side was hit by the ray, and draw_distance
     is the distance value that should be used for actual rendering. Index is
     used when raycasting the whole screen to identify the order that the
-    columns need to go in. Independently it is irrelevant and is -1 by default.
+    columns need to go in — alone it is irrelevant and is -1 by default.
     """
-    tile: Tuple[int, int]
     draw_distance: float
     side: int
     index: int = -1
@@ -149,7 +150,7 @@ def get_first_collision(current_level: level.Level,
                     no_sqrt_coord_distance(
                         current_level.player_coords,
                         (current_tile[0] + 0.5, current_tile[1] + 0.5)
-                    ), KEY
+                    ), current_tile, KEY
                 ))
             if current_tile in current_level.key_sensors:
                 sprites.append(SpriteCollision(
@@ -157,7 +158,7 @@ def get_first_collision(current_level: level.Level,
                     no_sqrt_coord_distance(
                         current_level.player_coords,
                         (current_tile[0] + 0.5, current_tile[1] + 0.5)
-                    ), KEY_SENSOR
+                    ), current_tile, KEY_SENSOR
                 ))
             if current_tile in current_level.guns:
                 sprites.append(SpriteCollision(
@@ -165,7 +166,15 @@ def get_first_collision(current_level: level.Level,
                     no_sqrt_coord_distance(
                         current_level.player_coords,
                         (current_tile[0] + 0.5, current_tile[1] + 0.5)
-                    ), GUN
+                    ), current_tile, GUN
+                ))
+            if current_tile in current_level.decorations:
+                sprites.append(SpriteCollision(
+                    (current_tile[0] + 0.5, current_tile[1] + 0.5),
+                    no_sqrt_coord_distance(
+                        current_level.player_coords,
+                        (current_tile[0] + 0.5, current_tile[1] + 0.5)
+                    ), current_tile, DECORATION
                 ))
             if current_level.end_point == current_tile:
                 sprites.append(SpriteCollision(
@@ -173,7 +182,7 @@ def get_first_collision(current_level: level.Level,
                     no_sqrt_coord_distance(
                         current_level.player_coords,
                         (current_tile[0] + 0.5, current_tile[1] + 0.5)
-                    ), END_POINT
+                    ), current_tile, END_POINT
                     if len(current_level.exit_keys) > 0 else
                     END_POINT_ACTIVE
                 ))
@@ -183,7 +192,7 @@ def get_first_collision(current_level: level.Level,
                     no_sqrt_coord_distance(
                         current_level.player_coords,
                         (current_tile[0] + 0.5, current_tile[1] + 0.5)
-                    ), MONSTER_SPAWN
+                    ), current_tile, MONSTER_SPAWN
                 ))
             if current_level.monster_coords == current_tile:
                 sprites.append(SpriteCollision(
@@ -191,7 +200,7 @@ def get_first_collision(current_level: level.Level,
                     no_sqrt_coord_distance(
                         current_level.player_coords,
                         (current_tile[0] + 0.5, current_tile[1] + 0.5)
-                    ), MONSTER
+                    ), current_tile, MONSTER
                 ))
             if current_level.start_point == current_tile:
                 sprites.append(SpriteCollision(
@@ -199,7 +208,7 @@ def get_first_collision(current_level: level.Level,
                     no_sqrt_coord_distance(
                         current_level.player_coords,
                         (current_tile[0] + 0.5, current_tile[1] + 0.5)
-                    ), START_POINT
+                    ), current_tile, START_POINT
                 ))
             if current_tile in current_level.player_flags:
                 sprites.append(SpriteCollision(
@@ -207,7 +216,7 @@ def get_first_collision(current_level: level.Level,
                     no_sqrt_coord_distance(
                         current_level.player_coords,
                         (current_tile[0] + 0.5, current_tile[1] + 0.5)
-                    ), FLAG
+                    ), current_tile, FLAG
                 ))
             # Collision check
             if current_level[current_tile]:
