@@ -187,19 +187,44 @@ def maze_game() -> None:
                 os.path.join("sounds", "player_breathe", "light.wav")
             )
         }
+        if len(breathing_sounds) == 0:
+            raise FileNotFoundError("No breathing sounds found")
         monster_roam_sounds: List[Union[
             pygame.mixer.Sound, EmptySound
         ]] = [
             pygame.mixer.Sound(x)
             for x in glob(os.path.join("sounds", "monster_roam", "*.wav"))
         ]
+        if len(monster_roam_sounds) == 0:
+            raise FileNotFoundError("No monster roam sounds found")
         key_pickup_sounds: List[Union[
             pygame.mixer.Sound, EmptySound
         ]] = [
             pygame.mixer.Sound(x)
             for x in glob(os.path.join("sounds", "key_pickup", "*.wav"))
         ]
-        gunshot: Union[
+        if len(key_pickup_sounds) == 0:
+            raise FileNotFoundError("No key pickup sounds found")
+        flag_place_sounds: List[Union[
+            pygame.mixer.Sound, EmptySound
+        ]] = [
+            pygame.mixer.Sound(x)
+            for x in glob(os.path.join("sounds", "flag_place", "*.wav"))
+        ]
+        if len(flag_place_sounds) == 0:
+            raise FileNotFoundError("No flag place sounds found")
+        wall_place_sounds: List[Union[
+            pygame.mixer.Sound, EmptySound
+        ]] = [
+            pygame.mixer.Sound(x)
+            for x in glob(os.path.join("sounds", "wall_place", "*.wav"))
+        ]
+        if len(wall_place_sounds) == 0:
+            raise FileNotFoundError("No wall place sounds found")
+        compass_toggle_sound: Union[
+            pygame.mixer.Sound, EmptySound
+        ] = pygame.mixer.Sound(os.path.join("sounds", "compass_toggle.wav"))
+        gunshot_sound: Union[
             pygame.mixer.Sound, EmptySound
         ] = pygame.mixer.Sound(os.path.join("sounds", "gunshot.wav"))
         # Constant ambient sound — loops infinitely
@@ -211,13 +236,17 @@ def maze_game() -> None:
         )
     except (FileNotFoundError, pygame.error):
         audio_error_occurred = True
-        monster_jumpscare_sound = EmptySound()
-        monster_spotted_sound = EmptySound()
-        breathing_sounds = {0: EmptySound()}
-        monster_roam_sounds = [EmptySound()]
-        key_pickup_sounds = [EmptySound()]
-        gunshot = EmptySound()
-        light_flicker_sound = EmptySound()
+        empty_sound = EmptySound()
+        monster_jumpscare_sound = empty_sound
+        monster_spotted_sound = empty_sound
+        breathing_sounds = {0: empty_sound}
+        monster_roam_sounds = [empty_sound]
+        key_pickup_sounds = [empty_sound]
+        flag_place_sounds = [empty_sound]
+        wall_place_sounds = [empty_sound]
+        compass_toggle_sound = empty_sound
+        gunshot_sound = empty_sound
+        light_flicker_sound = empty_sound
     time_to_breathing_finish = 0.0
     time_to_next_roam_sound = 0.0
 
@@ -304,10 +333,14 @@ def maze_game() -> None:
                             levels[current_level].player_flags.add(
                                 grid_coords
                             )
+                            random.choice(flag_place_sounds).play()
                     elif event.key == pygame.K_c:
                         # Compass and map cannot be displayed together
-                        if not display_map or cfg.enable_cheat_map:
+                        if (not display_map or cfg.enable_cheat_map) and not (
+                                levels[current_level].won
+                                or levels[current_level].killed):
                             display_compass = not display_compass
+                            compass_toggle_sound.play()
                     elif event.key == pygame.K_e:
                         # Stats and map cannot be displayed together
                         if not display_map or cfg.enable_cheat_map:
@@ -347,6 +380,7 @@ def maze_game() -> None:
                                 time_scores[current_level]
                             )
                             levels[current_level][target] = True
+                            random.choice(wall_place_sounds).play()
                     elif event.key == pygame.K_t and has_gun[current_level]:
                         has_gun[current_level] = False
                         _, hit_sprites = raycasting.get_first_collision(
@@ -359,7 +393,7 @@ def maze_game() -> None:
                                 # Monster was hit by gun
                                 levels[current_level].monster_coords = None
                                 break
-                        gunshot.play()
+                        gunshot_sound.play()
                     elif event.key in (pygame.K_r, pygame.K_ESCAPE):
                         is_reset_prompt_shown = True
                     elif event.key == pygame.K_SPACE:
