@@ -221,9 +221,12 @@ def maze_game() -> None:
         ]
         if len(wall_place_sounds) == 0:
             raise FileNotFoundError("No wall place sounds found")
-        compass_toggle_sound: Union[
+        compass_open_sound: Union[
             pygame.mixer.Sound, EmptySound
-        ] = pygame.mixer.Sound(os.path.join("sounds", "compass_toggle.wav"))
+        ] = pygame.mixer.Sound(os.path.join("sounds", "compass_open.wav"))
+        compass_close_sound: Union[
+            pygame.mixer.Sound, EmptySound
+        ] = pygame.mixer.Sound(os.path.join("sounds", "compass_close.wav"))
         gunshot_sound: Union[
             pygame.mixer.Sound, EmptySound
         ] = pygame.mixer.Sound(os.path.join("sounds", "gunshot.wav"))
@@ -244,7 +247,8 @@ def maze_game() -> None:
         key_pickup_sounds = [empty_sound]
         flag_place_sounds = [empty_sound]
         wall_place_sounds = [empty_sound]
-        compass_toggle_sound = empty_sound
+        compass_open_sound = empty_sound
+        compass_close_sound = empty_sound
         gunshot_sound = empty_sound
         light_flicker_sound = empty_sound
     time_to_breathing_finish = 0.0
@@ -340,7 +344,11 @@ def maze_game() -> None:
                                 levels[current_level].won
                                 or levels[current_level].killed):
                             display_compass = not display_compass
-                            compass_toggle_sound.play()
+                            (
+                                compass_open_sound
+                                if display_compass else
+                                compass_close_sound
+                            ).play()
                     elif event.key == pygame.K_e:
                         # Stats and map cannot be displayed together
                         if not display_map or cfg.enable_cheat_map:
