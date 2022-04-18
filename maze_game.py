@@ -203,6 +203,9 @@ def maze_game() -> None:
             pygame.mixer.Sound(x)
             for x in glob(os.path.join("sounds", "key_pickup", "*.wav"))
         ]
+        key_sensor_pickup_sound: Union[
+            pygame.mixer.Sound, EmptySound
+        ] = pygame.mixer.Sound(os.path.join("sounds", "sensor_pickup.wav"))
         if len(key_pickup_sounds) == 0:
             raise FileNotFoundError("No key pickup sounds found")
         flag_place_sounds: List[Union[
@@ -245,6 +248,7 @@ def maze_game() -> None:
         breathing_sounds = {0: empty_sound}
         monster_roam_sounds = [empty_sound]
         key_pickup_sounds = [empty_sound]
+        key_sensor_pickup_sound = empty_sound
         flag_place_sounds = [empty_sound]
         wall_place_sounds = [empty_sound]
         compass_open_sound = empty_sound
@@ -613,6 +617,7 @@ def maze_game() -> None:
                 random.choice(key_pickup_sounds).play()
             if level.PICKED_UP_KEY_SENSOR in events:
                 key_sensor_times[current_level] = cfg.key_sensor_time
+                key_sensor_pickup_sound.play()
             if level.PICKED_UP_GUN in events:
                 has_gun[current_level] = True
             move_scores[current_level] += math.sqrt(
