@@ -41,12 +41,6 @@ STATS = 5
 KEY_SENSOR = 6
 GUN = 7
 
-# Change working directory to the directory where the script is located
-# Prevents issues with required files not being found.
-os.chdir(os.path.dirname(__file__))
-
-_level_count = len(maze_levels.load_level_json("maze_levels.json"))
-
 pygame.font.init()
 FONT = pygame.font.SysFont('Tahoma', 24, True)
 
@@ -69,8 +63,8 @@ except (FileNotFoundError, pygame.error):
     VICTORY_INCREMENT = EmptySound()
     VICTORY_NEXT_BLOCK = EmptySound()
 
-total_time_on_screen = [0.0] * _level_count
-victory_sounds_played = [0] * _level_count
+total_time_on_screen: List[float] = []
+victory_sounds_played: List[int] = []
 
 
 def draw_victory_screen(screen: pygame.Surface, cfg: Config,
