@@ -22,7 +22,9 @@ import raycasting
 import screen_drawing
 
 
-def maze_game() -> None:
+def maze_game(*, level_json_path: str = "maze_levels.json",
+              config_ini_path: str = "config.ini",
+              process_command_args: bool = False) -> None:
     """
     Main function for the maze game. Manages all input, output, and timing.
     """
@@ -31,10 +33,24 @@ def maze_game() -> None:
     os.chdir(os.path.dirname(__file__))
     pygame.init()
 
-    last_config_edit = os.path.getmtime('config.ini')
-    cfg = config_loader.Config()
+    if process_command_args:
+        for arg in sys.argv[1:]:
+            arg_pair = arg.split("=")
+            if len(arg_pair) == 2:
+                lower_key = arg_pair[0].lower()
+                if lower_key in ("--level-json-path", "-p"):
+                    level_json_path = arg_pair[1]
+                    continue
+                if lower_key in ("--config-ini-path", "-c"):
+                    config_ini_path = arg_pair[1]
+                    continue
+            print(f"Unknown argument or missing value: '{arg}'")
+            sys.exit(1)
 
-    levels = maze_levels.load_level_json("maze_levels.json")
+    last_config_edit = os.path.getmtime('config.ini')
+    cfg = config_loader.Config(config_ini_path)
+
+    levels = maze_levels.load_level_json(level_json_path)
 
     # Minimum window resolution is 500×500
     screen = pygame.display.set_mode((
@@ -302,7 +318,7 @@ def maze_game() -> None:
         if os.path.getmtime('config.ini') > last_config_edit:
             # Config has been edited so it should be reloaded.
             last_config_edit = os.path.getmtime('config.ini')
-            cfg = config_loader.Config()
+            cfg = config_loader.Config(config_ini_path)
         # Limit FPS and record time last frame took to render
         frame_time = clock.tick(cfg.frame_rate_limit) / 1000
         for event in pygame.event.get():
@@ -1093,4 +1109,4 @@ class EmptySound:
 
 
 if __name__ == "__main__":
-    maze_game()
+    maze_game(process_command_args=True)

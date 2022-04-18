@@ -73,6 +73,11 @@ algorithm for raycasting.
 
 - Purple — Decorations
 
+## Command Line Arguments (Optional)
+
+- `-P=/path/to/maze_levels.json` or `--level-json-path=/path/to/maze_levels.json`
+- `-C=/path/to/config.ini` or `--config-ini-path=/path/to/config.ini`
+
 ---
 
 **Copyright © 2022  Ptolemy Hill and Finlay Griffiths**

@@ -58,12 +58,12 @@ class LevelDesignerApp:
     level JSON files. The game will always load from 'maze_levels.json',
     however you can load and save to wherever you like with this editor.
     """
-    def __init__(self) -> None:
+    def __init__(self, config_file_path: str = "config.ini") -> None:
         # Change working directory to the directory where the script is located
         # This prevents issues with required files not being found.
         os.chdir(os.path.dirname(__file__))
 
-        self._cfg = config_loader.Config()
+        self._cfg = config_loader.Config(config_file_path)
         self.current_path: Optional[str] = None
         self.levels: List[Level] = []
         self.current_level = -1

@@ -5,6 +5,7 @@ The script that launches the game, config editor, and level designer.
 """
 import os
 import sys
+from typing import Dict
 
 import pygame
 
@@ -46,6 +47,20 @@ def main() -> None:
         x.get_width() for x in (play_text, config_text, design_text)
     ) + 10
 
+    maze_game_kwargs: Dict[str, str] = {}
+    for arg in sys.argv[1:]:
+        arg_pair = arg.split("=")
+        if len(arg_pair) == 2:
+            lower_key = arg_pair[0].lower()
+            if lower_key in ("--level-json-path", "-p"):
+                maze_game_kwargs["level_json_path"] = arg_pair[1]
+                continue
+            if lower_key in ("--config-ini-path", "-c"):
+                maze_game_kwargs["config_ini_path"] = arg_pair[1]
+                continue
+        print(f"Unknown argument: '{arg}'")
+        sys.exit(1)
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -57,7 +72,9 @@ def main() -> None:
                     if (250 - button_width // 2 <= clicked_pos[0]
                             <= 250 + button_width // 2):
                         if 108 <= clicked_pos[1] <= 158:
-                            maze_game()
+                            maze_game(
+                                **maze_game_kwargs, process_command_args=False
+                            )
                         elif 224 <= clicked_pos[1] <= 274:
                             screen.fill(BLUE)
                             pygame.display.update()
@@ -65,7 +82,12 @@ def main() -> None:
                         elif 340 <= clicked_pos[1] <= 390:
                             screen.fill(BLUE)
                             pygame.display.update()
-                            LevelDesignerApp()
+                            if "config_ini_path" in maze_game_kwargs:
+                                LevelDesignerApp(
+                                    maze_game_kwargs["config_ini_path"]
+                                )
+                            else:
+                                LevelDesignerApp()
         screen.fill(GREEN)
         screen.blit(title_text, (250 - title_text.get_width() // 2, 5))
         screen.blit(copyright_text,

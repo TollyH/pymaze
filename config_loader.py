@@ -11,15 +11,13 @@ class Config:
     Contains the loaded configuration options. Options will be reloaded from
     the file every time a new instance of this class is created.
     """
-    def __init__(self) -> None:
+    def __init__(self, config_file_path: str) -> None:
         self.config = configparser.ConfigParser(allow_no_value=True)
         # Preserve the case of option names
         self.config.optionxform = str  # type: ignore
-        # Look for the config.ini file in the script directory regardless of
-        # working directory.
-        config_file_path = os.path.join(
-            os.path.dirname(__file__), "config.ini"
-        )
+        # Change working directory to the directory where the script is located
+        # This prevents issues with required files not being found.
+        os.chdir(os.path.dirname(__file__))
         if os.path.isfile(config_file_path):
             self.config.read(config_file_path)
             self.config_options: Dict[str, str] = dict(self.config['OPTIONS'])
