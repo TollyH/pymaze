@@ -5,6 +5,17 @@
 A pseudo-3D, grid-based maze game written in Python with PyGame using a DDA
 algorithm for raycasting.
 
+- [PyGame Maze](#pygame-maze)
+  - [Installation](#installation)
+  - [Controls](#controls)
+  - [Cheat Map Controls](#cheat-map-controls)
+  - [Instructions](#instructions)
+  - [Map Colours](#map-colours)
+    - [Game and Designer](#game-and-designer)
+    - [Game Only](#game-only)
+    - [Designer Only](#designer-only)
+  - [Command Line Arguments (Optional)](#command-line-arguments-optional)
+
 ## Installation
 
 *Python 3.6 or greater and a connected audio output device are required.*
