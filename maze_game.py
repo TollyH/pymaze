@@ -222,6 +222,9 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
         key_sensor_pickup_sound: Union[
             pygame.mixer.Sound, EmptySound
         ] = pygame.mixer.Sound(os.path.join("sounds", "sensor_pickup.wav"))
+        gun_pickup_sound: Union[
+            pygame.mixer.Sound, EmptySound
+        ] = pygame.mixer.Sound(os.path.join("sounds", "gun_pickup.wav"))
         if len(key_pickup_sounds) == 0:
             raise FileNotFoundError("No key pickup sounds found")
         flag_place_sounds: List[Union[
@@ -246,6 +249,12 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
         compass_close_sound: Union[
             pygame.mixer.Sound, EmptySound
         ] = pygame.mixer.Sound(os.path.join("sounds", "compass_close.wav"))
+        map_open_sound: Union[
+            pygame.mixer.Sound, EmptySound
+        ] = pygame.mixer.Sound(os.path.join("sounds", "map_open.wav"))
+        map_close_sound: Union[
+            pygame.mixer.Sound, EmptySound
+        ] = pygame.mixer.Sound(os.path.join("sounds", "map_close.wav"))
         gunshot_sound: Union[
             pygame.mixer.Sound, EmptySound
         ] = pygame.mixer.Sound(os.path.join("sounds", "gunshot.wav"))
@@ -265,10 +274,13 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
         monster_roam_sounds = [empty_sound]
         key_pickup_sounds = [empty_sound]
         key_sensor_pickup_sound = empty_sound
+        gun_pickup_sound = empty_sound
         flag_place_sounds = [empty_sound]
         wall_place_sounds = [empty_sound]
         compass_open_sound = empty_sound
         compass_close_sound = empty_sound
+        map_open_sound = empty_sound
+        map_close_sound = empty_sound
         gunshot_sound = empty_sound
         light_flicker_sound = empty_sound
     time_to_breathing_finish = 0.0
@@ -430,6 +442,11 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                             display_rays = not display_rays
                         else:
                             display_map = not display_map
+                            (
+                                map_open_sound
+                                if display_map else
+                                map_close_sound
+                            ).play()
                     elif event.key == pygame.K_SLASH:
                         pressed = pygame.key.get_pressed()
                         if pressed[pygame.K_RCTRL] or pressed[pygame.K_LCTRL]:
@@ -463,7 +480,11 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                         move_scores[current_level] = 0.0
                         has_gun[current_level] = False
                         has_started_level[current_level] = False
-                        screen_drawing.total_time_on_screen[current_level] = 0
+                        if current_level < len(
+                                screen_drawing.total_time_on_screen):
+                            screen_drawing.total_time_on_screen[
+                                current_level
+                            ] = 0
                         display_compass = False
                         if not cfg.enable_cheat_map:
                             display_map = False
@@ -636,6 +657,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                 key_sensor_pickup_sound.play()
             if level.PICKED_UP_GUN in events:
                 has_gun[current_level] = True
+                gun_pickup_sound.play()
             move_scores[current_level] += math.sqrt(
                 raycasting.no_sqrt_coord_distance(
                     old_position, levels[current_level].player_coords
