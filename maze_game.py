@@ -205,6 +205,14 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
         }
         if len(breathing_sounds) == 0:
             raise FileNotFoundError("No breathing sounds found")
+        footstep_sounds: List[Union[
+            pygame.mixer.Sound, EmptySound
+        ]] = [
+            pygame.mixer.Sound(x)
+            for x in glob(os.path.join("sounds", "footsteps", "*.wav"))
+        ]
+        if len(footstep_sounds) == 0:
+            raise FileNotFoundError("No footstep sounds found")
         monster_roam_sounds: List[Union[
             pygame.mixer.Sound, EmptySound
         ]] = [
@@ -271,6 +279,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
         monster_jumpscare_sound = empty_sound
         monster_spotted_sound = empty_sound
         breathing_sounds = {0: empty_sound}
+        footstep_sounds = [empty_sound]
         monster_roam_sounds = [empty_sound]
         key_pickup_sounds = [empty_sound]
         key_sensor_pickup_sound = empty_sound
@@ -658,11 +667,16 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             if level.PICKED_UP_GUN in events:
                 has_gun[current_level] = True
                 gun_pickup_sound.play()
+            old_move_score = move_scores[current_level]
             move_scores[current_level] += math.sqrt(
                 raycasting.no_sqrt_coord_distance(
                     old_position, levels[current_level].player_coords
                 )
             )
+            # Play footstep sound every time move score crosses every other
+            # integer boundary.
+            if move_scores[current_level] // 2 > old_move_score // 2:
+                random.choice(footstep_sounds).play()
             if level.MONSTER_CAUGHT in events:
                 monster_escape_clicks[current_level] = 0
                 display_map = False
