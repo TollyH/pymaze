@@ -367,18 +367,21 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                                 monster_escape_clicks[current_level] = -1
                                 levels[current_level].monster_coords = None
                     if event.key == pygame.K_f:
-                        grid_coords = level.floor_coordinates(
-                            levels[current_level].player_coords
-                        )
-                        if grid_coords in levels[current_level].player_flags:
-                            levels[current_level].player_flags.remove(
-                                grid_coords
+                        if (not levels[current_level].won
+                                or levels[current_level].killed):
+                            grid_coords = level.floor_coordinates(
+                                levels[current_level].player_coords
                             )
-                        else:
-                            levels[current_level].player_flags.add(
-                                grid_coords
-                            )
-                            random.choice(flag_place_sounds).play()
+                            if (grid_coords in
+                                    levels[current_level].player_flags):
+                                levels[current_level].player_flags.remove(
+                                    grid_coords
+                                )
+                            else:
+                                levels[current_level].player_flags.add(
+                                    grid_coords
+                                )
+                                random.choice(flag_place_sounds).play()
                     elif event.key == pygame.K_c:
                         # Compass and map cannot be displayed together
                         if (not display_map or cfg.enable_cheat_map) and not (
@@ -431,18 +434,21 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                             levels[current_level][target] = True
                             random.choice(wall_place_sounds).play()
                     elif event.key == pygame.K_t and has_gun[current_level]:
-                        has_gun[current_level] = False
-                        _, hit_sprites = raycasting.get_first_collision(
-                            levels[current_level],
-                            facing_directions[current_level],
-                            cfg.draw_maze_edge_as_wall
-                        )
-                        for sprite in hit_sprites:
-                            if sprite.type == raycasting.MONSTER:
-                                # Monster was hit by gun
-                                levels[current_level].monster_coords = None
-                                break
-                        gunshot_sound.play()
+                        if (not display_map or cfg.enable_cheat_map) and not (
+                                levels[current_level].won
+                                or levels[current_level].killed):
+                            has_gun[current_level] = False
+                            _, hit_sprites = raycasting.get_first_collision(
+                                levels[current_level],
+                                facing_directions[current_level],
+                                cfg.draw_maze_edge_as_wall
+                            )
+                            for sprite in hit_sprites:
+                                if sprite.type == raycasting.MONSTER:
+                                    # Monster was hit by gun
+                                    levels[current_level].monster_coords = None
+                                    break
+                            gunshot_sound.play()
                     elif event.key in (pygame.K_r, pygame.K_ESCAPE):
                         is_reset_prompt_shown = True
                     elif event.key == pygame.K_SPACE:
@@ -450,12 +456,14 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                         if pressed[pygame.K_RCTRL] or pressed[pygame.K_LCTRL]:
                             display_rays = not display_rays
                         else:
-                            display_map = not display_map
-                            (
-                                map_open_sound
-                                if display_map else
-                                map_close_sound
-                            ).play()
+                            if not (levels[current_level].won
+                                    or levels[current_level].killed):
+                                display_map = not display_map
+                                (
+                                    map_open_sound
+                                    if display_map else
+                                    map_close_sound
+                                ).play()
                     elif event.key == pygame.K_SLASH:
                         pressed = pygame.key.get_pressed()
                         if pressed[pygame.K_RCTRL] or pressed[pygame.K_LCTRL]:
@@ -1037,7 +1045,8 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                             0.0, flicker_time_remaining[current_level]
                         )
 
-            if has_gun[current_level]:
+            if has_gun[current_level] and (
+                    not display_map or cfg.enable_cheat_map):
                 screen_drawing.draw_gun(screen, cfg, first_person_gun)
 
             if display_compass and (not display_map or cfg.enable_cheat_map):
