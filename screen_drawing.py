@@ -44,6 +44,11 @@ GUN = 7
 pygame.font.init()
 FONT = pygame.font.SysFont('Tahoma', 24, True)
 
+# Change working directory to the directory where the script is located.
+# This prevents issues with required files not being found.
+os.chdir(os.path.dirname(__file__))
+pygame.init()
+
 audio_error_occurred = False
 try:
     # Used for the victory scene animations
