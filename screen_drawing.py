@@ -328,7 +328,7 @@ def draw_solid_background(screen: pygame.Surface, cfg: Config) -> None:
     )
     # Draw solid floor
     pygame.draw.rect(
-        screen, LIGHT_GREY,
+        screen, DARK_GREY,
         (
             0, cfg.viewport_height // 2, filled_screen_width,
             cfg.viewport_height // 2
