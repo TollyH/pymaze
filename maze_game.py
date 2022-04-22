@@ -667,7 +667,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                 )
             if level.PICKUP in events:
                 pickup_flash_time_remaining = 0.4
-            if level.PICKED_UP_KEY in events and not audio_error_occurred:
+            if level.PICKED_UP_KEY in events:
                 random.choice(key_pickup_sounds).play()
             if level.PICKED_UP_KEY_SENSOR in events:
                 key_sensor_times[current_level] = cfg.key_sensor_time
@@ -720,8 +720,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             if not audio_error_occurred and pygame.mixer.music.get_busy():
                 pygame.mixer.music.stop()
             if cfg.monster_sound_on_kill and has_started_level[current_level]:
-                if not audio_error_occurred:
-                    monster_jumpscare_sound.play()
+                monster_jumpscare_sound.play()
                 has_started_level[current_level] = False
             screen_drawing.draw_kill_screen(
                 screen, cfg, jumpscare_monster_texture
@@ -829,54 +828,51 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                             flicker_time_remaining[current_level] = (
                                 random.uniform(0.0, 0.5)
                             )
-                            if not audio_error_occurred:
-                                light_flicker_sound.play()
+                            light_flicker_sound.play()
 
             # Play background breathing if the previous breathing play has
             # finished
-            if not audio_error_occurred:
-                if time_to_breathing_finish > 0:
-                    time_to_breathing_finish -= frame_time
-                if (time_to_breathing_finish <= 0
-                        and has_started_level[current_level]):
-                    # There is no monster, so play the calmest breathing sound
-                    selected_sound = breathing_sounds[max(breathing_sounds)]
-                    monster_coords = levels[current_level].monster_coords
-                    if monster_coords is not None:
-                        distance = math.sqrt(raycasting.no_sqrt_coord_distance(
-                            levels[current_level].player_coords, monster_coords
-                        ))
-                        for min_distance, sound in breathing_sounds.items():
-                            if distance >= min_distance:
-                                selected_sound = sound
-                            else:
-                                break
-                    time_to_breathing_finish = selected_sound.get_length()
-                    selected_sound.play()
-
-            if not audio_error_occurred:
-                # Play monster roaming sound if enough time has passed and
-                # monster is present.
-                if time_to_next_roam_sound > 0:
-                    time_to_next_roam_sound -= frame_time
+            if time_to_breathing_finish > 0:
+                time_to_breathing_finish -= frame_time
+            if (time_to_breathing_finish <= 0
+                    and has_started_level[current_level]):
+                # There is no monster, so play the calmest breathing sound
+                selected_sound = breathing_sounds[max(breathing_sounds)]
                 monster_coords = levels[current_level].monster_coords
-                if (time_to_next_roam_sound <= 0
-                        and monster_coords is not None
-                        and monster_escape_clicks[current_level] == -1
-                        and cfg.monster_sound_roaming):
-                    selected_sound = random.choice(monster_roam_sounds)
-                    time_to_next_roam_sound = (
-                            selected_sound.get_length()
-                            + cfg.monster_roam_sound_delay
-                    )
+                if monster_coords is not None:
                     distance = math.sqrt(raycasting.no_sqrt_coord_distance(
                         levels[current_level].player_coords, monster_coords
                     ))
-                    # Adjust volume based on monster distance
-                    # (the further away the quieter) — tanh limits values
-                    # between 0 and 1.
-                    selected_sound.set_volume(math.tanh(3 / distance))
-                    selected_sound.play()
+                    for min_distance, sound in breathing_sounds.items():
+                        if distance >= min_distance:
+                            selected_sound = sound
+                        else:
+                            break
+                time_to_breathing_finish = selected_sound.get_length()
+                selected_sound.play()
+
+            # Play monster roaming sound if enough time has passed and
+            # monster is present.
+            if time_to_next_roam_sound > 0:
+                time_to_next_roam_sound -= frame_time
+            monster_coords = levels[current_level].monster_coords
+            if (time_to_next_roam_sound <= 0
+                    and monster_coords is not None
+                    and monster_escape_clicks[current_level] == -1
+                    and cfg.monster_sound_roaming):
+                selected_sound = random.choice(monster_roam_sounds)
+                time_to_next_roam_sound = (
+                        selected_sound.get_length()
+                        + cfg.monster_roam_sound_delay
+                )
+                distance = math.sqrt(raycasting.no_sqrt_coord_distance(
+                    levels[current_level].player_coords, monster_coords
+                ))
+                # Adjust volume based on monster distance
+                # (the further away the quieter) — tanh limits values
+                # between 0 and 1.
+                selected_sound.set_volume(math.tanh(3 / distance))
+                selected_sound.play()
 
             if not display_map or cfg.enable_cheat_map:
                 screen_drawing.draw_solid_background(screen, cfg)
@@ -933,8 +929,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                         # If the monster has been rendered, play the jumpscare
                         # sound if enough time has passed since the last play.
                         # Also set the timer to 0 to reset it.
-                        if (not audio_error_occurred and
-                                cfg.monster_sound_on_spot and
+                        if (cfg.monster_sound_on_spot and
                                 monster_spotted[current_level]
                                 == cfg.monster_spot_timeout):
                             monster_spotted_sound.play()
