@@ -265,6 +265,15 @@ def draw_textured_column(screen: pygame.Surface, cfg: Config,
             0, overlap, display_column_width, cfg.viewport_height
         )
     screen.blit(pixel_column, (draw_x, draw_y))
+    if cfg.fog_strength > 0:
+        fog_overlay = pygame.Surface(
+            (1, min(column_height, cfg.viewport_height))
+        )
+        fog_overlay.fill(BLACK)
+        fog_overlay.set_alpha(round(
+            255 / (column_height / cfg.viewport_height * cfg.fog_strength)
+        ))
+        screen.blit(fog_overlay, (draw_x, draw_y))
 
 
 def draw_sprite(screen: pygame.Surface, cfg: Config,
@@ -307,6 +316,19 @@ def draw_sprite(screen: pygame.Surface, cfg: Config,
         abs(cfg.viewport_height // transformation[1])
     )
     scaled_texture = pygame.transform.scale(texture, sprite_size)
+    if cfg.fog_strength > 0:
+        fog_overlay = pygame.Surface(sprite_size)
+        fog_overlay.fill(
+            # Ensure value between 0 and 255
+            (max(round(255 - (255 / (
+                sprite_size[1] / cfg.viewport_height * cfg.fog_strength
+            ))), 0),) * 3
+        )
+        scaled_texture.blit(
+            fog_overlay, (0, 0),
+            special_flags=pygame.BLEND_RGBA_MULT
+            # Multiply sprite pixel values by values in overlay
+        )
     screen.blit(
         scaled_texture, (
             screen_x_pos - sprite_size[0] // 2,

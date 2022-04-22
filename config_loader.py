@@ -130,6 +130,10 @@ class Config:
             'SKY_TEXTURES_ENABLED', True
         )
 
+        # The strength of the fog effect. Lower values result in stronger fog.
+        # A value of 0 disables fog entirely.
+        self.fog_strength = self._parse_float('FOG_STRENGTH', 7.5)
+
         # The dimensions of all the PNGs found in the textures folder.
         self.texture_width = self._parse_int('TEXTURE_WIDTH', 128)
         self.texture_height = self._parse_int('TEXTURE_HEIGHT', 128)

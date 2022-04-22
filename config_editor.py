@@ -336,6 +336,23 @@ class ConfigEditorApp:
         )
         self.gui_sky_textures_check.pack(fill="x", anchor=tkinter.NW)
 
+        self.gui_fog_strength_label = tkinter.Label(
+            self.gui_basic_config_frame, anchor=tkinter.W,
+            text="Fog strength (lower is stronger, 0 is disabled) — "
+            + f"({self.parse_float('FOG_STRENGTH', 7.5)})"
+        )
+        self.scale_labels['FOG_STRENGTH'] = (
+            self.gui_fog_strength_label,
+            "Fog strength (lower is stronger, 0 is disabled) — ({})"
+        )
+        self.gui_fog_strength_slider = tkinter.ttk.Scale(
+            self.gui_basic_config_frame, from_=0.0, to=20.0,
+            value=self.parse_float('FOG_STRENGTH', 7.5),
+            command=lambda x: self.on_scale_change('FOG_STRENGTH', x, 1)
+        )
+        self.gui_fog_strength_label.pack(fill="x", anchor=tkinter.NW)
+        self.gui_fog_strength_slider.pack(fill="x", anchor=tkinter.NW)
+
         self.gui_turn_speed_label = tkinter.Label(
             self.gui_basic_config_frame, anchor=tkinter.W,
             text=f"Turn Sensitivity — ({self.parse_float('TURN_SPEED', 2.5)})"
