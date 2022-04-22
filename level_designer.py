@@ -81,6 +81,7 @@ class LevelDesignerApp:
         self.window.wm_iconbitmap(
             os.path.join("window_icons", "editor.ico")
         )
+        self.window.protocol("WM_DELETE_WINDOW", self.on_closing)
 
         with open("level_designer_descriptions.txt") as file:
             # {CONSTANT_VALUE: description}
@@ -1038,6 +1039,17 @@ class LevelDesignerApp:
         self.levels.insert(target, self.levels.pop(self.current_level))
         self.current_level = target
         self.update_level_list()
+
+    def on_closing(self) -> None:
+        """
+        When closing the window, prompt the user first if they have unsaved
+        changes.
+        """
+        if self.unsaved_changes and not tkinter.messagebox.askyesno(
+                "Unsaved changes", "You currently have unsaved changes, "
+                                   + "are you sure you wish to exit? "):
+            return
+        self.window.destroy()
 
 
 if __name__ == "__main__":
