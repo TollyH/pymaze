@@ -308,7 +308,7 @@ class LevelDesignerApp:
         self.gui_texture_preview.grid(column=0, row=4, columnspan=3)
 
         self.gui_edge_texture_label = tkinter.Label(
-            self.gui_edge_texture_frame, text="Level edge texture",
+            self.gui_edge_texture_frame, text="Default / Edge texture",
             anchor=tkinter.W
         )
         self.gui_edge_texture_label.pack(pady=2, fill=tkinter.X)
