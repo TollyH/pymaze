@@ -69,6 +69,8 @@ class LevelDesignerApp:
         self.current_level = -1
         self.current_tool = SELECT
         self.current_tile = (-1, -1)
+        # The mouse must leave a tile before that same tile is modified again.
+        self.last_visited_tile = (-1, -1)
         # [(current_level, [Level, ...]), ...]
         self.undo_stack: List[Tuple[int, List[Level]]] = []
         self.unsaved_changes = False
@@ -211,6 +213,7 @@ class LevelDesignerApp:
             height=self._cfg.viewport_height + 1
         )
         self.gui_map_canvas.bind("<Button-1>", self.on_map_canvas_click)
+        self.gui_map_canvas.bind("<B1-Motion>", self.on_map_canvas_mouse)
         self.gui_map_canvas.pack()
 
         self.blank_photo_image = tkinter.PhotoImage()
@@ -752,8 +755,17 @@ class LevelDesignerApp:
 
     def on_map_canvas_click(self, event: tkinter.Event) -> None:
         """
-        Called when the map canvas is clicked by the user. Handles the event
-        based on the currently selected tool.
+        Called when the map canvas is clicked by the user. Resets the last
+        visited tile, then continues with the canvas functionality as normal.
+        """
+        self.last_visited_tile = (-1, -1)
+        self.on_map_canvas_mouse(event)
+
+    def on_map_canvas_mouse(self, event: tkinter.Event) -> None:
+        """
+        Called when the map canvas is clicked by the user or the mouse is moved
+        while the left mouse button is held down. Handles the event based on
+        the currently selected tool.
         """
         if self.current_level < 0:
             return
@@ -765,6 +777,9 @@ class LevelDesignerApp:
         )
         if not current_level.is_coord_in_bounds(clicked_tile):
             return
+        if clicked_tile == self.last_visited_tile:
+            return
+        self.last_visited_tile = clicked_tile
         if self.current_tool == SELECT:
             self.current_tile = clicked_tile
         elif self.current_tool == WALL:
