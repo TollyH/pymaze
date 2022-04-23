@@ -787,7 +787,6 @@ class LevelDesignerApp:
         selection = self.gui_level_select.curselection()
         new_level = selection[0] if len(selection) > 0 else -1
         if new_level != self.current_level:
-            self.add_to_undo()
             self.current_level = new_level
             self.current_tile = (-1, -1)
             self.zoom_level = 1.0
