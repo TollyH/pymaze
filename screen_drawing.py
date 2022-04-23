@@ -214,7 +214,8 @@ def draw_untextured_column(screen: pygame.Surface, cfg: Config, index: int,
 def draw_textured_column(screen: pygame.Surface, cfg: Config,
                          coord: Tuple[float, float], side_was_ns: bool,
                          column_height: int, index: int,
-                         facing: Tuple[float, float], texture: pygame.Surface
+                         facing: Tuple[float, float], texture: pygame.Surface,
+                         camera_plane: Tuple[float, float]
                          ) -> None:
     """
     Takes a single column of pixels from the given texture and scales it to
@@ -225,9 +226,14 @@ def draw_textured_column(screen: pygame.Surface, cfg: Config,
     display_column_width = cfg.viewport_width // cfg.display_columns
     position_along_wall = coord[int(not side_was_ns)] % 1
     texture_x = math.floor(position_along_wall * cfg.texture_width)
-    if not side_was_ns and facing[0] > 0:
+    camera_x = 2 * index / cfg.display_columns - 1
+    cast_direction = (
+        facing[0] + camera_plane[0] * camera_x,
+        facing[1] + camera_plane[1] * camera_x,
+    )
+    if not side_was_ns and cast_direction[0] < 0:
         texture_x = cfg.texture_width - texture_x - 1
-    elif side_was_ns and facing[1] < 0:
+    elif side_was_ns and cast_direction[1] > 0:
         texture_x = cfg.texture_width - texture_x - 1
     # The location on the screen to start drawing the column
     draw_x = display_column_width * index

@@ -1001,7 +1001,8 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                             screen, cfg, collision_object.coordinate,
                             side_was_ns, column_height,
                             collision_object.index,
-                            facing_directions[current_level], texture
+                            facing_directions[current_level], texture,
+                            camera_planes[current_level]
                         )
                     else:
                         screen_drawing.draw_untextured_column(
