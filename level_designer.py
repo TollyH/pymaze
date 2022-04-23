@@ -849,17 +849,25 @@ class LevelDesignerApp:
             if event.y >= self._cfg.viewport_height * 0.75:
                 new_offset = (new_offset[0], new_offset[1] + 1)
             elif event.y <= self._cfg.viewport_height * 0.25:
-                new_offset = (new_offset[0] - 1, new_offset[1] - 1)
-            if (current_level.is_coord_in_bounds((
-                    math.floor(current_level.dimensions[0] * self.zoom_level)
-                    + new_offset[0],
-                    math.floor(current_level.dimensions[1] * self.zoom_level)
-                    + new_offset[1])) and
-                    current_level.is_coord_in_bounds(
-                        (new_offset[0], new_offset[1]))):
-                # New scroll offset remains in level boundaries
-                self.scroll_offset = new_offset
-                self.update_map_canvas()
+                new_offset = (new_offset[0], new_offset[1] - 1)
+            # If we can't move diagonally, try moving in just one dimension
+            # instead.
+            for try_offset in (
+                    new_offset, (new_offset[0], self.scroll_offset[1]),
+                    (self.scroll_offset[0], new_offset[1])):
+                if (current_level.is_coord_in_bounds((
+                        math.floor(
+                            current_level.dimensions[0] * self.zoom_level)
+                        + try_offset[0] - 1,
+                        math.floor(
+                            current_level.dimensions[1] * self.zoom_level)
+                        + try_offset[1] - 1)) and
+                        current_level.is_coord_in_bounds(
+                            (try_offset[0], try_offset[1]))):
+                    # New scroll offset remains in level boundaries
+                    self.scroll_offset = try_offset
+                    self.update_map_canvas()
+                    break
         elif self.current_tool == WALL:
             if not is_tile_free(current_level, clicked_tile):
                 return
@@ -1101,9 +1109,9 @@ class LevelDesignerApp:
         current_level = self.levels[self.current_level]
         if (not current_level.is_coord_in_bounds((
                 math.floor(current_level.dimensions[0] * self.zoom_level)
-                + self.scroll_offset[0],
+                + self.scroll_offset[0] - 1,
                 math.floor(current_level.dimensions[1] * self.zoom_level)
-                + self.scroll_offset[1]))):
+                + self.scroll_offset[1] - 1))):
             # Zoomed out enough to have current offset go over level boundary,
             # so reset offset.
             self.scroll_offset = (0, 0)
