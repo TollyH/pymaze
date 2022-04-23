@@ -501,6 +501,11 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                                 screen_drawing.total_time_on_screen):
                             screen_drawing.total_time_on_screen[
                                 current_level
+                            ] = 0.0
+                        if current_level < len(
+                                screen_drawing.victory_sounds_played):
+                            screen_drawing.victory_sounds_played[
+                                current_level
                             ] = 0
                         display_compass = False
                         if not cfg.enable_cheat_map:
