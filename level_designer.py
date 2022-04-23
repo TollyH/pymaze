@@ -855,11 +855,11 @@ class LevelDesignerApp:
                     new_offset, (new_offset[0], self.scroll_offset[1]),
                     (self.scroll_offset[0], new_offset[1])):
                 if (current_level.is_coord_in_bounds((
-                        math.floor(
-                            current_level.dimensions[0] * self.zoom_level)
+                        max(math.floor(
+                            current_level.dimensions[0] * self.zoom_level), 1)
                         + try_offset[0] - 1,
-                        math.floor(
-                            current_level.dimensions[1] * self.zoom_level)
+                        max(math.floor(
+                            current_level.dimensions[1] * self.zoom_level), 1)
                         + try_offset[1] - 1)) and
                         current_level.is_coord_in_bounds(
                             (try_offset[0], try_offset[1]))):
@@ -1107,9 +1107,11 @@ class LevelDesignerApp:
         self.zoom_level = float(new_zoom)
         current_level = self.levels[self.current_level]
         if (not current_level.is_coord_in_bounds((
-                math.floor(current_level.dimensions[0] * self.zoom_level)
+                max(math.floor(
+                    current_level.dimensions[0] * self.zoom_level), 1)
                 + self.scroll_offset[0] - 1,
-                math.floor(current_level.dimensions[1] * self.zoom_level)
+                max(math.floor(
+                    current_level.dimensions[0] * self.zoom_level), 1)
                 + self.scroll_offset[1] - 1))):
             # Zoomed out enough to have current offset go over level boundary,
             # so reset offset.
