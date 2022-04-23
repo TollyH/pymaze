@@ -3,6 +3,7 @@ Contains the definition for LevelDesignerApp, a GUI for editing the game's
 level JSON files easily.
 """
 import copy
+import math
 import os
 import tkinter
 import tkinter.filedialog
@@ -19,14 +20,15 @@ from level import Level
 
 # Tools
 SELECT = 0
-WALL = 1
-START = 2
-END = 3
-KEY = 4
-SENSOR = 5
-GUN = 6
-MONSTER = 7
-DECORATION = 8
+MOVE = 1
+WALL = 2
+START = 3
+END = 4
+KEY = 5
+SENSOR = 6
+GUN = 7
+MONSTER = 8
+DECORATION = 9
 
 
 def rgb_to_hex(red: int, green: int, blue: int) -> str:
@@ -71,6 +73,8 @@ class LevelDesignerApp:
         self.current_tile = (-1, -1)
         # The mouse must leave a tile before that same tile is modified again.
         self.last_visited_tile = (-1, -1)
+        self.zoom_level = 1.0
+        self.scroll_offset = (0, 0)
         # [(current_level, [Level, ...]), ...]
         self.undo_stack: List[Tuple[int, List[Level]]] = []
         self.unsaved_changes = False
@@ -145,6 +149,13 @@ class LevelDesignerApp:
         )
         self.gui_tool_select.pack(pady=2)
 
+        self.gui_tool_move = tkinter.Button(
+            self.gui_tools_frame, image=self.tool_icons.get(
+                MOVE, self.tool_icons[-1]  # Placeholder
+            ), width=24, height=24, command=lambda: self.select_tool(MOVE)
+        )
+        self.gui_tool_move.pack(pady=2)
+
         self.gui_tool_wall = tkinter.Button(
             self.gui_tools_frame, image=self.tool_icons.get(
                 WALL, self.tool_icons[-1]  # Placeholder
@@ -203,9 +214,10 @@ class LevelDesignerApp:
         self.gui_tool_decoration.pack(pady=2)
 
         self.tool_buttons = [
-            self.gui_tool_select, self.gui_tool_wall, self.gui_tool_start,
-            self.gui_tool_end, self.gui_tool_key, self.gui_tool_sensor,
-            self.gui_tool_gun, self.gui_tool_monster, self.gui_tool_decoration
+            self.gui_tool_select, self.gui_tool_move, self.gui_tool_wall,
+            self.gui_tool_start, self.gui_tool_end, self.gui_tool_key,
+            self.gui_tool_sensor, self.gui_tool_gun, self.gui_tool_monster,
+            self.gui_tool_decoration
         ]
 
         self.gui_map_canvas = tkinter.Canvas(
@@ -214,7 +226,14 @@ class LevelDesignerApp:
         )
         self.gui_map_canvas.bind("<Button-1>", self.on_map_canvas_click)
         self.gui_map_canvas.bind("<B1-Motion>", self.on_map_canvas_mouse)
-        self.gui_map_canvas.pack()
+        self.gui_map_canvas.pack(side=tkinter.LEFT)
+
+        self.gui_map_zoom_slider = tkinter.ttk.Scale(
+            self.gui_map_frame, from_=0.01, to=1, orient="vertical",
+            length=self._cfg.viewport_height + 1, value=1,
+            command=self.zoom_level_change
+        )
+        self.gui_map_zoom_slider.pack(side=tkinter.LEFT)
 
         self.blank_photo_image = tkinter.PhotoImage()
         self.gui_selected_square_description = tkinter.Label(
@@ -446,6 +465,11 @@ class LevelDesignerApp:
             self.window.wm_title(f"Level Designer - {filepath}")
             self.current_level = -1
             self.current_tile = (-1, -1)
+            self.zoom_level = 1.0
+            self.scroll_offset = (0, 0)
+            self.do_updates = False
+            self.gui_map_zoom_slider.set(1.0)
+            self.do_updates = True
             self.undo_stack = []
             self.gui_undo_button.config(state=tkinter.DISABLED)
             self.unsaved_changes = False
@@ -495,24 +519,40 @@ class LevelDesignerApp:
         if self.current_level < 0:
             return
         current_level = self.levels[self.current_level]
-        tile_width = self._cfg.viewport_width // current_level.dimensions[0]
-        tile_height = self._cfg.viewport_height // current_level.dimensions[1]
+        tile_width = (
+            self._cfg.viewport_width // max(
+                math.floor(
+                    current_level.dimensions[0] * self.zoom_level
+                ), 1
+            )
+        )
+        tile_height = (
+            self._cfg.viewport_height // max(
+                math.floor(
+                    current_level.dimensions[1] * self.zoom_level
+                ), 1
+            )
+        )
         tile_to_redraw: Optional[Tuple[int, int, int, int, str]] = None
-        for y, row in enumerate(current_level.wall_map):
-            for x, point in enumerate(row):
-                if (x, y) in current_level.original_exit_keys:
+        for y, row in enumerate(
+                current_level.wall_map[self.scroll_offset[1]:]):
+            for x, point in enumerate(row[self.scroll_offset[0]:]):
+                tile_coord = (
+                    x + self.scroll_offset[0], y + self.scroll_offset[1]
+                )
+                if tile_coord in current_level.original_exit_keys:
                     colour = screen_drawing.GOLD
-                elif (x, y) in current_level.original_key_sensors:
+                elif tile_coord in current_level.original_key_sensors:
                     colour = screen_drawing.DARK_GOLD
-                elif (x, y) in current_level.original_guns:
+                elif tile_coord in current_level.original_guns:
                     colour = screen_drawing.GREY
-                elif (x, y) in current_level.decorations:
+                elif tile_coord in current_level.decorations:
                     colour = screen_drawing.PURPLE
-                elif current_level.monster_start == (x, y):
+                elif current_level.monster_start == tile_coord:
                     colour = screen_drawing.DARK_RED
-                elif current_level.start_point == (x, y):
+                elif current_level.start_point == tile_coord:
                     colour = screen_drawing.RED
-                elif current_level.end_point == (x, y):
+                elif current_level.end_point == tile_coord:
                     colour = screen_drawing.GREEN
                 else:
                     colour = (
@@ -520,7 +560,7 @@ class LevelDesignerApp:
                         if point is not None else
                         screen_drawing.WHITE
                     )
-                if self.current_tile == (x, y):
+                if self.current_tile == tile_coord:
                     tile_to_redraw = (
                         tile_width * x + 2, tile_height * y + 2,
                         tile_width * (x + 1) + 2, tile_height * (y + 1) + 2,
@@ -750,6 +790,11 @@ class LevelDesignerApp:
             self.add_to_undo()
             self.current_level = new_level
             self.current_tile = (-1, -1)
+            self.zoom_level = 1.0
+            self.scroll_offset = (0, 0)
+            self.do_updates = False
+            self.gui_map_zoom_slider.set(1.0)
+            self.do_updates = True
             self.update_map_canvas()
             self.update_properties_frame()
 
@@ -770,10 +815,23 @@ class LevelDesignerApp:
         if self.current_level < 0:
             return
         current_level = self.levels[self.current_level]
-        tile_width = self._cfg.viewport_width // current_level.dimensions[0]
-        tile_height = self._cfg.viewport_height // current_level.dimensions[1]
+        tile_width = (
+            self._cfg.viewport_width // max(
+                math.floor(
+                    current_level.dimensions[0] * self.zoom_level
+                ), 1
+            )
+        )
+        tile_height = (
+            self._cfg.viewport_height // max(
+                math.floor(
+                    current_level.dimensions[1] * self.zoom_level
+                ), 1
+            )
+        )
         clicked_tile = (
-            (event.x - 2) // tile_width, (event.y - 2) // tile_height
+            (event.x - 2) // tile_width + self.scroll_offset[0],
+            (event.y - 2) // tile_height + self.scroll_offset[1]
         )
         if not current_level.is_coord_in_bounds(clicked_tile):
             return
@@ -782,6 +840,26 @@ class LevelDesignerApp:
         self.last_visited_tile = clicked_tile
         if self.current_tool == SELECT:
             self.current_tile = clicked_tile
+        elif self.current_tool == MOVE:
+            new_offset = self.scroll_offset
+            if event.x >= self._cfg.viewport_width * 0.75:
+                new_offset = (new_offset[0] + 1, new_offset[1])
+            elif event.x <= self._cfg.viewport_width * 0.25:
+                new_offset = (new_offset[0] - 1, new_offset[1])
+            if event.y >= self._cfg.viewport_height * 0.75:
+                new_offset = (new_offset[0], new_offset[1] + 1)
+            elif event.y <= self._cfg.viewport_height * 0.25:
+                new_offset = (new_offset[0] - 1, new_offset[1] - 1)
+            if (current_level.is_coord_in_bounds((
+                    math.floor(current_level.dimensions[0] * self.zoom_level)
+                    + new_offset[0],
+                    math.floor(current_level.dimensions[1] * self.zoom_level)
+                    + new_offset[1])) and
+                    current_level.is_coord_in_bounds(
+                        (new_offset[0], new_offset[1]))):
+                # New scroll offset remains in level boundaries
+                self.scroll_offset = new_offset
+                self.update_map_canvas()
         elif self.current_tool == WALL:
             if not is_tile_free(current_level, clicked_tile):
                 return
@@ -945,6 +1023,11 @@ class LevelDesignerApp:
                 current_level.wall_map[index].append(None)
         if not current_level.is_coord_in_bounds(self.current_tile):
             self.current_tile = (-1, -1)
+        self.zoom_level = 1.0
+        self.scroll_offset = (0, 0)
+        self.do_updates = False
+        self.gui_map_zoom_slider.set(1.0)
+        self.do_updates = True
         self.update_properties_frame()
         self.update_level_list()
         self.update_map_canvas()
@@ -1006,6 +1089,25 @@ class LevelDesignerApp:
             self.gui_decoration_texture_dropdown.get()
         )
         self.update_properties_frame()
+
+    def zoom_level_change(self, new_zoom: str) -> None:
+        """
+        Called when the user updates the canvas zoom level. Due to how
+        tkinter scales work, new_zoom is given as a string.
+        """
+        if self.current_level < 0 or not self.do_updates:
+            return
+        self.zoom_level = float(new_zoom)
+        current_level = self.levels[self.current_level]
+        if (not current_level.is_coord_in_bounds((
+                math.floor(current_level.dimensions[0] * self.zoom_level)
+                + self.scroll_offset[0],
+                math.floor(current_level.dimensions[1] * self.zoom_level)
+                + self.scroll_offset[1]))):
+            # Zoomed out enough to have current offset go over level boundary,
+            # so reset offset.
+            self.scroll_offset = (0, 0)
+        self.update_map_canvas()
 
     def new_level(self) -> None:
         """
