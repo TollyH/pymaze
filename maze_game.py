@@ -348,6 +348,10 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                     pygame.quit()
                     sys.exit()
                 pygame.mixer.music.unload()
+                # Return the mouse to normal if it is currently captured
+                if enable_mouse_control:
+                    pygame.mouse.set_visible(True)
+                    pygame.event.set_grab(False)
                 return
             # Standard "press-once" keys
             elif event.type == pygame.KEYDOWN:
