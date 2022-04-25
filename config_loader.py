@@ -165,6 +165,15 @@ class Config:
             'DRAW_MAZE_EDGE_AS_WALL', True
         )
 
+        # Whether the player should be blocked by walls.
+        self.enable_collision = self._parse_bool(
+            'ENABLE_COLLISION', True
+        )
+        # Whether the player should be killed upon collision with the monster.
+        self.enable_monster_killing = self._parse_bool(
+            'ENABLE_MONSTER_KILLING', True
+        )
+
         # Larger values will result in faster speeds. Move speed is measured in
         # grid squares per second, and turn speed in radians per second.
         # Run and crawl multipliers are applied when holding Shift or CTRL

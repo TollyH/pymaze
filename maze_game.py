@@ -612,7 +612,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                         * move_multiplier,
                         facing_directions[current_level][1] * move_speed_mod
                         * move_multiplier
-                    ), has_gun[current_level]))
+                    ), has_gun[current_level], True, cfg.enable_collision))
                     has_started_level[current_level] = True
             if pressed_keys[pygame.K_s] or pressed_keys[pygame.K_DOWN]:
                 if (not levels[current_level].won
@@ -622,7 +622,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                         * move_multiplier,
                         -facing_directions[current_level][1] * move_speed_mod
                         * move_multiplier
-                    ), has_gun[current_level]))
+                    ), has_gun[current_level], True, cfg.enable_collision))
                     has_started_level[current_level] = True
             if pressed_keys[pygame.K_a]:
                 if (not levels[current_level].won
@@ -632,7 +632,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                         * move_multiplier,
                         -facing_directions[current_level][0] * move_speed_mod
                         * move_multiplier
-                    ), has_gun[current_level]))
+                    ), has_gun[current_level], True, cfg.enable_collision))
                     has_started_level[current_level] = True
             if pressed_keys[pygame.K_d]:
                 if (not levels[current_level].won
@@ -642,7 +642,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                         * move_multiplier,
                         facing_directions[current_level][0] * move_speed_mod
                         * move_multiplier
-                    ), has_gun[current_level]))
+                    ), has_gun[current_level], True, cfg.enable_collision))
                     has_started_level[current_level] = True
             if pressed_keys[pygame.K_RIGHT]:
                 old_direction = facing_directions[current_level]
@@ -694,7 +694,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             # integer boundary.
             if move_scores[current_level] // 2 > old_move_score // 2:
                 random.choice(footstep_sounds).play()
-            if level.MONSTER_CAUGHT in events:
+            if level.MONSTER_CAUGHT in events and cfg.enable_monster_killing:
                 monster_escape_clicks[current_level] = 0
                 display_map = False
 
@@ -814,7 +814,8 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                         and monster_timeouts[current_level]
                         > cfg.monster_movement_wait
                         and monster_escape_clicks[current_level] == -1):
-                    if levels[current_level].move_monster():
+                    if (levels[current_level].move_monster()
+                            and cfg.enable_monster_killing):
                         monster_escape_clicks[current_level] = 0
                         display_map = False
                     monster_timeouts[current_level] = 0

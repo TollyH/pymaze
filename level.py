@@ -244,7 +244,8 @@ class Level:
         self.wall_map[index[1]][index[0]] = value
 
     def move_player(self, vector: Tuple[float, float], has_gun: bool,
-                    relative: bool = True) -> Set[int]:
+                    relative: bool = True, collision_check: bool = True
+                    ) -> Set[int]:
         """
         Moves the player either relative to their current position, or to an
         absolute location. Pickups and victory checking will be performed
@@ -272,10 +273,12 @@ class Level:
             target = vector
             # There are no alternate movements if we aren't moving relatively.
             alternate_targets = []
-        if not self.is_coord_in_bounds(target) or self[target]:
+        if not self.is_coord_in_bounds(target) or (
+                self[target] and collision_check):
             found_valid = False
             for alt_move in alternate_targets:
-                if self.is_coord_in_bounds(alt_move) and not self[alt_move]:
+                if self.is_coord_in_bounds(alt_move) and (
+                        not self[alt_move] or not collision_check):
                     target = alt_move
                     found_valid = True
                     events.add(ALTERNATE_COORD_CHOSEN)
@@ -289,15 +292,16 @@ class Level:
         )
         # Moved diagonally therefore skipping a square, make sure that's valid.
         if relative_grid_pos[0] and relative_grid_pos[1]:
-            diagonal_path_free = False
-            if not self[old_grid_coords[0] + relative_grid_pos[0],
-                        old_grid_coords[1]]:
-                diagonal_path_free = True
-            elif not self[old_grid_coords[0],
-                          old_grid_coords[1] + relative_grid_pos[1]]:
-                diagonal_path_free = True
-            if not diagonal_path_free:
-                return events
+            if collision_check:
+                diagonal_path_free = False
+                if not self[old_grid_coords[0] + relative_grid_pos[0],
+                            old_grid_coords[1]]:
+                    diagonal_path_free = True
+                elif not self[old_grid_coords[0],
+                              old_grid_coords[1] + relative_grid_pos[1]]:
+                    diagonal_path_free = True
+                if not diagonal_path_free:
+                    return events
             events.add(MOVED_GRID_DIAGONALLY)
         self.player_coords = target
         events.add(MOVED)

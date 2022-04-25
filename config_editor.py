@@ -596,6 +596,34 @@ class ConfigEditorApp:
         )
         self.gui_draw_maze_edge_check.pack(fill="x", anchor=tkinter.NW)
 
+        self.checkbuttons['ENABLE_COLLISION'] = tkinter.IntVar()
+        self.gui_enable_collision_check = tkinter.Checkbutton(
+            self.gui_advanced_config_frame, anchor=tkinter.W,
+            variable=self.checkbuttons['ENABLE_COLLISION'],
+            text="Enable wall collision detection"
+        )
+        if self.parse_bool('ENABLE_COLLISION', True):
+            self.gui_enable_collision_check.select()
+        # Set command after select to prevent it from being called
+        self.gui_enable_collision_check.config(
+            command=lambda: self.on_checkbutton_click('ENABLE_COLLISION')
+        )
+        self.gui_enable_collision_check.pack(fill="x", anchor=tkinter.NW)
+
+        self.checkbuttons['ENABLE_MONSTER_KILLING'] = tkinter.IntVar()
+        self.gui_enable_monster_killing_check = tkinter.Checkbutton(
+            self.gui_advanced_config_frame, anchor=tkinter.W,
+            variable=self.checkbuttons['ENABLE_MONSTER_KILLING'],
+            text="Enable monster engagement on collision"
+        )
+        if self.parse_bool('ENABLE_MONSTER_KILLING', True):
+            self.gui_enable_monster_killing_check.select()
+        # Set command after select to prevent it from being called
+        self.gui_enable_monster_killing_check.config(
+            command=lambda: self.on_checkbutton_click('ENABLE_MONSTER_KILLING')
+        )
+        self.gui_enable_monster_killing_check.pack(fill="x", anchor=tkinter.NW)
+
         self.gui_save_button = tkinter.ttk.Button(
             self.window, command=self.save_config, text="Save"
         )
