@@ -965,9 +965,7 @@ class LevelDesignerApp:
                         current_level, clicked_tile):
                     return
                 self.add_to_undo()
-                current_level.decorations[clicked_tile] = (
-                    next(iter(self.decoration_textures))  # First key
-                )
+                current_level.decorations[clicked_tile] = 'placeholder'
         self.update_map_canvas()
         self.update_properties_frame()
 
@@ -1140,7 +1138,7 @@ class LevelDesignerApp:
         self.add_to_undo()
         self.levels.insert(self.current_level + 1, Level(
             (10, 10), [[None] * 10 for _ in range(10)], (0, 0), (1, 0), set(),
-            set(), set(), {}, None, next(iter(self.textures))  # First key
+            set(), set(), {}, None, 'placeholder'
         ))
         self.update_level_list()
         self.update_map_canvas()
