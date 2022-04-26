@@ -1,5 +1,5 @@
 """
-PyGame Maze - Copyright © 2022  Ptolemy Hill and Finlay Griffiths
+PyMaze - Copyright © 2022  Ptolemy Hill and Finlay Griffiths
 
 The script that launches the game, config editor, and level designer.
 """
@@ -27,7 +27,7 @@ def main() -> None:
 
     # Minimum window resolution is 500×500
     screen = pygame.display.set_mode((500, 500))
-    pygame.display.set_caption("PyGame Maze")
+    pygame.display.set_caption("PyMaze")
     pygame.display.set_icon(
         pygame.image.load(os.path.join("window_icons", "main.png")).convert()
     )
@@ -36,7 +36,7 @@ def main() -> None:
     button_font = pygame.font.SysFont('Tahoma', 28, True)
     title_font = pygame.font.SysFont('Tahoma', 36, True)
 
-    title_text = title_font.render("PyGame Maze", True, BLUE)
+    title_text = title_font.render("PyMaze", True, BLUE)
     copyright_text = normal_font.render(
         "Copyright © 2022  Ptolemy Hill and Finlay Griffiths", True, BLUE
     )

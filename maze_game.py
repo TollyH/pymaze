@@ -56,7 +56,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
     screen = pygame.display.set_mode((
         max(cfg.viewport_width, 500), max(cfg.viewport_height, 500)
     ))
-    pygame.display.set_caption("Maze - Level 1")
+    pygame.display.set_caption("PyMaze - Level 1")
     pygame.display.set_icon(
         pygame.image.load(os.path.join("window_icons", "main.png")).convert()
     )
@@ -348,6 +348,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                     pygame.quit()
                     sys.exit()
                 pygame.mixer.music.unload()
+                pygame.display.set_caption("PyMaze")
                 # Return the mouse to normal if it is currently captured
                 if enable_mouse_control:
                     pygame.mouse.set_visible(True)

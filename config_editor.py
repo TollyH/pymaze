@@ -31,7 +31,7 @@ class ConfigEditorApp:
         self.config_options = self.config['OPTIONS']
 
         self.window = tkinter.Tk()
-        self.window.wm_title("PyGame Maze Config")
+        self.window.wm_title("PyMaze Config")
         self.window.wm_iconbitmap(
             self, os.path.join("window_icons", "config.ico")
         )
