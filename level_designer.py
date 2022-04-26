@@ -71,6 +71,7 @@ class LevelDesignerApp:
         self.current_level = -1
         self.current_tool = SELECT
         self.current_tile = (-1, -1)
+        self.bulk_wall_selection: List[Tuple[int, int]] = []
         # The mouse must leave a tile before that same tile is modified again.
         self.last_visited_tile = (-1, -1)
         self.zoom_level = 1.0
@@ -465,6 +466,7 @@ class LevelDesignerApp:
             self.window.wm_title(f"Level Designer - {filepath}")
             self.current_level = -1
             self.current_tile = (-1, -1)
+            self.bulk_wall_selection = []
             self.zoom_level = 1.0
             self.scroll_offset = (0, 0)
             self.do_updates = False
@@ -533,7 +535,7 @@ class LevelDesignerApp:
                 ), 1
             )
         )
-        tile_to_redraw: Optional[Tuple[int, int, int, int, str]] = None
+        tiles_to_redraw: List[Tuple[int, int, int, int, str, str]] = []
         for y, row in enumerate(
                 current_level.wall_map[self.scroll_offset[1]:]):
             for x, point in enumerate(row[self.scroll_offset[0]:]):
@@ -561,22 +563,27 @@ class LevelDesignerApp:
                         screen_drawing.WHITE
                     )
                 if self.current_tile == tile_coord:
-                    tile_to_redraw = (
+                    tiles_to_redraw.append((
                         tile_width * x + 2, tile_height * y + 2,
                         tile_width * (x + 1) + 2, tile_height * (y + 1) + 2,
-                        rgb_to_hex(*colour)
-                    )
+                        rgb_to_hex(*colour), rgb_to_hex(*screen_drawing.RED)
+                    ))
+                elif (x, y) in self.bulk_wall_selection:
+                    tiles_to_redraw.append((
+                        tile_width * x + 2, tile_height * y + 2,
+                        tile_width * (x + 1) + 2, tile_height * (y + 1) + 2,
+                        rgb_to_hex(*colour), rgb_to_hex(*screen_drawing.GREEN)
+                    ))
                 else:
                     self.gui_map_canvas.create_rectangle(
                         tile_width * x + 2, tile_height * y + 2,
                         tile_width * (x + 1) + 2, tile_height * (y + 1) + 2,
                         fill=rgb_to_hex(*colour)
                     )
-        # Redraw the selected tile to keep the entire outline on top.
-        if tile_to_redraw is not None:
+        # Redraw the selected tile(s) to keep the entire outline on top.
+        for tile in tiles_to_redraw:
             self.gui_map_canvas.create_rectangle(
-                *tile_to_redraw[:4], fill=tile_to_redraw[4],
-                outline=rgb_to_hex(*screen_drawing.RED)
+                *tile[:4], fill=tile[4], outline=tile[5]
             )
 
     def update_level_list(self) -> None:
@@ -789,6 +796,7 @@ class LevelDesignerApp:
         if new_level != self.current_level:
             self.current_level = new_level
             self.current_tile = (-1, -1)
+            self.bulk_wall_selection = []
             self.zoom_level = 1.0
             self.scroll_offset = (0, 0)
             self.do_updates = False
@@ -800,7 +808,8 @@ class LevelDesignerApp:
     def on_map_canvas_click(self, event: tkinter.Event) -> None:
         """
         Called when the map canvas is clicked by the user. Resets the last
-        visited tile, then continues with the canvas functionality as normal.
+        visited tile and bulk wall selection, then continues with the canvas
+        functionality as normal.
         """
         self.last_visited_tile = (-1, -1)
         self.on_map_canvas_mouse(event)
@@ -839,6 +848,10 @@ class LevelDesignerApp:
         self.last_visited_tile = clicked_tile
         if self.current_tool == SELECT:
             self.current_tile = clicked_tile
+            if current_level[clicked_tile] is not None:
+                self.bulk_wall_selection.append(clicked_tile)
+            else:
+                self.bulk_wall_selection = []
         elif self.current_tool == MOVE:
             new_offset = self.scroll_offset
             if event.x >= self._cfg.viewport_width * 0.75:
@@ -972,6 +985,7 @@ class LevelDesignerApp:
         if new_dimensions == current_level.dimensions:
             return
         self.add_to_undo()
+        self.bulk_wall_selection = []
         old_dimensions = current_level.dimensions
         current_level.dimensions = new_dimensions
         if (not current_level.is_coord_in_bounds(current_level.start_point) or
@@ -1063,13 +1077,14 @@ class LevelDesignerApp:
             return
         self.add_to_undo()
         current_level = self.levels[self.current_level]
-        current_tile = current_level[self.current_tile]
-        if isinstance(current_tile, tuple):
-            new_tile = list(current_tile)
-            new_tile[self.texture_direction_variable.get()] = (
-                self.gui_texture_dropdown.get()
-            )
-            current_level[self.current_tile] = tuple(new_tile)  # type: ignore
+        for current_tile in self.bulk_wall_selection:
+            tile = current_level[current_tile]
+            if isinstance(tile, tuple):
+                new_tile = list(tile)
+                new_tile[self.texture_direction_variable.get()] = (
+                    self.gui_texture_dropdown.get()
+                )
+                current_level[current_tile] = tuple(new_tile)  # type: ignore
         self.update_properties_frame()
 
     def edge_texture_change(self, _: tkinter.Event) -> None:
