@@ -462,9 +462,9 @@ def draw_map(screen: pygame.Surface, cfg: Config, current_level: Level,
         ),
         (
             current_level.player_coords[0] * tile_width + x_offset + facing[0]
-            * tile_width // 2,
+            * min(tile_width, tile_height) // 2,
             current_level.player_coords[1] * tile_height + facing[1]
-            * tile_width // 2
+            * min(tile_width, tile_height) // 2
         ), 3
     )
     # Exact player position
@@ -472,7 +472,7 @@ def draw_map(screen: pygame.Surface, cfg: Config, current_level: Level,
         screen, DARK_GREEN, (
             current_level.player_coords[0] * tile_width + x_offset,
             current_level.player_coords[1] * tile_height
-        ), tile_width / 8
+        ), min(tile_width, tile_height) / 8
     )
 
 
