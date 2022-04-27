@@ -22,13 +22,15 @@ import screen_drawing
 SELECT = 0
 MOVE = 1
 WALL = 2
-START = 3
-END = 4
-KEY = 5
-SENSOR = 6
-GUN = 7
-MONSTER = 8
-DECORATION = 9
+COLLISION_PLAYER = 3
+COLLISION_MONSTER = 4
+START = 5
+END = 6
+KEY = 7
+SENSOR = 8
+GUN = 9
+MONSTER = 10
+DECORATION = 11
 
 
 def rgb_to_hex(red: int, green: int, blue: int) -> str:
@@ -166,6 +168,22 @@ class LevelDesignerApp:
         )
         self.gui_tool_wall.pack(pady=2)
 
+        self.gui_tool_collision_player = tkinter.Button(
+            self.gui_tools_frame, image=self.tool_icons.get(
+                COLLISION_PLAYER, self.tool_icons[-1]  # Placeholder
+            ), width=24, height=24,
+            command=lambda: self.select_tool(COLLISION_PLAYER)
+        )
+        self.gui_tool_collision_player.pack(pady=2)
+
+        self.gui_tool_collision_monster = tkinter.Button(
+            self.gui_tools_frame, image=self.tool_icons.get(
+                COLLISION_MONSTER, self.tool_icons[-1]  # Placeholder
+            ), width=24, height=24,
+            command=lambda: self.select_tool(COLLISION_MONSTER)
+        )
+        self.gui_tool_collision_monster.pack(pady=2)
+
         self.gui_tool_start = tkinter.Button(
             self.gui_tools_frame, image=self.tool_icons.get(
                 START, self.tool_icons[-1]  # Placeholder
@@ -218,6 +236,7 @@ class LevelDesignerApp:
 
         self.tool_buttons = [
             self.gui_tool_select, self.gui_tool_move, self.gui_tool_wall,
+            self.gui_tool_collision_player, self.gui_tool_collision_monster,
             self.gui_tool_start, self.gui_tool_end, self.gui_tool_key,
             self.gui_tool_sensor, self.gui_tool_gun, self.gui_tool_monster,
             self.gui_tool_decoration
@@ -925,6 +944,21 @@ class LevelDesignerApp:
                     current_level[clicked_tile, level.PRESENCE], tuple) else
                 (current_level.edge_wall_texture_name,) * 4
             )
+        elif self.current_tool == COLLISION_PLAYER:
+            if (clicked_tile != current_level.monster_start
+                    and not is_tile_free(current_level, clicked_tile)):
+                return
+            self.add_to_undo()
+            current_level[clicked_tile, level.PLAYER_COLLIDE] = (
+                not current_level[clicked_tile, level.PLAYER_COLLIDE]
+            )
+        elif self.current_tool == COLLISION_MONSTER:
+            if clicked_tile == current_level.monster_start:
+                return
+            self.add_to_undo()
+            current_level[clicked_tile, level.MONSTER_COLLIDE] = (
+                not current_level[clicked_tile, level.MONSTER_COLLIDE]
+            )
         elif self.current_tool == START:
             if (current_level[clicked_tile, level.PRESENCE]
                     or current_level[clicked_tile, level.PLAYER_COLLIDE]
@@ -1072,16 +1106,30 @@ class LevelDesignerApp:
         current_level.wall_map = (
             current_level.wall_map[:current_level.dimensions[1]]
         )
+        current_level.collision_map = (
+            current_level.collision_map[:current_level.dimensions[1]]
+        )
         # Pad new rows with empty space
         for __ in range(
                 current_level.dimensions[1] - len(current_level.wall_map)):
             current_level.wall_map.append([None] * current_level.dimensions[0])
+            current_level.collision_map.append(
+                [(False, False)] * current_level.dimensions[0]
+            )
         for index, row in enumerate(current_level.wall_map):
             # Remove excess columns
             current_level.wall_map[index] = row[:current_level.dimensions[0]]
             # Pad new columns with empty space
             for __ in range(current_level.dimensions[0] - len(row)):
                 current_level.wall_map[index].append(None)
+        for index, collision_row in enumerate(current_level.collision_map):
+            # Remove excess columns
+            current_level.collision_map[index] = (
+                collision_row[:current_level.dimensions[0]]
+            )
+            # Pad new columns with empty space
+            for __ in range(current_level.dimensions[0] - len(collision_row)):
+                current_level.collision_map[index].append((False, False))
         if not current_level.is_coord_in_bounds(self.current_tile):
             self.current_tile = (-1, -1)
         self.zoom_level = 1.0
