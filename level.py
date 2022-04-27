@@ -17,6 +17,11 @@ PICKED_UP_GUN = 6
 WON = 7
 MONSTER_CAUGHT = 8
 
+# Wall map index selection type
+PRESENCE = 0
+PLAYER_COLLIDE = 1
+MONSTER_COLLIDE = 2
+
 
 def floor_coordinates(coord: Tuple[float, float]) -> Tuple[int, int]:
     """
@@ -30,6 +35,8 @@ class Level:
     A class representing a single maze level. Contains a wall map
     as a 2D array, with strings representing the north, east, south, and west
     texture names for maze walls, and None representing occupy-able space.
+    The collision map is a 2D array of two bools representing whether the
+    player/monster should collide with the square respectively.
     Also keeps track of the current player coordinates within the level and can
     calculate possible solutions.
     Decorations are a dictionary of coordinates to a decoration texture name.
@@ -41,9 +48,10 @@ class Level:
     player placed walls and are only temporary.
     """
     def __init__(self, dimensions: Tuple[int, int],
-                 wall_map: List[
-                     List[Optional[Union[Tuple[str, str, str, str], bool]]]
-                 ], start_point: Tuple[int, int], end_point: Tuple[int, int],
+                 wall_map: List[List[
+                     Optional[Union[Tuple[str, str, str, str], bool]]
+                 ]], collision_map: List[List[Tuple[bool, bool]]],
+                 start_point: Tuple[int, int], end_point: Tuple[int, int],
                  exit_keys: Set[Tuple[int, int]],
                  key_sensors: Set[Tuple[int, int]], guns: Set[Tuple[int, int]],
                  decorations: Dict[Tuple[int, int], str],
@@ -61,25 +69,39 @@ class Level:
             List[Optional[Union[Tuple[str, str, str, str], bool]]]
         ] = wall_map
 
+        if (len(collision_map) != dimensions[1]
+                or sum(
+                    1 for x in collision_map if len(x) != dimensions[0]) != 0):
+            raise ValueError(
+                f"Collision map must be {dimensions[0]}x{dimensions[1]} points"
+            )
+        self.collision_map: List[List[Tuple[bool, bool]]] = collision_map
+
         if not self.is_coord_in_bounds(start_point):
             raise ValueError("Out of bounds start point coordinates")
-        if self[start_point]:
-            raise ValueError("Start point cannot be inside wall")
+        if self[start_point, PRESENCE] or self[start_point, PLAYER_COLLIDE]:
+            raise ValueError(
+                "Start point cannot be inside wall or player collider"
+            )
         self.start_point = start_point
         # Start in the centre of the tile
         self.player_coords = (start_point[0] + 0.5, start_point[1] + 0.5)
 
         if not self.is_coord_in_bounds(end_point):
             raise ValueError("Out of bounds end point coordinates")
-        if self[end_point]:
-            raise ValueError("End point cannot be inside wall")
+        if self[end_point, PRESENCE] or self[end_point, PLAYER_COLLIDE]:
+            raise ValueError(
+                "End point cannot be inside wall or player collider"
+            )
         self.end_point = end_point
 
         for key in exit_keys:
             if not self.is_coord_in_bounds(key):
                 raise ValueError("Out of bounds key coordinates")
-            if self[key]:
-                raise ValueError("Key cannot be inside wall")
+            if self[key, PRESENCE] or self[key, PLAYER_COLLIDE]:
+                raise ValueError(
+                    "Key cannot be inside wall or player collider"
+                )
         # Use a frozen set to prevent manipulation of original exit keys.
         self.original_exit_keys = frozenset(exit_keys)
         self.exit_keys = exit_keys
@@ -87,8 +109,10 @@ class Level:
         for sensor in key_sensors:
             if not self.is_coord_in_bounds(sensor):
                 raise ValueError("Out of bounds key sensor coordinates")
-            if self[sensor]:
-                raise ValueError("Key sensor cannot be inside wall")
+            if self[sensor, PRESENCE] or self[sensor, PLAYER_COLLIDE]:
+                raise ValueError(
+                    "Key sensor cannot be inside wall or player collider"
+                )
         # Use a frozen set to prevent manipulation of original key sensors.
         self.original_key_sensors = frozenset(key_sensors)
         self.key_sensors = key_sensors
@@ -96,8 +120,10 @@ class Level:
         for gun_pickup in guns:
             if not self.is_coord_in_bounds(gun_pickup):
                 raise ValueError("Out of bounds gun coordinates")
-            if self[gun_pickup]:
-                raise ValueError("Gun cannot be inside wall")
+            if self[gun_pickup, PRESENCE] or self[gun_pickup, PLAYER_COLLIDE]:
+                raise ValueError(
+                    "Gun cannot be inside wall or player collider"
+                )
         # Use a frozen set to prevent manipulation of original guns
         self.original_guns = frozenset(guns)
         self.guns = guns
@@ -105,8 +131,10 @@ class Level:
         for decor in decorations:
             if not self.is_coord_in_bounds(decor[:2]):
                 raise ValueError("Out of bounds decoration coordinates")
-            if self[decor[:2]]:
-                raise ValueError("Decoration cannot be inside wall")
+            if self[decor[:2], PRESENCE] or self[decor[:2], PLAYER_COLLIDE]:
+                raise ValueError(
+                    "Decoration cannot be inside wall or player collider"
+                )
         self.decorations = decorations
 
         self.monster_coords: Optional[Tuple[int, int]] = None
@@ -114,8 +142,11 @@ class Level:
             monster_start, monster_wait = monster[:2], monster[2]
             if not self.is_coord_in_bounds(monster_start):
                 raise ValueError("Out of bounds monster start coordinates")
-            if self[monster_start]:
-                raise ValueError("Monster start cannot be inside wall")
+            if (self[monster_start, PRESENCE]
+                    or self[monster_start, PLAYER_COLLIDE]):
+                raise ValueError(
+                    "Monster start cannot be inside wall or player collider"
+                )
             self.monster_start: Optional[Tuple[int, int]] = monster_start
             self.monster_wait: Optional[float] = monster_wait
         else:
@@ -151,6 +182,7 @@ class Level:
                 [None if x is None else tuple(x) for x in y]
                 for y in json_dict['wall_map']
             ],
+            [[tuple(x) for x in y] for y in json_dict['collision_map']],
             tuple(json_dict['start_point']), tuple(json_dict['end_point']),
             {tuple(x) for x in json_dict['exit_keys']},
             {tuple(x) for x in json_dict['key_sensors']},
@@ -180,6 +212,9 @@ class Level:
                 # empty space.
                 [None if x is True or x is None else list(x) for x in y]
                 for y in self.wall_map
+            ],
+            "collision_map": [
+                [list(x) for x in y] for y in self.collision_map
             ],
             "start_point": list(self.start_point),
             "end_point": list(self.end_point),
@@ -222,26 +257,53 @@ class Level:
             string += "\n"
         return string[:-1]
 
-    def __getitem__(self, index: Tuple[float, float]
+    def __getitem__(self, index: Tuple[Tuple[float, float], int]
                     ) -> Optional[Union[Tuple[str, str, str, str], bool]]:
         """
-        Get the north, south, east, and west textures for the wall at the
-        specified coordinates, or None if there is no wall.
+        Check for either the PRESENCE of a wall, or whether the player should
+        collide (PLAYER_COLLIDE), or whether the monster should collide
+        (MONSTER_COLLIDE).
+        Gets the north, south, east, and west textures for the wall at the
+        specified coordinates, or None if there is no wall if checking for
+        PRESENCE, otherwise a bool. A True value may also be returned for
+        PRESENCE if a player placed wall is at the specified coordinate.
         """
-        if not self.is_coord_in_bounds(index):
+        if not self.is_coord_in_bounds(index[0]):
             raise ValueError("Target coordinates out of bounds")
-        grid_index = floor_coordinates(index)
-        return self.wall_map[grid_index[1]][grid_index[0]]
+        grid_index = floor_coordinates(index[0])
+        if index[1] == PRESENCE:
+            return self.wall_map[grid_index[1]][grid_index[0]]
+        if index[1] == PLAYER_COLLIDE:
+            return self.collision_map[grid_index[1]][grid_index[0]][0]
+        if index[1] == MONSTER_COLLIDE:
+            return self.collision_map[grid_index[1]][grid_index[0]][1]
+        return None
 
-    def __setitem__(self, index: Tuple[int, int],
+    def __setitem__(self, index: Tuple[Tuple[int, int], int],
                     value: Optional[Union[Tuple[str, str, str, str], bool]]
                     ) -> None:
         """
-        Change the texture of a wall or remove the wall entirely.
+        Change the texture of a wall or remove the wall entirely if PRESENCE
+        is specified, or change the PLAYER_COLLIDE or MONSTER_COLLIDE status.
         """
-        if not self.is_coord_in_bounds(index):
+        if not self.is_coord_in_bounds(index[0]):
             raise ValueError("Target coordinates out of bounds")
-        self.wall_map[index[1]][index[0]] = value
+        if index[1] == PRESENCE:
+            self.wall_map[index[0][1]][index[0][0]] = value
+        elif index[1] == PLAYER_COLLIDE:
+            if isinstance(value, bool):
+                self.collision_map[index[0][1]][index[0][0]] = (
+                    value, self.collision_map[index[0][1]][index[0][0]][1]
+                )
+            else:
+                raise TypeError("Collision map entries must be bool")
+        elif index[1] == MONSTER_COLLIDE:
+            if isinstance(value, bool):
+                self.collision_map[index[0][1]][index[0][0]] = (
+                    self.collision_map[index[0][1]][index[0][0]][0], value
+                )
+            else:
+                raise TypeError("Collision map entries must be bool")
 
     def move_player(self, vector: Tuple[float, float], has_gun: bool,
                     relative: bool = True, collision_check: bool = True
@@ -274,11 +336,12 @@ class Level:
             # There are no alternate movements if we aren't moving relatively.
             alternate_targets = []
         if not self.is_coord_in_bounds(target) or (
-                self[target] and collision_check):
+                self[target, PLAYER_COLLIDE] and collision_check):
             found_valid = False
             for alt_move in alternate_targets:
                 if self.is_coord_in_bounds(alt_move) and (
-                        not self[alt_move] or not collision_check):
+                        not self[alt_move, PLAYER_COLLIDE]
+                        or not collision_check):
                     target = alt_move
                     found_valid = True
                     events.add(ALTERNATE_COORD_CHOSEN)
@@ -294,11 +357,12 @@ class Level:
         if relative_grid_pos[0] and relative_grid_pos[1]:
             if collision_check:
                 diagonal_path_free = False
-                if not self[old_grid_coords[0] + relative_grid_pos[0],
-                            old_grid_coords[1]]:
+                if not self[(old_grid_coords[0] + relative_grid_pos[0],
+                            old_grid_coords[1]), PLAYER_COLLIDE]:
                     diagonal_path_free = True
-                elif not self[old_grid_coords[0],
-                              old_grid_coords[1] + relative_grid_pos[1]]:
+                elif not self[(old_grid_coords[0],
+                              old_grid_coords[1] + relative_grid_pos[1]),
+                              PLAYER_COLLIDE]:
                     diagonal_path_free = True
                 if not diagonal_path_free:
                     return events
@@ -358,7 +422,8 @@ class Level:
                 )
                 collided = False
                 for y_coord in range(min_y_coord, max_y_coord + 1):
-                    if self[player_grid_position[0], y_coord]:
+                    if self[(player_grid_position[0], y_coord),
+                            MONSTER_COLLIDE]:
                         collided = True
                         break
                 if not collided:
@@ -372,7 +437,8 @@ class Level:
                 )
                 collided = False
                 for x_coord in range(min_x_coord, max_x_coord + 1):
-                    if self[x_coord, player_grid_position[1]]:
+                    if self[(x_coord, player_grid_position[1]),
+                            MONSTER_COLLIDE]:
                         collided = True
                         break
                 if not collided:
@@ -405,7 +471,8 @@ class Level:
                         self.monster_coords[0] + vector[0],
                         self.monster_coords[1] + vector[1]
                     )
-                    if (self.is_coord_in_bounds(target) and not self[target]
+                    if (self.is_coord_in_bounds(target)
+                            and not self[target, MONSTER_COLLIDE]
                             and self._last_monster_position != target):
                         self.monster_coords = target
                         break
@@ -474,8 +541,8 @@ class Level:
                 current_path[-1][0] + x_offset,
                 current_path[-1][1] + y_offset
             )
-            if (not self.is_coord_in_bounds(point) or self[point]
-                    or point in current_path):
+            if not self.is_coord_in_bounds(point) or self[
+                    point, PLAYER_COLLIDE] or point in current_path:
                 continue
             if point in targets:
                 found_paths.append(current_path + [point])

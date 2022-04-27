@@ -431,12 +431,22 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                             grid_coords[1] + cardinal_facing[1]
                         )
                         if (levels[current_level].is_coord_in_bounds(target)
-                                and not levels[current_level][target]):
+                                and not levels[current_level][
+                                    target, level.PRESENCE]
+                                and not levels[current_level][
+                                    target, level.PLAYER_COLLIDE]
+                                and not levels[current_level][
+                                    target, level.MONSTER_COLLIDE]):
                             player_walls[current_level] = (
                                 target[0], target[1],
                                 time_scores[current_level]
                             )
-                            levels[current_level][target] = True
+                            levels[current_level][
+                                target, level.PRESENCE] = True
+                            levels[current_level][
+                                target, level.PLAYER_COLLIDE] = True
+                            levels[current_level][
+                                target, level.MONSTER_COLLIDE] = True
                             random.choice(wall_place_sounds).play()
                     elif event.key == pygame.K_t and has_gun[current_level]:
                         if (not display_map or cfg.enable_cheat_map) and not (
@@ -518,8 +528,14 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                         current_player_wall = player_walls[current_level]
                         if current_player_wall is not None:
                             levels[current_level][
-                                current_player_wall[:2]
+                                current_player_wall[:2], level.PRESENCE
                             ] = None
+                            levels[current_level][
+                                current_player_wall[:2], level.PLAYER_COLLIDE
+                            ] = False
+                            levels[current_level][
+                                current_player_wall[:2], level.MONSTER_COLLIDE
+                            ] = False
                             player_walls[current_level] = None
                         wall_place_cooldown[current_level] = 0.0
                     elif event.key == pygame.K_n:
@@ -768,8 +784,14 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                         >= current_player_wall[2] + cfg.player_wall_time):
                     # Remove player placed wall if enough time has passed
                     levels[current_level][
-                        current_player_wall[:2]
+                        current_player_wall[:2], level.PRESENCE
                     ] = None
+                    levels[current_level][
+                        current_player_wall[:2], level.PLAYER_COLLIDE
+                    ] = False
+                    levels[current_level][
+                        current_player_wall[:2], level.MONSTER_COLLIDE
+                    ] = False
                     player_walls[current_level] = None
                     wall_place_cooldown[current_level] = (
                         cfg.player_wall_cooldown
@@ -984,7 +1006,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                         elif levels[current_level].is_coord_in_bounds(
                                 collision_object.tile):
                             point = levels[current_level][
-                                collision_object.tile
+                                collision_object.tile, level.PRESENCE
                             ]
                             if isinstance(point, tuple):
                                 texture_name = point[collision_object.side]

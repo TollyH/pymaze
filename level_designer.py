@@ -13,10 +13,10 @@ from glob import glob
 from typing import Dict, List, Optional, Tuple
 
 import config_loader
+import level
 import maze_levels
 import raycasting
 import screen_drawing
-from level import Level
 
 # Tools
 SELECT = 0
@@ -38,18 +38,20 @@ def rgb_to_hex(red: int, green: int, blue: int) -> str:
     return f'#{red:02x}{green:02x}{blue:02x}'
 
 
-def is_tile_free(level: Level, tile: Tuple[int, int]) -> bool:
+def is_tile_free(maze_level: level.Level, tile: Tuple[int, int]) -> bool:
     """
     Determine whether a particular tile in a level is free to have a wall
     placed on it.
     """
-    if not level.is_coord_in_bounds(tile):
-        return False
-    if tile in (level.start_point, level.end_point, level.monster_start):
+    if not maze_level.is_coord_in_bounds(tile):
         return False
     if tile in (
-            level.original_exit_keys | level.original_key_sensors
-            | level.original_guns | level.decorations.keys()):
+            maze_level.start_point, maze_level.end_point,
+            maze_level.monster_start):
+        return False
+    if tile in (
+            maze_level.original_exit_keys | maze_level.original_key_sensors
+            | maze_level.original_guns | maze_level.decorations.keys()):
         return False
     return True
 
@@ -67,7 +69,7 @@ class LevelDesignerApp:
 
         self._cfg = config_loader.Config(config_file_path)
         self.current_path: Optional[str] = None
-        self.levels: List[Level] = []
+        self.levels: List[level.Level] = []
         self.current_level = -1
         self.current_tool = SELECT
         self.current_tile = (-1, -1)
@@ -77,7 +79,7 @@ class LevelDesignerApp:
         self.zoom_level = 1.0
         self.scroll_offset = (0, 0)
         # [(current_level, [Level, ...]), ...]
-        self.undo_stack: List[Tuple[int, List[Level]]] = []
+        self.undo_stack: List[Tuple[int, List[level.Level]]] = []
         self.unsaved_changes = False
         # Used to prevent methods from being called when programmatically
         # setting widget values.
@@ -591,6 +593,24 @@ class LevelDesignerApp:
             self.gui_map_canvas.create_rectangle(
                 *tile[:4], fill=tile[4], outline=tile[5]
             )
+        for y, collider_row in enumerate(
+                current_level.collision_map[self.scroll_offset[1]:]):
+            for x, collider in enumerate(collider_row[self.scroll_offset[0]:]):
+                if collider[0]:
+                    self.gui_map_canvas.create_oval(
+                        tile_width * x + 3,
+                        tile_height * y + (tile_height - tile_height // 8),
+                        tile_width * x + tile_width // 8 + 3,
+                        tile_height * (y + 1),
+                        fill=rgb_to_hex(*screen_drawing.DARK_GREEN)
+                    )
+                if collider[1]:
+                    self.gui_map_canvas.create_oval(
+                        tile_width * x + (tile_width - tile_width // 8),
+                        tile_height * y + (tile_height - tile_height // 8),
+                        tile_width * (x + 1), tile_height * (y + 1),
+                        fill=rgb_to_hex(*screen_drawing.RED)
+                    )
 
     def update_level_list(self) -> None:
         """
@@ -600,10 +620,10 @@ class LevelDesignerApp:
             return
         self.do_updates = False
         self.gui_level_select.delete(0, tkinter.END)
-        for index, level in enumerate(self.levels):
+        for index, maze_level in enumerate(self.levels):
             self.gui_level_select.insert(
                 tkinter.END, f"Level {index + 1} - "
-                + f"{level.dimensions[0]}x{level.dimensions[1]}"
+                + f"{maze_level.dimensions[0]}x{maze_level.dimensions[1]}"
             )
         if 0 <= self.current_level < len(self.levels):
             self.gui_level_select.selection_set(self.current_level)
@@ -719,7 +739,7 @@ class LevelDesignerApp:
                 bg=rgb_to_hex(*screen_drawing.GREEN), fg="black"
             )
         else:
-            if current_level[self.current_tile] is not None:
+            if current_level[self.current_tile, level.PRESENCE] is not None:
                 self.gui_selected_square_description.config(
                     text=self.descriptions[WALL],
                     bg=rgb_to_hex(*screen_drawing.BLACK), fg="white"
@@ -728,7 +748,7 @@ class LevelDesignerApp:
                     self.gui_texture_frame.pack(
                         padx=2, pady=2, fill="x"
                     )
-                current_tile = current_level[self.current_tile]
+                current_tile = current_level[self.current_tile, level.PRESENCE]
                 if isinstance(current_tile, tuple):
                     self.do_updates = False
                     self.gui_texture_dropdown.set(
@@ -855,7 +875,7 @@ class LevelDesignerApp:
         self.last_visited_tile = clicked_tile
         if self.current_tool == SELECT:
             self.current_tile = clicked_tile
-            if current_level[clicked_tile] is not None:
+            if current_level[clicked_tile, level.PRESENCE] is not None:
                 self.bulk_wall_selection.append(clicked_tile)
             else:
                 self.bulk_wall_selection = []
@@ -891,20 +911,31 @@ class LevelDesignerApp:
             if not is_tile_free(current_level, clicked_tile):
                 return
             self.add_to_undo()
-            current_level[clicked_tile] = (
+            current_level[clicked_tile, level.PLAYER_COLLIDE] = not isinstance(
+                current_level[clicked_tile, level.PRESENCE], tuple
+            )
+            current_level[clicked_tile, level.MONSTER_COLLIDE] = (
+                not isinstance(
+                    current_level[clicked_tile, level.PRESENCE], tuple
+                )
+            )
+            current_level[clicked_tile, level.PRESENCE] = (
                 None
-                if isinstance(current_level[clicked_tile], tuple) else
+                if isinstance(
+                    current_level[clicked_tile, level.PRESENCE], tuple) else
                 (current_level.edge_wall_texture_name,) * 4
             )
         elif self.current_tool == START:
-            if current_level[clicked_tile] or not is_tile_free(
-                    current_level, clicked_tile):
+            if (current_level[clicked_tile, level.PRESENCE]
+                    or current_level[clicked_tile, level.PLAYER_COLLIDE]
+                    or not is_tile_free(current_level, clicked_tile)):
                 return
             self.add_to_undo()
             current_level.start_point = clicked_tile
         elif self.current_tool == END:
-            if current_level[clicked_tile] or not is_tile_free(
-                    current_level, clicked_tile):
+            if (current_level[clicked_tile, level.PRESENCE]
+                    or current_level[clicked_tile, level.PLAYER_COLLIDE]
+                    or not is_tile_free(current_level, clicked_tile)):
                 return
             self.add_to_undo()
             current_level.end_point = clicked_tile
@@ -915,8 +946,9 @@ class LevelDesignerApp:
                     current_level.original_exit_keys - {clicked_tile}
                 )
             else:
-                if current_level[clicked_tile] or not is_tile_free(
-                        current_level, clicked_tile):
+                if (current_level[clicked_tile, level.PRESENCE]
+                        or current_level[clicked_tile, level.PLAYER_COLLIDE]
+                        or not is_tile_free(current_level, clicked_tile)):
                     return
                 self.add_to_undo()
                 current_level.original_exit_keys = (
@@ -929,8 +961,9 @@ class LevelDesignerApp:
                     current_level.original_key_sensors - {clicked_tile}
                 )
             else:
-                if current_level[clicked_tile] or not is_tile_free(
-                        current_level, clicked_tile):
+                if (current_level[clicked_tile, level.PRESENCE]
+                        or current_level[clicked_tile, level.PLAYER_COLLIDE]
+                        or not is_tile_free(current_level, clicked_tile)):
                     return
                 self.add_to_undo()
                 current_level.original_key_sensors = (
@@ -943,8 +976,9 @@ class LevelDesignerApp:
                     current_level.original_guns - {clicked_tile}
                 )
             else:
-                if current_level[clicked_tile] or not is_tile_free(
-                        current_level, clicked_tile):
+                if (current_level[clicked_tile, level.PRESENCE]
+                        or current_level[clicked_tile, level.PLAYER_COLLIDE]
+                        or not is_tile_free(current_level, clicked_tile)):
                     return
                 self.add_to_undo()
                 current_level.original_guns = (
@@ -956,8 +990,9 @@ class LevelDesignerApp:
                 current_level.monster_start = None
                 current_level.monster_wait = None
             else:
-                if current_level[clicked_tile] or not is_tile_free(
-                        current_level, clicked_tile):
+                if (current_level[clicked_tile, level.PRESENCE]
+                        or current_level[clicked_tile, level.MONSTER_COLLIDE]
+                        or not is_tile_free(current_level, clicked_tile)):
                     return
                 self.add_to_undo()
                 current_level.monster_start = clicked_tile
@@ -968,8 +1003,8 @@ class LevelDesignerApp:
                 self.add_to_undo()
                 current_level.decorations.pop(clicked_tile)
             else:
-                if current_level[clicked_tile] or not is_tile_free(
-                        current_level, clicked_tile):
+                if (current_level[clicked_tile, level.PRESENCE]
+                        or not is_tile_free(current_level, clicked_tile)):
                     return
                 self.add_to_undo()
                 current_level.decorations[clicked_tile] = 'placeholder'
@@ -1083,7 +1118,7 @@ class LevelDesignerApp:
         self.add_to_undo()
         current_level = self.levels[self.current_level]
         for current_tile in self.bulk_wall_selection:
-            tile = current_level[current_tile]
+            tile = current_level[current_tile, level.PRESENCE]
             if isinstance(tile, tuple):
                 new_tile = list(tile)
                 new_tile[self.texture_direction_variable.get()] = (
@@ -1143,8 +1178,9 @@ class LevelDesignerApp:
         Create an empty level after the currently selected level.
         """
         self.add_to_undo()
-        self.levels.insert(self.current_level + 1, Level(
-            (10, 10), [[None] * 10 for _ in range(10)], (0, 0), (1, 0), set(),
+        self.levels.insert(self.current_level + 1, level.Level(
+            (10, 10), [[None] * 10 for _ in range(10)],
+            [[(False, False)] * 10 for _ in range(10)], (0, 0), (1, 0), set(),
             set(), set(), {}, None, 'placeholder'
         ))
         self.update_level_list()

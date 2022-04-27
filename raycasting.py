@@ -219,7 +219,7 @@ def get_first_collision(current_level: level.Level,
                     ), current_tile, FLAG
                 ))
             # Collision check
-            if current_level[current_tile]:
+            if current_level[current_tile, level.PRESENCE]:
                 tile_found = True
     # If this point is reached, a wall tile has been found.
     collision_point = (
