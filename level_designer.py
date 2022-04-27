@@ -220,6 +220,12 @@ class LevelDesignerApp:
             self.gui_tool_sensor, self.gui_tool_gun, self.gui_tool_monster,
             self.gui_tool_decoration
         ]
+        self.window.bind(
+            's', lambda _: self.select_tool(self.current_tool + 1)
+        )
+        self.window.bind(
+            'w', lambda _: self.select_tool(self.current_tool - 1)
+        )
 
         self.gui_map_canvas = tkinter.Canvas(
             self.gui_map_frame, width=self._cfg.viewport_width + 1,
@@ -757,6 +763,7 @@ class LevelDesignerApp:
     def select_tool(self, new_tool: int) -> None:
         """
         Change the currently selected tool and update buttons to match.
+        Silently fails if the specified tool does not exist.
         """
         if 0 <= new_tool < len(self.tool_buttons):
             self.tool_buttons[self.current_tool].config(state=tkinter.ACTIVE)
