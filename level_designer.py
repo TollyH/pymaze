@@ -247,6 +247,7 @@ class LevelDesignerApp:
         self.window.bind(
             'w', lambda _: self.select_tool(self.current_tool - 1)
         )
+        self.window.bind('a', self.bulk_select_all_walls)
 
         self.gui_map_canvas = tkinter.Canvas(
             self.gui_map_frame, width=self._cfg.viewport_width + 1,
@@ -1045,6 +1046,19 @@ class LevelDesignerApp:
         self.update_map_canvas()
         self.update_properties_frame()
 
+    def bulk_select_all_walls(self, _: tkinter.Event = None) -> None:
+        """
+        Called when the user presses 'a'. Bulk selects all walls in the current
+        level.
+        """
+        for y, row in enumerate(
+                self.levels[self.current_level].wall_map[
+                    self.scroll_offset[1]:]):
+            for x, point in enumerate(row[self.scroll_offset[0]:]):
+                if isinstance(point, tuple):
+                    self.bulk_wall_selection.append((x, y))
+        self.update_map_canvas()
+
     def dimensions_changed(self, _: str) -> None:
         """
         Called when the user updates the dimensions of the level.
@@ -1172,7 +1186,7 @@ class LevelDesignerApp:
                 new_tile[self.texture_direction_variable.get()] = (
                     self.gui_texture_dropdown.get()
                 )
-                current_level[current_tile, level.PRESENCE] = (
+                current_level[current_tile, level.PRESENCE] = (  # type: ignore
                     tuple(new_tile)  # type: ignore
                 )
         self.update_properties_frame()
