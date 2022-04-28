@@ -91,4 +91,4 @@ algorithm for raycasting.
 
 ---
 
-**Copyright © 2022  Ptolemy Hill and Finlay Griffiths**
+**Copyright © 2022  Ptolemy Hill, Finlay Griffiths, and Tomas Reynolds**
