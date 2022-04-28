@@ -1045,8 +1045,14 @@ class LevelDesignerApp:
     def bulk_select_all_walls(self, _: tkinter.Event = None) -> None:
         """
         Called when the user presses 'a'. Bulk selects all walls in the current
-        level.
+        level. Only works if the currently selected tile is a wall.
         """
+        if self.current_level < 0 or -1 in self.current_tile:
+            return
+        if not isinstance(
+                self.levels[self.current_level][
+                    self.current_tile, level.PRESENCE], tuple):
+            return
         for y, row in enumerate(
                 self.levels[self.current_level].wall_map[
                     self.scroll_offset[1]:]):
