@@ -1172,7 +1172,9 @@ class LevelDesignerApp:
                 new_tile[self.texture_direction_variable.get()] = (
                     self.gui_texture_dropdown.get()
                 )
-                current_level[current_tile] = tuple(new_tile)  # type: ignore
+                current_level[current_tile, level.PRESENCE] = (
+                    tuple(new_tile)  # type: ignore
+                )
         self.update_properties_frame()
 
     def edge_texture_change(self, _: tkinter.Event) -> None:
