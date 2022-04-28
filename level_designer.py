@@ -253,8 +253,12 @@ class LevelDesignerApp:
             self.gui_map_frame, width=self._cfg.viewport_width + 1,
             height=self._cfg.viewport_height + 1
         )
-        self.gui_map_canvas.bind("<Button-1>", self.on_map_canvas_click)
-        self.gui_map_canvas.bind("<B1-Motion>", self.on_map_canvas_mouse)
+        self.gui_map_canvas.bind(
+            "<Button-1>", lambda e: self.on_map_canvas_mouse(e, True)
+        )
+        self.gui_map_canvas.bind(
+            "<B1-Motion>", lambda e: self.on_map_canvas_mouse(e, False)
+        )
         self.gui_map_canvas.pack(side=tkinter.LEFT)
 
         self.gui_map_zoom_slider = tkinter.ttk.Scale(
@@ -852,16 +856,8 @@ class LevelDesignerApp:
             self.update_map_canvas()
             self.update_properties_frame()
 
-    def on_map_canvas_click(self, event: tkinter.Event) -> None:
-        """
-        Called when the map canvas is clicked by the user. Resets the last
-        visited tile and bulk wall selection, then continues with the canvas
-        functionality as normal.
-        """
-        self.last_visited_tile = (-1, -1)
-        self.on_map_canvas_mouse(event)
-
-    def on_map_canvas_mouse(self, event: tkinter.Event) -> None:
+    def on_map_canvas_mouse(self, event: tkinter.Event, was_click: bool
+                            ) -> None:
         """
         Called when the map canvas is clicked by the user or the mouse is moved
         while the left mouse button is held down. Handles the event based on
@@ -890,14 +886,14 @@ class LevelDesignerApp:
         )
         if not current_level.is_coord_in_bounds(clicked_tile):
             return
-        if clicked_tile == self.last_visited_tile:
+        if not was_click and clicked_tile == self.last_visited_tile:
             return
         self.last_visited_tile = clicked_tile
         if self.current_tool == SELECT:
             self.current_tile = clicked_tile
             if current_level[clicked_tile, level.PRESENCE] is not None:
                 self.bulk_wall_selection.append(clicked_tile)
-            else:
+            elif was_click:
                 self.bulk_wall_selection = []
         elif self.current_tool == MOVE:
             new_offset = self.scroll_offset
