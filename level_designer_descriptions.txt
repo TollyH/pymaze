@@ -1,5 +1,5 @@
 SELECT|Empty Space: There's nothing here. How boring. Appears on both the normal map and cheat map.
-WALL|Wall: Blocks the player from moving through. Each of the four sides can have its own texture. How boring. Appears on both the normal map and cheat map.
+WALL|Wall: Blocks the player from moving through. Each of the four sides can have its own texture. Click/drag on multiple walls to bulk update texutres, or press 'A' to select them all. Appears on both the normal map and cheat map.
 START|Start Point: Where the player will be placed when the level starts and upon resetting. The player will always be facing south when spawned. Appears on both the normal map and cheat map.
 END|End/Exit Point: The point the player must reach to complete the level after collecting all the keys. Appears on only the cheat map.
 KEY|Key: Levels can have as many of these as you see fit, and can even be left out entirely. The player must collect every key before being allowed to exit the level. Appears on only the cheat map unless the player has a key sensor.
