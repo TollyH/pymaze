@@ -592,7 +592,12 @@ class LevelDesignerApp:
                     colour = (
                         screen_drawing.BLACK
                         if point is not None else
-                        screen_drawing.WHITE
+                        (
+                            screen_drawing.WHITE
+                            if tile_coord
+                            in current_level.get_reachable_tiles()
+                            else screen_drawing.LIGHT_BLUE
+                        )
                     )
                 if self.current_tile == tile_coord:
                     tiles_to_redraw.append((
@@ -787,7 +792,12 @@ class LevelDesignerApp:
             else:
                 self.gui_selected_square_description.config(
                     text=self.descriptions[SELECT],
-                    bg=rgb_to_hex(*screen_drawing.WHITE), fg="black"
+                    bg=rgb_to_hex(
+                        *screen_drawing.WHITE
+                        if self.current_tile
+                        in current_level.get_reachable_tiles()
+                        else screen_drawing.LIGHT_BLUE
+                    ), fg="black"
                 )
                 if not self.gui_edge_texture_frame.winfo_ismapped():
                     self.gui_edge_texture_frame.pack(
