@@ -3,7 +3,6 @@ Contains the definition for LevelDesignerApp, a GUI for editing the game's
 level JSON files easily.
 """
 import copy
-import math
 import os
 import tkinter
 import tkinter.filedialog
@@ -555,16 +554,12 @@ class LevelDesignerApp:
         current_level = self.levels[self.current_level]
         tile_width = (
             self._cfg.viewport_width // max(
-                math.floor(
-                    current_level.dimensions[0] * self.zoom_level
-                ), 1
+                (current_level.dimensions[0] * self.zoom_level).__trunc__(), 1
             )
         )
         tile_height = (
             self._cfg.viewport_height // max(
-                math.floor(
-                    current_level.dimensions[1] * self.zoom_level
-                ), 1
+                (current_level.dimensions[1] * self.zoom_level).__trunc__(), 1
             )
         )
         tiles_to_redraw: List[Tuple[int, int, int, int, str, str]] = []
@@ -878,16 +873,12 @@ class LevelDesignerApp:
         current_level = self.levels[self.current_level]
         tile_width = (
             self._cfg.viewport_width // max(
-                math.floor(
-                    current_level.dimensions[0] * self.zoom_level
-                ), 1
+                (current_level.dimensions[0] * self.zoom_level).__trunc__(), 1
             )
         )
         tile_height = (
             self._cfg.viewport_height // max(
-                math.floor(
-                    current_level.dimensions[1] * self.zoom_level
-                ), 1
+                (current_level.dimensions[1] * self.zoom_level).__trunc__(), 1
             )
         )
         clicked_tile = (
@@ -921,12 +912,16 @@ class LevelDesignerApp:
                     new_offset, (new_offset[0], self.scroll_offset[1]),
                     (self.scroll_offset[0], new_offset[1])):
                 if (current_level.is_coord_in_bounds((
-                        max(math.floor(
-                            current_level.dimensions[0] * self.zoom_level), 1)
-                        + try_offset[0] - 1,
-                        max(math.floor(
-                            current_level.dimensions[1] * self.zoom_level), 1)
-                        + try_offset[1] - 1)) and
+                        max(
+                            (
+                                current_level.dimensions[0] * self.zoom_level
+                            ).__trunc__(), 1
+                        ) + try_offset[0] - 1,
+                        max(
+                            (
+                                current_level.dimensions[1] * self.zoom_level
+                            ).__trunc__(), 1
+                        ) + try_offset[1] - 1)) and
                         current_level.is_coord_in_bounds(
                             (try_offset[0], try_offset[1]))):
                     # New scroll offset remains in level boundaries
@@ -1238,12 +1233,16 @@ class LevelDesignerApp:
         self.zoom_level = float(new_zoom)
         current_level = self.levels[self.current_level]
         if (not current_level.is_coord_in_bounds((
-                max(math.floor(
-                    current_level.dimensions[0] * self.zoom_level), 1)
-                + self.scroll_offset[0] - 1,
-                max(math.floor(
-                    current_level.dimensions[0] * self.zoom_level), 1)
-                + self.scroll_offset[1] - 1))):
+                max(
+                    (
+                        current_level.dimensions[0] * self.zoom_level
+                    ).__trunc__(), 1
+                ) + self.scroll_offset[0] - 1,
+                max(
+                    (
+                        current_level.dimensions[0] * self.zoom_level
+                    ).__trunc__(), 1
+                ) + self.scroll_offset[1] - 1))):
             # Zoomed out enough to have current offset go over level boundary,
             # so reset offset.
             self.scroll_offset = (0, 0)

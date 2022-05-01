@@ -2,7 +2,6 @@
 Contains the class definition for Level, which handles collision,
 player movement, victory checking, and path finding.
 """
-import math
 import random
 from typing import Any, Dict, List, no_type_check, Optional, Set, Tuple, Union
 
@@ -27,7 +26,7 @@ def floor_coordinates(coord: Tuple[float, float]) -> Tuple[int, int]:
     """
     Convert a precise coordinate to one representing whole tile position.
     """
-    return math.floor(coord[0]), math.floor(coord[1])
+    return coord[0].__trunc__(), coord[1].__trunc__()
 
 
 class Level:
@@ -272,8 +271,6 @@ class Level:
         PRESENCE, otherwise a bool. A True value may also be returned for
         PRESENCE if a player placed wall is at the specified coordinate.
         """
-        if not self.is_coord_in_bounds(index[0]):
-            raise ValueError("Target coordinates out of bounds")
         grid_index = floor_coordinates(index[0])
         if index[1] == PRESENCE:
             return self.wall_map[grid_index[1]][grid_index[0]]
@@ -290,8 +287,6 @@ class Level:
         Change the texture of a wall or remove the wall entirely if PRESENCE
         is specified, or change the PLAYER_COLLIDE or MONSTER_COLLIDE status.
         """
-        if not self.is_coord_in_bounds(index[0]):
-            raise ValueError("Target coordinates out of bounds")
         if index[1] == PRESENCE:
             self.wall_map[index[0][1]][index[0][0]] = value
         elif index[1] == PLAYER_COLLIDE:

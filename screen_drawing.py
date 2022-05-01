@@ -225,7 +225,7 @@ def draw_textured_column(screen: pygame.Surface, cfg: Config,
     # decimal part of the collision coordinate.
     display_column_width = cfg.viewport_width // cfg.display_columns
     position_along_wall = coord[int(not side_was_ns)] % 1
-    texture_x = math.floor(position_along_wall * cfg.texture_width)
+    texture_x = (position_along_wall * cfg.texture_width).__trunc__()
     camera_x = 2 * index / cfg.display_columns - 1
     cast_direction = (
         facing[0] + camera_plane[0] * camera_x,
@@ -246,10 +246,10 @@ def draw_textured_column(screen: pygame.Surface, cfg: Config,
         # viewport. This will boost performance, at the cost of making textures
         # uneven. This will only occur if the column is taller than the config
         # value in texture_scale_limit.
-        overlap = math.floor(
+        overlap = (
             (column_height - cfg.viewport_height)
             / ((column_height - cfg.texture_height) / cfg.texture_height)
-        )
+        ).__trunc__()
         pixel_column = pixel_column.subsurface(
             0, overlap // 2, 1, cfg.texture_height - overlap
         )
@@ -310,9 +310,9 @@ def draw_sprite(screen: pygame.Surface, cfg: Config,
         transformation[0] if transformation[0] != 0 else 1e-5,
         transformation[1] if transformation[1] != 0 else 1e-5
     )
-    screen_x_pos = math.floor(
+    screen_x_pos = (
         (filled_screen_width / 2) * (1 + transformation[0] / transformation[1])
-    )
+    ).__trunc__()
     if (screen_x_pos > filled_screen_width + cfg.texture_width // 2
             or screen_x_pos < -cfg.texture_width // 2):
         # Sprite is fully off screen - don't render it

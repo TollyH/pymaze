@@ -137,13 +137,7 @@ def get_first_collision(current_level: level.Level,
             dimension_ray_length[1] += step_size[1]
             side_was_ns = True
 
-        if not current_level.is_coord_in_bounds(current_tile):
-            # Edge of wall map has been reached, yet no wall in sight.
-            if edge_is_wall:
-                tile_found = True
-            else:
-                return None, sprites
-        else:
+        try:
             if current_tile in current_level.exit_keys:
                 sprites.append(SpriteCollision(
                     (current_tile[0] + 0.5, current_tile[1] + 0.5),
@@ -221,6 +215,12 @@ def get_first_collision(current_level: level.Level,
             # Collision check
             if current_level[current_tile, level.PRESENCE]:
                 tile_found = True
+        except IndexError:
+            # Edge of wall map has been reached, yet no wall in sight.
+            if edge_is_wall:
+                tile_found = True
+            else:
+                return None, sprites
     # If this point is reached, a wall tile has been found.
     collision_point = (
         current_level.player_coords[0] + direction[0] * distance,

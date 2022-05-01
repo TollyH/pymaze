@@ -943,15 +943,21 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                     # Sprites are just flat images scaled and blitted onto the
                     # 3D view.
                     if collision_object.type == raycasting.DECORATION:
-                        selected_sprite = decoration_textures.get(
-                            levels[current_level].decorations[
-                                collision_object.tile
-                            ], placeholder_texture
-                        )
+                        try:
+                            selected_sprite = decoration_textures[
+                                levels[current_level].decorations[
+                                    collision_object.tile
+                                ]
+                            ]
+                        except KeyError:
+                            selected_sprite = placeholder_texture
                     else:
-                        selected_sprite = sprite_textures.get(
-                            collision_object.type, placeholder_texture
-                        )
+                        try:
+                            selected_sprite = sprite_textures[
+                                collision_object.type
+                            ]
+                        except KeyError:
+                            selected_sprite = placeholder_texture
                     screen_drawing.draw_sprite(
                         screen, cfg, collision_object.coordinate,
                         levels[current_level].player_coords,
@@ -994,14 +1000,14 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                             # Select appropriate player wall texture depending
                             # on how long the wall has left until breaking.
                             both_textures = player_wall_textures[
-                                math.floor(
+                                (
                                     (
                                         time_scores[current_level]
                                         - current_player_wall[2]
                                     ) / cfg.player_wall_time * len(
                                         player_wall_textures
                                     )
-                                )
+                                ).__trunc__()
                             ]
                         elif levels[current_level].is_coord_in_bounds(
                                 collision_object.tile):
@@ -1016,17 +1022,21 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                                 texture_name = levels[
                                     current_level
                                 ].edge_wall_texture_name
-                            both_textures = wall_textures.get(
-                                texture_name,
-                                wall_textures["placeholder"]
-                            )
+                            try:
+                                both_textures = wall_textures[texture_name]
+                            except KeyError:
+                                both_textures = wall_textures["placeholder"]
                         else:
                             # Maze edge was hit and we should render maze edges
                             # as walls at this point.
-                            both_textures = wall_textures.get(
-                                levels[current_level].edge_wall_texture_name,
-                                wall_textures["placeholder"]
-                            )
+                            try:
+                                both_textures = wall_textures[
+                                    levels[
+                                        current_level
+                                    ].edge_wall_texture_name
+                                ]
+                            except KeyError:
+                                both_textures = wall_textures["placeholder"]
                         # Select either light or dark texture
                         # depending on side
                         texture = both_textures[int(side_was_ns)]
