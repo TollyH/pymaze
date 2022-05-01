@@ -185,7 +185,7 @@ class ConfigEditorApp:
             self.gui_frame_rate_limit_label, "Max FPS — ({})"
         )
         self.gui_frame_rate_limit_slider = tkinter.ttk.Scale(
-            self.gui_basic_config_frame, from_=1, to=360,
+            self.gui_basic_config_frame, from_=8, to=360,
             value=self.parse_int('FRAME_RATE_LIMIT', 75),
             command=lambda x: self.on_scale_change('FRAME_RATE_LIMIT', x, 0)
         )
