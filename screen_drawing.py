@@ -273,7 +273,7 @@ def draw_textured_column(screen: pygame.Surface, cfg: Config,
     screen.blit(pixel_column, (draw_x, draw_y))
     if cfg.fog_strength > 0:
         fog_overlay = pygame.Surface(
-            (1, min(column_height, cfg.viewport_height))
+            (display_column_width, min(column_height, cfg.viewport_height))
         )
         fog_overlay.fill(BLACK)
         fog_overlay.set_alpha(round(
