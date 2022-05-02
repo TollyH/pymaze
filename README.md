@@ -1,11 +1,11 @@
 # PyGame Maze
 
-A simple, grid-based maze game written in Python with PyGame. **Note: Aside from new levels, this 2D version will not be receiving any new features. See the ["3D" version](https://github.com/TollyH/pygame_maze/tree/raycasting) for the more up-to-date experience.**
+A simple, grid-based maze game written in Python with PyGame. **Note: This 2D version will not be receiving any new features. See the ["3D" version](https://github.com/TollyH/pymaze/tree/raycasting) for the more up-to-date experience.**
 
 ## Installation
 
 1. Download the files by pressing the green "Code" button above, followed by "Download ZIP" - extracting all of the files once the download is complete.
-   - Alternatively, if you have git installed, run `git clone https://github.com/TollyH/pygame_maze.git` in a terminal to download the repository, then `git checkout flat` from the repository folder to switch to the flat branch.
+   - Alternatively, if you have git installed, run `git clone https://github.com/TollyH/pymaze.git` in a terminal to download the repository, then `git checkout flat` from the repository folder to switch to the flat branch.
 2. Install PyGame with the command `pip3 install pygame` on Linux or `pip install pygame` on Windows.
 3. Run `__main__.py` to start the game.
 
