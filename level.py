@@ -158,10 +158,6 @@ class Level:
             Tuple[int, int], List[List[Tuple[int, int]]]
         ] = {}
 
-        # Stores a list of tiles that have already been determined to be
-        # reachable.
-        self._reachable_tile_cache: List[Tuple[int, int]] = []
-
         self.won = False
         self.killed = False
 
@@ -288,9 +284,6 @@ class Level:
                 self.collision_map[index[0][1]][index[0][0]] = (
                     value, self.collision_map[index[0][1]][index[0][0]][1]
                 )
-                # Collision map is being changed, so reachable tiles may also
-                # change.
-                self._reachable_tile_cache = []
             else:
                 raise TypeError("Collision map entries must be bool")
         elif index[1] == MONSTER_COLLIDE:
@@ -511,28 +504,6 @@ class Level:
         self.monster_coords = None
         self.won = False
         self.killed = False
-
-    def get_reachable_tiles(self, _tile: Tuple[int, int] = None
-                            ) -> List[Tuple[int, int]]:
-        """
-        Get all tiles that the player can reach from the start point.
-        """
-        if _tile is None:
-            _tile = self.start_point
-        if self.start_point in self._reachable_tile_cache:
-            return self._reachable_tile_cache
-        for x_offset, y_offset in ((0, -1), (1, 0), (0, 1), (-1, 0)):
-            point = (_tile[0] + x_offset, _tile[1] + y_offset)
-            if (not self.is_coord_in_bounds(point)
-                    or self[point, PLAYER_COLLIDE]
-                    or point == self.start_point
-                    or point in self._reachable_tile_cache):
-                continue
-            self._reachable_tile_cache.append(point)
-            self.get_reachable_tiles(point)
-        if _tile == self.start_point:
-            self._reachable_tile_cache.append(self.start_point)
-        return self._reachable_tile_cache
 
     def is_coord_in_bounds(self, coord: Tuple[float, float]) -> bool:
         """
