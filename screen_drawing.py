@@ -13,7 +13,7 @@ import pygame
 
 import maze_levels
 from config_loader import Config
-from level import floor_coordinates, Level
+from level import Level
 from maze_game import EmptySound
 
 WHITE = (0xFF, 0xFF, 0xFF)
@@ -408,8 +408,7 @@ def draw_map(screen: pygame.Surface, cfg: Config, current_level: Level,
     x_offset = cfg.viewport_width if cfg.enable_cheat_map else 0
     for y, row in enumerate(current_level.wall_map):
         for x, point in enumerate(row):
-            if floor_coordinates(
-                    current_level.player_coords) == (x, y):
+            if current_level.player_grid_coords == (x, y):
                 colour = BLUE
             elif (current_level.monster_coords == (x, y)
                     and cfg.enable_cheat_map):
@@ -584,10 +583,14 @@ def draw_compass(screen: pygame.Surface, cfg: Config,
         direction = math.atan2(*relative_pos) - math.atan2(*facing)
         # Compass line gets shorter as it runs out of charge.
         line_length = compass_inner_radius * time_active / cfg.compass_time
-        line_end_coords = floor_coordinates((
-            line_length * math.sin(direction) + compass_centre[0],
-            line_length * math.cos(direction) + compass_centre[1]
-        ))
+        line_end_coords = (
+            (
+                line_length * math.sin(direction) + compass_centre[0]
+            ).__trunc__(),
+            (
+                line_length * math.cos(direction) + compass_centre[1]
+            ).__trunc__()
+        )
         pygame.draw.line(
             screen, RED, compass_centre, line_end_coords,
             # Cannot be any thinner than 1px

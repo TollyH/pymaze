@@ -374,9 +374,9 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                     if event.key == pygame.K_f:
                         if (not levels[current_level].won
                                 or levels[current_level].killed):
-                            grid_coords = level.floor_coordinates(
-                                levels[current_level].player_coords
-                            )
+                            grid_coords = levels[
+                                current_level
+                            ].player_grid_coords
                             if (grid_coords in
                                     levels[current_level].player_flags):
                                 levels[current_level].player_flags.remove(
@@ -423,9 +423,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                             round(facing_directions[current_level][0]),
                             round(facing_directions[current_level][1])
                         )
-                        grid_coords = level.floor_coordinates(
-                            levels[current_level].player_coords
-                        )
+                        grid_coords = levels[current_level].player_grid_coords
                         target = (
                             grid_coords[0] + cardinal_facing[0],
                             grid_coords[1] + cardinal_facing[1]

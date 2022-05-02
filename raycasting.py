@@ -84,7 +84,7 @@ def get_first_collision(current_level: level.Level,
     # When traversing one unit in a direction, what will the coordinate of the
     # other direction increase by?
     step_size = (abs(1 / direction[0]), abs(1 / direction[1]))
-    current_tile = level.floor_coordinates(current_level.player_coords)
+    current_tile = current_level.player_grid_coords
     # The current length of the X and Y rays respectively
     dimension_ray_length = [0.0, 0.0]
     step = [0, 0]
@@ -137,7 +137,7 @@ def get_first_collision(current_level: level.Level,
             dimension_ray_length[1] += step_size[1]
             side_was_ns = True
 
-        try:
+        if current_level.is_coord_in_bounds(current_tile):
             if current_tile in current_level.exit_keys:
                 sprites.append(SpriteCollision(
                     (current_tile[0] + 0.5, current_tile[1] + 0.5),
@@ -215,7 +215,7 @@ def get_first_collision(current_level: level.Level,
             # Collision check
             if current_level[current_tile, level.PRESENCE]:
                 tile_found = True
-        except IndexError:
+        else:
             # Edge of wall map has been reached, yet no wall in sight.
             if edge_is_wall:
                 tile_found = True

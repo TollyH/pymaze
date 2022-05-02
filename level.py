@@ -22,13 +22,6 @@ PLAYER_COLLIDE = 1
 MONSTER_COLLIDE = 2
 
 
-def floor_coordinates(coord: Tuple[float, float]) -> Tuple[int, int]:
-    """
-    Convert a precise coordinate to one representing whole tile position.
-    """
-    return coord[0].__trunc__(), coord[1].__trunc__()
-
-
 class Level:
     """
     A class representing a single maze level. Contains a wall map
@@ -85,6 +78,7 @@ class Level:
         self.start_point = start_point
         # Start in the centre of the tile
         self.player_coords = (start_point[0] + 0.5, start_point[1] + 0.5)
+        self.player_grid_coords = start_point
 
         if not self.is_coord_in_bounds(end_point):
             raise ValueError("Out of bounds end point coordinates")
@@ -245,7 +239,7 @@ class Level:
         string = ""
         for y, row in enumerate(self.wall_map):
             for x, point in enumerate(row):
-                if floor_coordinates(self.player_coords) == (x, y):
+                if self.player_grid_coords == (x, y):
                     string += "PP"
                 elif self.monster_coords == (x, y):
                     string += "MM"
@@ -271,7 +265,7 @@ class Level:
         PRESENCE, otherwise a bool. A True value may also be returned for
         PRESENCE if a player placed wall is at the specified coordinate.
         """
-        grid_index = floor_coordinates(index[0])
+        grid_index = (index[0][0].__trunc__(), index[0][1].__trunc__())
         if index[1] == PRESENCE:
             return self.wall_map[grid_index[1]][grid_index[0]]
         if index[1] == PLAYER_COLLIDE:
@@ -349,27 +343,27 @@ class Level:
                     events.add(ALTERNATE_COORD_CHOSEN)
             if not found_valid:
                 return events
-        grid_coords = floor_coordinates(target)
-        old_grid_coords = floor_coordinates(self.player_coords)
+        grid_coords = (target[0].__trunc__(), target[1].__trunc__())
         relative_grid_pos = (
-            grid_coords[0] - old_grid_coords[0],
-            grid_coords[1] - old_grid_coords[1]
+            grid_coords[0] - self.player_grid_coords[0],
+            grid_coords[1] - self.player_grid_coords[1]
         )
         # Moved diagonally therefore skipping a square, make sure that's valid.
         if relative_grid_pos[0] and relative_grid_pos[1]:
             if collision_check:
                 diagonal_path_free = False
-                if not self[(old_grid_coords[0] + relative_grid_pos[0],
-                            old_grid_coords[1]), PLAYER_COLLIDE]:
+                if not self[(self.player_grid_coords[0] + relative_grid_pos[0],
+                            self.player_grid_coords[1]), PLAYER_COLLIDE]:
                     diagonal_path_free = True
-                elif not self[(old_grid_coords[0],
-                              old_grid_coords[1] + relative_grid_pos[1]),
-                              PLAYER_COLLIDE]:
+                elif not self[(self.player_grid_coords[0],
+                              self.player_grid_coords[1]
+                              + relative_grid_pos[1]), PLAYER_COLLIDE]:
                     diagonal_path_free = True
                 if not diagonal_path_free:
                     return events
             events.add(MOVED_GRID_DIAGONALLY)
         self.player_coords = target
+        self.player_grid_coords = grid_coords
         events.add(MOVED)
         if grid_coords in self.exit_keys:
             self.exit_keys.remove(grid_coords)
@@ -402,12 +396,11 @@ class Level:
         """
         import raycasting  # Import is here to prevent circular import
         last_monster_position = self.monster_coords
-        player_grid_position = floor_coordinates(self.player_coords)
         if self.monster_start is None:
             return False
         if (self.monster_coords is None and
                 raycasting.no_sqrt_coord_distance(
-                    floor_coordinates(self.player_coords), self.monster_start
+                    self.player_grid_coords, self.monster_start
                 ) >= 4):
             self.monster_coords = self.monster_start
         elif self.monster_coords is not None:
@@ -415,38 +408,38 @@ class Level:
             # 1 — Line of sight on Y axis.
             # 2 — Line of sight on X axis.
             line_of_sight = 0
-            if player_grid_position[0] == self.monster_coords[0]:
+            if self.player_grid_coords[0] == self.monster_coords[0]:
                 min_y_coord = min(
-                    player_grid_position[1], self.monster_coords[1]
+                    self.player_grid_coords[1], self.monster_coords[1]
                 )
                 max_y_coord = max(
-                    player_grid_position[1], self.monster_coords[1]
+                    self.player_grid_coords[1], self.monster_coords[1]
                 )
                 collided = False
                 for y_coord in range(min_y_coord, max_y_coord + 1):
-                    if self[(player_grid_position[0], y_coord),
+                    if self[(self.player_grid_coords[0], y_coord),
                             MONSTER_COLLIDE]:
                         collided = True
                         break
                 if not collided:
                     line_of_sight = 1
-            elif player_grid_position[1] == self.monster_coords[1]:
+            elif self.player_grid_coords[1] == self.monster_coords[1]:
                 min_x_coord = min(
-                    player_grid_position[0], self.monster_coords[0]
+                    self.player_grid_coords[0], self.monster_coords[0]
                 )
                 max_x_coord = max(
-                    player_grid_position[0], self.monster_coords[0]
+                    self.player_grid_coords[0], self.monster_coords[0]
                 )
                 collided = False
                 for x_coord in range(min_x_coord, max_x_coord + 1):
-                    if self[(x_coord, player_grid_position[1]),
+                    if self[(x_coord, self.player_grid_coords[1]),
                             MONSTER_COLLIDE]:
                         collided = True
                         break
                 if not collided:
                     line_of_sight = 2
             if line_of_sight == 1:
-                if player_grid_position[1] > self.monster_coords[1]:
+                if self.player_grid_coords[1] > self.monster_coords[1]:
                     self.monster_coords = (
                         self.monster_coords[0], self.monster_coords[1] + 1
                     )
@@ -455,7 +448,7 @@ class Level:
                         self.monster_coords[0], self.monster_coords[1] - 1
                     )
             elif line_of_sight == 2:
-                if player_grid_position[0] > self.monster_coords[0]:
+                if self.player_grid_coords[0] > self.monster_coords[0]:
                     self.monster_coords = (
                         self.monster_coords[0] + 1, self.monster_coords[1]
                     )
@@ -481,7 +474,7 @@ class Level:
         self._last_monster_position = last_monster_position
         if self.monster_coords in self.player_flags and random.random() < 0.25:
             self.player_flags.remove(self.monster_coords)
-        return self.monster_coords == player_grid_position
+        return self.monster_coords == self.player_grid_coords
 
     def find_possible_paths(self) -> List[List[Tuple[int, int]]]:
         """
@@ -493,16 +486,15 @@ class Level:
         targets = (
             {self.end_point} if len(self.exit_keys) == 0 else self.exit_keys
         )
-        grid_coords = floor_coordinates(self.player_coords)
-        if grid_coords in self._solution_cache:
+        if self.player_grid_coords in self._solution_cache:
             return [
-                x for x in self._solution_cache[grid_coords]
+                x for x in self._solution_cache[self.player_grid_coords]
                 if x[-1] in targets
             ]
         result = sorted(
-            self._path_search([grid_coords], targets), key=len
+            self._path_search([self.player_grid_coords], targets), key=len
         )
-        self._solution_cache[grid_coords] = result
+        self._solution_cache[self.player_grid_coords] = result
         return result
 
     def reset(self) -> None:
