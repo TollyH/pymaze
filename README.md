@@ -82,7 +82,6 @@ algorithm for raycasting.
 
 ### Designer Only
 
-- Light blue — Unreachable floor
 - Purple — Decorations
 
 ## Command Line Arguments (Optional)
