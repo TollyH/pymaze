@@ -501,6 +501,7 @@ class Level:
         self.player_coords = (
             self.start_point[0] + 0.5, self.start_point[1] + 0.5
         )
+        self.player_grid_coords = self.start_point
         self.monster_coords = None
         self.won = False
         self.killed = False
