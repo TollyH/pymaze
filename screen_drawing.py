@@ -271,9 +271,16 @@ def draw_textured_column(screen: pygame.Surface, cfg: Config,
             0, overlap, display_column_width, cfg.viewport_height
         )
     screen.blit(pixel_column, (draw_x, draw_y))
+    pixel_column = pygame.transform.flip(
+        pixel_column, False, True
+    ).convert_alpha()
+    pixel_column.fill(
+        (255, 255, 255, 25), special_flags=pygame.BLEND_RGBA_MULT
+    )
+    screen.blit(pixel_column, (draw_x, draw_y + column_height))
     if cfg.fog_strength > 0:
         fog_overlay = pygame.Surface(
-            (display_column_width, min(column_height, cfg.viewport_height))
+            (display_column_width, min(column_height * 2, cfg.viewport_height))
         )
         fog_overlay.fill(BLACK)
         fog_overlay.set_alpha(round(
@@ -341,6 +348,16 @@ def draw_sprite(screen: pygame.Surface, cfg: Config,
             cfg.viewport_height // 2 - sprite_size[1] // 2
         )
     )
+    scaled_texture = pygame.transform.flip(scaled_texture, False, True)
+    scaled_texture.fill(
+        (255, 255, 255, 25), special_flags=pygame.BLEND_RGBA_MULT
+    )
+    screen.blit(
+        scaled_texture, (
+            screen_x_pos - sprite_size[0] // 2,
+            cfg.viewport_height // 2 + sprite_size[1] // 2
+        )
+    )
 
 
 def draw_solid_background(screen: pygame.Surface, cfg: Config) -> None:
@@ -393,6 +410,16 @@ def draw_sky_texture(screen: pygame.Surface, cfg: Config,
             (display_column_width, cfg.viewport_height // 2)
         )
         screen.blit(scaled_pixel_column, (index * display_column_width, 0))
+        scaled_pixel_column = pygame.transform.flip(
+            scaled_pixel_column, False, True
+        )
+        scaled_pixel_column.fill(
+            (255, 255, 255, 25), special_flags=pygame.BLEND_RGBA_MULT
+        )
+        screen.blit(
+            scaled_pixel_column,
+            (index * display_column_width, cfg.viewport_height // 2)
+        )
 
 
 def draw_map(screen: pygame.Surface, cfg: Config, current_level: Level,
