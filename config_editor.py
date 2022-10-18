@@ -232,12 +232,12 @@ class ConfigEditorApp:
 
         self.gui_monster_presses_to_escape_label = tkinter.Label(
             self.gui_basic_config_frame, anchor=tkinter.W,
-            text="Total key presses to escape monster (seconds) — "
+            text="Total key presses to escape monster — "
                  + f"({self.parse_int('MONSTER_PRESSES_TO_ESCAPE', 10)})"
         )
         self.scale_labels['MONSTER_PRESSES_TO_ESCAPE'] = (
             self.gui_monster_presses_to_escape_label,
-            "Total key presses to escape monster (seconds) — ({})"
+            "Total key presses to escape monster — ({})"
         )
         self.gui_monster_presses_to_escape_slider = tkinter.ttk.Scale(
             self.gui_basic_config_frame, from_=0, to=60,
@@ -552,7 +552,7 @@ class ConfigEditorApp:
         )
         self.gui_texture_scale_info_label = tkinter.Label(
             self.gui_advanced_config_frame, anchor=tkinter.W, fg="blue",
-            text="Note: Higher values will make nearby textures appear jagged"
+            text="Note: Lower values will make nearby textures appear jagged"
         )
         self.scale_labels['TEXTURE_SCALE_LIMIT'] = (
             self.gui_texture_scale_label,
