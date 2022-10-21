@@ -49,7 +49,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             print(f"Unknown argument or missing value: '{arg}'")
             sys.exit(1)
 
-    last_config_edit = os.path.getmtime('config.ini')
+    last_config_edit = os.path.getmtime(config_ini_path)
     cfg = config_loader.Config(config_ini_path)
 
     levels = maze_levels.load_level_json(level_json_path)
@@ -127,9 +127,9 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
     # Game loop
     while True:
         screen.fill(screen_drawing.BLACK)
-        if os.path.getmtime('config.ini') > last_config_edit:
+        if os.path.getmtime(config_ini_path) > last_config_edit:
             # Config has been edited so it should be reloaded.
-            last_config_edit = os.path.getmtime('config.ini')
+            last_config_edit = os.path.getmtime(config_ini_path)
             cfg = config_loader.Config(config_ini_path)
         # Limit FPS and record time last frame took to render
         frame_time = clock.tick(cfg.frame_rate_limit) / 1000
