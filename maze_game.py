@@ -9,8 +9,7 @@ import pickle
 import random
 import sys
 import threading
-from glob import glob
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import List, Optional, Set, Tuple
 
 import pygame
 
@@ -20,6 +19,9 @@ import level
 import maze_levels
 import raycasting
 import screen_drawing
+
+TEXTURE_WIDTH = 128
+TEXTURE_HEIGHT = 128
 
 
 def maze_game(*, level_json_path: str = "maze_levels.json",
@@ -61,16 +63,10 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
         pygame.image.load(os.path.join("window_icons", "main.png")).convert()
     )
 
-    clock = pygame.time.Clock()
+    # Resources must be imported here after pygame has been initialised.
+    import resources
 
-    try:
-        placeholder_texture = pygame.image.load(
-            os.path.join("textures", "placeholder.png")
-        ).convert_alpha()
-    except FileNotFoundError:
-        placeholder_texture = pygame.Surface(
-            (cfg.texture_width, cfg.texture_height)
-        )
+    clock = pygame.time.Clock()
 
     # X+Y facing directions, times, moves, etc. are specific to each level,
     # so are each stored in a list.
@@ -87,213 +83,6 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                 highscores += [(0.0, 0.0)] * (len(levels) - len(highscores))
     else:
         highscores = [(0.0, 0.0)] * len(levels)
-
-    # Used to create the darker versions of each texture
-    darkener = pygame.Surface((cfg.texture_width, cfg.texture_height))
-    darkener.fill(screen_drawing.BLACK)
-    darkener.set_alpha(127)
-    # {texture_name: (light_texture, dark_texture)}
-    wall_textures: Dict[str, Tuple[pygame.Surface, pygame.Surface]] = {
-        os.path.split(x)[-1].split(".")[0]:
-            (pygame.image.load(x).convert(), pygame.image.load(x).convert())
-        for x in glob(os.path.join("textures", "wall", "*.png"))
-    }
-    wall_textures["placeholder"] = (
-        placeholder_texture, placeholder_texture.copy()
-    )
-    for _, (_, surface_to_dark) in wall_textures.items():
-        surface_to_dark.blit(darkener, (0, 0))
-
-    # {texture_name: texture}
-    decoration_textures: Dict[str, pygame.Surface] = {
-        os.path.split(x)[-1].split(".")[0]:
-            pygame.image.load(x).convert_alpha()
-        for x in glob(
-            os.path.join("textures", "sprite", "decoration", "*.png"))
-    }
-    decoration_textures["placeholder"] = placeholder_texture
-
-    # {degradation_stage: (light_texture, dark_texture)}
-    player_wall_textures: Dict[int, Tuple[pygame.Surface, pygame.Surface]] = {
-        # Parse player wall texture surfaces to integer
-        int(os.path.split(x)[-1].split(".")[0]):
-            (pygame.image.load(x).convert(), pygame.image.load(x).convert())
-        for x in glob(os.path.join("textures", "player_wall", "*.png"))
-    }
-    if len(player_wall_textures) == 0:
-        player_wall_textures[0] = (
-            placeholder_texture, placeholder_texture.copy()
-        )
-    for _, (_, surface_to_dark) in player_wall_textures.items():
-        surface_to_dark.blit(darkener, (0, 0))
-
-    try:
-        sky_texture = pygame.image.load(
-            os.path.join("textures", "sky.png")
-        ).convert_alpha()
-    except FileNotFoundError:
-        sky_texture = placeholder_texture
-
-    # {raycasting.CONSTANT_VALUE: sprite_texture}
-    sprite_textures = {
-        getattr(raycasting, os.path.split(x)[-1].split(".")[0].upper()):
-            pygame.image.load(x).convert_alpha()
-        for x in glob(os.path.join("textures", "sprite", "*.png"))
-    }
-
-    blank_icon = pygame.Surface((32, 32))
-    # {screen_drawing.CONSTANT_VALUE: icon_texture}
-    hud_icons = {
-        getattr(screen_drawing, os.path.split(x)[-1].split(".")[0].upper()):
-            pygame.transform.scale(
-                pygame.image.load(x).convert_alpha(), (32, 32)
-            )
-        for x in glob(os.path.join('textures', 'hud_icons', '*.png'))
-    }
-
-    try:
-        first_person_gun = pygame.transform.scale(
-            pygame.image.load(
-                os.path.join('textures', 'gun_fp.png')
-            ).convert_alpha(),
-            (cfg.viewport_width, cfg.viewport_height)
-        )
-    except FileNotFoundError:
-        first_person_gun = pygame.Surface(
-            (cfg.viewport_width, cfg.viewport_height)
-        )
-
-    try:
-        jumpscare_monster_texture = pygame.transform.scale(
-            pygame.image.load(
-                os.path.join("textures", "death_monster.png")
-            ).convert_alpha(),
-            (cfg.viewport_width, cfg.viewport_height)
-        )
-    except FileNotFoundError:
-        jumpscare_monster_texture = pygame.transform.scale(
-            placeholder_texture,
-            (cfg.viewport_width, cfg.viewport_height)
-        )
-
-    audio_error_occurred = False
-    try:
-        monster_jumpscare_sound: Union[
-            pygame.mixer.Sound, EmptySound
-        ] = pygame.mixer.Sound(
-            os.path.join("sounds", "monster_jumpscare.wav")
-        )
-        monster_spotted_sound: Union[
-            pygame.mixer.Sound, EmptySound
-        ] = pygame.mixer.Sound(
-            os.path.join("sounds", "monster_spotted.wav")
-        )
-        # {min_distance_to_play: Sound}
-        # Must be in ascending numerical order.
-        breathing_sounds: Dict[int, Union[
-            pygame.mixer.Sound, EmptySound
-        ]] = {
-            0: pygame.mixer.Sound(
-                os.path.join("sounds", "player_breathe", "heavy.wav")
-            ),
-            5: pygame.mixer.Sound(
-                os.path.join("sounds", "player_breathe", "medium.wav")
-            ),
-            10: pygame.mixer.Sound(
-                os.path.join("sounds", "player_breathe", "light.wav")
-            )
-        }
-        if len(breathing_sounds) == 0:
-            raise FileNotFoundError("No breathing sounds found")
-        footstep_sounds: List[Union[
-            pygame.mixer.Sound, EmptySound
-        ]] = [
-            pygame.mixer.Sound(x)
-            for x in glob(os.path.join("sounds", "footsteps", "*.wav"))
-        ]
-        if len(footstep_sounds) == 0:
-            raise FileNotFoundError("No footstep sounds found")
-        monster_roam_sounds: List[Union[
-            pygame.mixer.Sound, EmptySound
-        ]] = [
-            pygame.mixer.Sound(x)
-            for x in glob(os.path.join("sounds", "monster_roam", "*.wav"))
-        ]
-        if len(monster_roam_sounds) == 0:
-            raise FileNotFoundError("No monster roam sounds found")
-        key_pickup_sounds: List[Union[
-            pygame.mixer.Sound, EmptySound
-        ]] = [
-            pygame.mixer.Sound(x)
-            for x in glob(os.path.join("sounds", "key_pickup", "*.wav"))
-        ]
-        key_sensor_pickup_sound: Union[
-            pygame.mixer.Sound, EmptySound
-        ] = pygame.mixer.Sound(os.path.join("sounds", "sensor_pickup.wav"))
-        gun_pickup_sound: Union[
-            pygame.mixer.Sound, EmptySound
-        ] = pygame.mixer.Sound(os.path.join("sounds", "gun_pickup.wav"))
-        if len(key_pickup_sounds) == 0:
-            raise FileNotFoundError("No key pickup sounds found")
-        flag_place_sounds: List[Union[
-            pygame.mixer.Sound, EmptySound
-        ]] = [
-            pygame.mixer.Sound(x)
-            for x in glob(os.path.join("sounds", "flag_place", "*.wav"))
-        ]
-        if len(flag_place_sounds) == 0:
-            raise FileNotFoundError("No flag place sounds found")
-        wall_place_sounds: List[Union[
-            pygame.mixer.Sound, EmptySound
-        ]] = [
-            pygame.mixer.Sound(x)
-            for x in glob(os.path.join("sounds", "wall_place", "*.wav"))
-        ]
-        if len(wall_place_sounds) == 0:
-            raise FileNotFoundError("No wall place sounds found")
-        compass_open_sound: Union[
-            pygame.mixer.Sound, EmptySound
-        ] = pygame.mixer.Sound(os.path.join("sounds", "compass_open.wav"))
-        compass_close_sound: Union[
-            pygame.mixer.Sound, EmptySound
-        ] = pygame.mixer.Sound(os.path.join("sounds", "compass_close.wav"))
-        map_open_sound: Union[
-            pygame.mixer.Sound, EmptySound
-        ] = pygame.mixer.Sound(os.path.join("sounds", "map_open.wav"))
-        map_close_sound: Union[
-            pygame.mixer.Sound, EmptySound
-        ] = pygame.mixer.Sound(os.path.join("sounds", "map_close.wav"))
-        gunshot_sound: Union[
-            pygame.mixer.Sound, EmptySound
-        ] = pygame.mixer.Sound(os.path.join("sounds", "gunshot.wav"))
-        # Constant ambient sound — loops infinitely
-        pygame.mixer.music.load(os.path.join("sounds", "ambience.wav"))
-        light_flicker_sound: Union[
-            pygame.mixer.Sound, EmptySound
-        ] = pygame.mixer.Sound(
-            os.path.join("sounds", "light_flicker.wav")
-        )
-    except (FileNotFoundError, pygame.error):
-        audio_error_occurred = True
-        empty_sound = EmptySound()
-        monster_jumpscare_sound = empty_sound
-        monster_spotted_sound = empty_sound
-        breathing_sounds = {0: empty_sound}
-        footstep_sounds = [empty_sound]
-        monster_roam_sounds = [empty_sound]
-        key_pickup_sounds = [empty_sound]
-        key_sensor_pickup_sound = empty_sound
-        gun_pickup_sound = empty_sound
-        flag_place_sounds = [empty_sound]
-        wall_place_sounds = [empty_sound]
-        compass_open_sound = empty_sound
-        compass_close_sound = empty_sound
-        map_open_sound = empty_sound
-        map_close_sound = empty_sound
-        gunshot_sound = empty_sound
-        light_flicker_sound = empty_sound
-    time_to_breathing_finish = 0.0
-    time_to_next_roam_sound = 0.0
 
     enable_mouse_control = False
     # Used to calculate how far mouse has travelled for mouse control.
@@ -322,6 +111,8 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
     wall_place_cooldown = [0.0] * len(levels)
     flicker_time_remaining = [0.0] * len(levels)
     pickup_flash_time_remaining = 0.0
+    time_to_breathing_finish = 0.0
+    time_to_next_roam_sound = 0.0
 
     # [None | (grid_x, grid_y, time_of_placement)]
     player_walls: List[Optional[Tuple[int, int, float]]] = [None] * len(levels)
@@ -386,7 +177,9 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                                 levels[current_level].player_flags.add(
                                     grid_coords
                                 )
-                                random.choice(flag_place_sounds).play()
+                                random.choice(
+                                    resources.flag_place_sounds
+                                ).play()
                     elif event.key == pygame.K_c:
                         # Compass and map cannot be displayed together
                         if (not display_map or cfg.enable_cheat_map) and not (
@@ -394,9 +187,9 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                                 or levels[current_level].killed):
                             display_compass = not display_compass
                             (
-                                compass_open_sound
+                                resources.compass_open_sound
                                 if display_compass else
-                                compass_close_sound
+                                resources.compass_close_sound
                             ).play()
                     elif event.key == pygame.K_e:
                         # Stats and map cannot be displayed together
@@ -445,7 +238,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                                 target, level.PLAYER_COLLIDE] = True
                             levels[current_level][
                                 target, level.MONSTER_COLLIDE] = True
-                            random.choice(wall_place_sounds).play()
+                            random.choice(resources.wall_place_sounds).play()
                     elif event.key == pygame.K_t and has_gun[current_level]:
                         if (not display_map or cfg.enable_cheat_map) and not (
                                 levels[current_level].won
@@ -461,7 +254,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                                     # Monster was hit by gun
                                     levels[current_level].monster_coords = None
                                     break
-                            gunshot_sound.play()
+                            resources.gunshot_sound.play()
                     elif event.key in (pygame.K_r, pygame.K_ESCAPE):
                         is_reset_prompt_shown = True
                     elif event.key == pygame.K_SPACE:
@@ -473,9 +266,9 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                                     or levels[current_level].killed):
                                 display_map = not display_map
                                 (
-                                    map_open_sound
+                                    resources.map_open_sound
                                     if display_map else
-                                    map_close_sound
+                                    resources.map_close_sound
                                 ).play()
                     elif event.key == pygame.K_SLASH:
                         pressed = pygame.key.get_pressed()
@@ -686,13 +479,13 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             if level.PICKUP in events:
                 pickup_flash_time_remaining = 0.4
             if level.PICKED_UP_KEY in events:
-                random.choice(key_pickup_sounds).play()
+                random.choice(resources.key_pickup_sounds).play()
             if level.PICKED_UP_KEY_SENSOR in events:
                 key_sensor_times[current_level] = cfg.key_sensor_time
-                key_sensor_pickup_sound.play()
+                resources.key_sensor_pickup_sound.play()
             if level.PICKED_UP_GUN in events:
                 has_gun[current_level] = True
-                gun_pickup_sound.play()
+                resources.gun_pickup_sound.play()
             old_move_score = move_scores[current_level]
             move_scores[current_level] += math.sqrt(
                 raycasting.no_sqrt_coord_distance(
@@ -702,14 +495,15 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             # Play footstep sound every time move score crosses every other
             # integer boundary.
             if move_scores[current_level] // 2 > old_move_score // 2:
-                random.choice(footstep_sounds).play()
+                random.choice(resources.footstep_sounds).play()
             if level.MONSTER_CAUGHT in events and cfg.enable_monster_killing:
                 monster_escape_clicks[current_level] = 0
                 display_map = False
 
         # Victory screen
         if levels[current_level].won:
-            if not audio_error_occurred and pygame.mixer.music.get_busy():
+            if (not resources.audio_error_occurred
+                    and pygame.mixer.music.get_busy()):
                 pygame.mixer.music.stop()
             # Overwrite existing highscores if required
             highscores_updated = False
@@ -731,21 +525,24 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             screen_drawing.draw_victory_screen(
                 screen, cfg, last_level_frame[current_level],
                 highscores, current_level, time_scores[current_level],
-                move_scores[current_level], frame_time
+                move_scores[current_level], frame_time,
+                resources.victory_increment, resources.victory_next_block
             )
         # Death screen
         elif levels[current_level].killed:
-            if not audio_error_occurred and pygame.mixer.music.get_busy():
+            if (not resources.audio_error_occurred
+                    and pygame.mixer.music.get_busy()):
                 pygame.mixer.music.stop()
             if cfg.monster_sound_on_kill and has_started_level[current_level]:
-                monster_jumpscare_sound.play()
+                resources.monster_jumpscare_sound.play()
                 has_started_level[current_level] = False
             screen_drawing.draw_kill_screen(
-                screen, cfg, jumpscare_monster_texture
+                screen, cfg, resources.jumpscare_monster_texture
             )
         # Currently playing
         elif not is_reset_prompt_shown:
-            if not audio_error_occurred and not pygame.mixer.music.get_busy():
+            if (not resources.audio_error_occurred
+                    and not pygame.mixer.music.get_busy()):
                 pygame.mixer.music.play()
             if has_started_level[current_level]:
                 # Progress time-based attributes and events
@@ -853,7 +650,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                             flicker_time_remaining[current_level] = (
                                 random.uniform(0.0, 0.5)
                             )
-                            light_flicker_sound.play()
+                            resources.light_flicker_sound.play()
 
             # Play background breathing if the previous breathing play has
             # finished
@@ -862,13 +659,16 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             if (time_to_breathing_finish <= 0
                     and has_started_level[current_level]):
                 # There is no monster, so play the calmest breathing sound
-                selected_sound = breathing_sounds[max(breathing_sounds)]
+                selected_sound = resources.breathing_sounds[
+                    max(resources.breathing_sounds)
+                ]
                 monster_coords = levels[current_level].monster_coords
                 if monster_coords is not None:
                     distance = math.sqrt(raycasting.no_sqrt_coord_distance(
                         levels[current_level].player_coords, monster_coords
                     ))
-                    for min_distance, sound in breathing_sounds.items():
+                    for min_distance, sound in (
+                            resources.breathing_sounds.items()):
                         if distance >= min_distance:
                             selected_sound = sound
                         else:
@@ -885,7 +685,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                     and monster_coords is not None
                     and monster_escape_clicks[current_level] == -1
                     and cfg.monster_sound_roaming):
-                selected_sound = random.choice(monster_roam_sounds)
+                selected_sound = random.choice(resources.monster_roam_sounds)
                 time_to_next_roam_sound = (
                         selected_sound.get_length()
                         + cfg.monster_roam_sound_delay
@@ -906,7 +706,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                     and (not display_map or cfg.enable_cheat_map)):
                 screen_drawing.draw_sky_texture(
                     screen, cfg, facing_directions[current_level],
-                    camera_planes[current_level], sky_texture
+                    camera_planes[current_level], resources.sky_texture
                 )
 
             if not display_map or cfg.enable_cheat_map:
@@ -936,20 +736,20 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                     # 3D view.
                     if collision_object.type == raycasting.DECORATION:
                         try:
-                            selected_sprite = decoration_textures[
+                            selected_sprite = resources.decoration_textures[
                                 levels[current_level].decorations[
                                     collision_object.tile
                                 ]
                             ]
                         except KeyError:
-                            selected_sprite = placeholder_texture
+                            selected_sprite = resources.placeholder_texture
                     else:
                         try:
-                            selected_sprite = sprite_textures[
+                            selected_sprite = resources.sprite_textures[
                                 collision_object.type
                             ]
                         except KeyError:
-                            selected_sprite = placeholder_texture
+                            selected_sprite = resources.placeholder_texture
                     screen_drawing.draw_sprite(
                         screen, cfg, collision_object.coordinate,
                         levels[current_level].player_coords,
@@ -963,7 +763,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                         if (cfg.monster_sound_on_spot and
                                 monster_spotted[current_level]
                                 == cfg.monster_spot_timeout):
-                            monster_spotted_sound.play()
+                            resources.monster_spotted_sound.play()
                         monster_spotted[current_level] = 0.0
                 elif isinstance(collision_object, raycasting.WallCollision):
                     # A column is a portion of a wall that was hit by a ray.
@@ -991,13 +791,13 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                                 == current_player_wall[:2]):
                             # Select appropriate player wall texture depending
                             # on how long the wall has left until breaking.
-                            both_textures = player_wall_textures[
+                            both_textures = resources.player_wall_textures[
                                 (
                                     (
                                         time_scores[current_level]
                                         - current_player_wall[2]
                                     ) / cfg.player_wall_time * len(
-                                        player_wall_textures
+                                        resources.player_wall_textures
                                     )
                                 ).__trunc__()
                             ]
@@ -1015,20 +815,26 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                                     current_level
                                 ].edge_wall_texture_name
                             try:
-                                both_textures = wall_textures[texture_name]
+                                both_textures = resources.wall_textures[
+                                    texture_name
+                                ]
                             except KeyError:
-                                both_textures = wall_textures["placeholder"]
+                                both_textures = resources.wall_textures[
+                                    "placeholder"
+                                ]
                         else:
                             # Maze edge was hit and we should render maze edges
                             # as walls at this point.
                             try:
-                                both_textures = wall_textures[
+                                both_textures = resources.wall_textures[
                                     levels[
                                         current_level
                                     ].edge_wall_texture_name
                                 ]
                             except KeyError:
-                                both_textures = wall_textures["placeholder"]
+                                both_textures = resources.wall_textures[
+                                    "placeholder"
+                                ]
                         # Select either light or dark texture
                         # depending on side
                         texture = both_textures[int(side_was_ns)]
@@ -1078,7 +884,9 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
 
             if has_gun[current_level] and (
                     not display_map or cfg.enable_cheat_map):
-                screen_drawing.draw_gun(screen, cfg, first_person_gun)
+                screen_drawing.draw_gun(
+                    screen, cfg, resources.first_person_gun
+                )
 
             if display_compass and (not display_map or cfg.enable_cheat_map):
                 monster_coords = levels[current_level].monster_coords
@@ -1115,7 +923,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                     len(levels[current_level].original_exit_keys)
                     - len(levels[current_level].exit_keys),
                     len(levels[current_level].original_exit_keys),
-                    hud_icons, blank_icon,
+                    resources.hud_icons, resources.blank_icon,
                     key_sensor_times[current_level],
                     compass_times[current_level],
                     compass_burned_out[current_level],
@@ -1128,7 +936,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
 
             if monster_escape_clicks[current_level] >= 0:
                 screen_drawing.draw_escape_screen(
-                    screen, cfg, jumpscare_monster_texture
+                    screen, cfg, resources.jumpscare_monster_texture
                 )
                 monster_escape_time[current_level] -= frame_time
                 if monster_escape_time[current_level] <= 0:
@@ -1137,7 +945,8 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             last_level_frame[current_level] = screen.copy()
 
         if is_reset_prompt_shown:
-            if not audio_error_occurred and pygame.mixer.music.get_busy():
+            if (not resources.audio_error_occurred
+                    and pygame.mixer.music.get_busy()):
                 pygame.mixer.music.stop()
             screen_drawing.draw_reset_prompt(
                 screen, cfg, last_level_frame[current_level]
