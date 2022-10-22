@@ -92,7 +92,7 @@ algorithm for raycasting.
 
 - `-P=/path/to/maze_levels.json` or `--level-json-path=/path/to/maze_levels.json`
 - `-C=/path/to/config.ini` or `--config-ini-path=/path/to/config.ini`
-- `-S=host:port` or `--multiplayer-server=host:port`
+- `-S="host:port"` or `--multiplayer-server="host:port"`
 
 ### Server
 

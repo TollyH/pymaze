@@ -74,14 +74,15 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             lvl.monster_wait = None
         sock = netcode.create_client_socket()
         assert multiplayer_server is not None
-        host = netcode.get_host_port(multiplayer_server)
-        player_key = netcode.join_server(sock, host)
+        addr = netcode.get_host_port(multiplayer_server)
+        player_key = netcode.join_server(sock, addr)
     else:
         # Not needed in single player
         player_key = bytes()
         sock = socket.socket()
-        host = ("", 0)
+        addr = ("", 0)
     other_players: List[net_data.Player] = []
+    time_since_server_ping = 0.0
 
     # Minimum window resolution is 500×500
     screen = pygame.display.set_mode((
@@ -162,8 +163,20 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             cfg = config_loader.Config(config_ini_path)
         # Limit FPS and record time last frame took to render
         frame_time = clock.tick(cfg.frame_rate_limit) / 1000
+        if is_multi:
+            time_since_server_ping += frame_time
+            if time_since_server_ping >= 0.1:
+                time_since_server_ping = 0
+                other_players = netcode.ping_server(
+                    sock, addr, player_key, levels[current_level].player_coords
+                )
+                hits_remaining = netcode.get_status(sock, addr, player_key)
+                if hits_remaining == 0:
+                    levels[current_level].killed = True
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                if is_multi:
+                    netcode.leave_server(sock, addr, player_key)
                 pygame.quit()
                 sys.exit()
             # Standard "press-once" keys
@@ -175,6 +188,9 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                     # Return the mouse to normal
                     pygame.mouse.set_visible(True)
                     pygame.event.set_grab(False)
+                elif is_multi and levels[current_level].killed:
+                    netcode.respawn(sock, addr, player_key)
+                    levels[current_level].reset()
                 elif not is_reset_prompt_shown:
                     if monster_escape_clicks[current_level] >= 0:
                         if event.key == pygame.K_w:
@@ -184,8 +200,8 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                                 monster_escape_clicks[current_level] = -1
                                 levels[current_level].monster_coords = None
                     if event.key == pygame.K_f:
-                        if (not levels[current_level].won
-                                or levels[current_level].killed):
+                        if not (levels[current_level].won
+                                or levels[current_level].killed or is_multi):
                             grid_coords = levels[
                                 current_level
                             ].player_grid_coords
@@ -218,21 +234,23 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                             display_stats = not display_stats
                     elif event.key in (pygame.K_LEFTBRACKET,
                                        pygame.K_RIGHTBRACKET):
-                        if (event.key == pygame.K_LEFTBRACKET
-                                and current_level > 0):
-                            current_level -= 1
-                        elif (event.key == pygame.K_RIGHTBRACKET
-                                and current_level < len(levels) - 1):
-                            current_level += 1
-                        else:
-                            continue
-                        pygame.display.set_caption(
-                            f"Maze - Level {current_level + 1}"
-                        )
+                        if not is_multi:
+                            if (event.key == pygame.K_LEFTBRACKET
+                                    and current_level > 0):
+                                current_level -= 1
+                            elif (event.key == pygame.K_RIGHTBRACKET
+                                    and current_level < len(levels) - 1):
+                                current_level += 1
+                            else:
+                                continue
+                            pygame.display.set_caption(
+                                f"Maze - Level {current_level + 1}"
+                            )
                     elif (event.key == pygame.K_q
                             and player_walls[current_level] is None
                             and wall_place_cooldown[current_level] == 0
-                            and has_started_level[current_level]):
+                            and has_started_level[current_level]
+                            and not is_multi):
                         cardinal_facing = (
                             round(facing_directions[current_level][0]),
                             round(facing_directions[current_level][1])
@@ -264,7 +282,6 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                         if (not display_map or cfg.enable_cheat_map) and not (
                                 levels[current_level].won
                                 or levels[current_level].killed):
-                            has_gun[current_level] = False
                             _, hit_sprites = raycasting.get_first_collision(
                                 levels[current_level],
                                 facing_directions[current_level],
@@ -275,9 +292,18 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                                     # Monster was hit by gun
                                     levels[current_level].monster_coords = None
                                     break
+                            if is_multi:
+                                netcode.fire_gun(
+                                    sock, addr, player_key,
+                                    levels[current_level].player_coords,
+                                    facing_directions[current_level]
+                                )
+                            else:
+                                has_gun[current_level] = False
                             resources.gunshot_sound.play()
                     elif event.key in (pygame.K_r, pygame.K_ESCAPE):
-                        is_reset_prompt_shown = True
+                        if not is_multi:
+                            is_reset_prompt_shown = True
                     elif event.key == pygame.K_SPACE:
                         pressed = pygame.key.get_pressed()
                         if pressed[pygame.K_RCTRL] or pressed[pygame.K_LCTRL]:

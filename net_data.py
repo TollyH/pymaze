@@ -21,8 +21,8 @@ class Coords:
         # Positions are sent as integers with 2 d.p of accuracy from the
         # original float.
         return (
-            int(self.x_pos * 100).to_bytes(4, "big")
-            + int(self.y_pos * 100).to_bytes(4, "big")
+            int(self.x_pos * 100).to_bytes(4, "big", signed=True)
+            + int(self.y_pos * 100).to_bytes(4, "big", signed=True)
         )
 
     @classmethod
@@ -31,8 +31,8 @@ class Coords:
         Get an instance of this class from bytes transmitted over the network.
         """
         return cls(
-            int.from_bytes(coord_bytes[:4], "big") / 100,
-            int.from_bytes(coord_bytes[4:8], "big") / 100
+            int.from_bytes(coord_bytes[:4], "big", signed=True) / 100,
+            int.from_bytes(coord_bytes[4:8], "big", signed=True) / 100
         )
 
     def to_tuple(self) -> Tuple[float, float]:
