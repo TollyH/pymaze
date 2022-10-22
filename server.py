@@ -17,8 +17,7 @@ PING = 0
 JOIN = 1
 FIRE = 2
 RESPAWN = 3
-CHECK_DEAD = 4
-LEAVE = 5
+LEAVE = 4
 
 SHOTS_UNTIL_DEAD = 10
 
@@ -60,7 +59,10 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                     players[player_key].pos.x_pos.__trunc__(),
                     players[player_key].pos.y_pos.__trunc__()
                 )
-                player_bytes = bytes()
+                player_bytes = (
+                    players[player_key].hits_remaining.to_bytes(1, "big")
+                    + players[player_key].last_killer_skin.to_bytes(1, "big")
+                )
                 for key, plr in players.items():
                     if key != player_key and plr.hits_remaining > 0:
                         player_bytes += bytes(plr.strip_private_data())
@@ -119,13 +121,6 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                     LOG.warning(
                         "Will not respawn from %s as player isn't dead", addr
                     )
-            elif rq_type == CHECK_DEAD:
-                LOG.debug("Player checked health from %s", addr)
-                sock.sendto(
-                    players[player_key].hits_remaining.to_bytes(1, "big")
-                    + players[player_key].last_killer_skin.to_bytes(1, "big"),
-                    addr
-                )
             elif rq_type == LEAVE:
                 LOG.info("Player left from %s", addr)
                 del players[player_key]

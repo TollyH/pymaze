@@ -176,15 +176,14 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             time_since_server_ping += frame_time
             if time_since_server_ping >= 0.1:
                 time_since_server_ping = 0
-                new_other_players = netcode.ping_server(
+                ping_response = netcode.ping_server(
                     sock, addr, player_key, levels[current_level].player_coords
                 )
-                if new_other_players is not None:
-                    other_players = new_other_players
-                status_response = netcode.get_status(sock, addr, player_key)
-                if status_response is not None:
+                if ping_response is not None:
                     previous_hits = hits_remaining
-                    hits_remaining, last_killer_skin = status_response
+                    hits_remaining, last_killer_skin, other_players = (
+                        ping_response
+                    )
                     if hits_remaining < previous_hits:
                         resources.player_hit_sound.play()
                     if hits_remaining == 0:

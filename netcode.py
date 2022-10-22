@@ -29,10 +29,12 @@ def create_client_socket() -> socket.socket:
 
 def ping_server(sock: socket.socket, addr: Tuple[str, int], player_key: bytes,
                 coords: Tuple[float, float]
-                ) -> Optional[List[net_data.Player]]:
+                ) -> Optional[Tuple[int, int, List[net_data.Player]]]:
     """
     Tell the server where we currently are, and get a list of where all other
-    players are. Returns None if a response doesn't arrive in a timely manner.
+    players are. Also gets current hits remaining until death and the skin of
+    our last known killer. Returns None if a response doesn't arrive in a
+    timely manner.
     """
     # Positions are sent as integers with 2 d.p of accuracy from the original
     # float.
@@ -40,11 +42,13 @@ def ping_server(sock: socket.socket, addr: Tuple[str, int], player_key: bytes,
     sock.sendto(server.PING.to_bytes(1, "big") + player_key + coords_b, addr)
     try:
         player_list_bytes = sock.recvfrom(4096)[0]
+        hits_remaining = player_list_bytes[0]
+        last_killer_skin = player_list_bytes[1]
         player_byte_size = net_data.Player.byte_size
-        return [
+        return hits_remaining, last_killer_skin, [
             net_data.Player.from_bytes(player_list_bytes[
-                    i * player_byte_size:(i + 1) * player_byte_size
-            ]) for i in range(len(player_list_bytes) // player_byte_size)
+                    i * player_byte_size + 2:(i + 1) * player_byte_size + 2
+            ]) for i in range(len(player_list_bytes) - 2 // player_byte_size)
         ]
     except (socket.timeout, OSError):
         return None
@@ -89,21 +93,6 @@ def respawn(sock: socket.socket, addr: Tuple[str, int], player_key: bytes
     are already dead.
     """
     sock.sendto(server.RESPAWN.to_bytes(1, "big") + player_key, addr)
-
-
-def get_status(sock: socket.socket, addr: Tuple[str, int], player_key: bytes
-               ) -> Optional[Tuple[int, int]]:
-    """
-    Gets the current hits remaining until death and the skin of our last known
-    killer from the server. Returns None if a response doesn't arrive in a
-    timely manner.
-    """
-    sock.sendto(server.CHECK_DEAD.to_bytes(1, "big") + player_key, addr)
-    try:
-        received_bytes = sock.recvfrom(2)[0]
-        return received_bytes[0], received_bytes[1]
-    except (socket.timeout, OSError):
-        return None
 
 
 def leave_server(sock: socket.socket, addr: Tuple[str, int], player_key: bytes
