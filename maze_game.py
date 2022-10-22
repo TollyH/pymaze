@@ -135,16 +135,8 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
         frame_time = clock.tick(cfg.frame_rate_limit) / 1000
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                if __name__ == "__main__":
-                    pygame.quit()
-                    sys.exit()
-                pygame.mixer.music.unload()
-                pygame.display.set_caption("PyMaze")
-                # Return the mouse to normal if it is currently captured
-                if enable_mouse_control:
-                    pygame.mouse.set_visible(True)
-                    pygame.event.set_grab(False)
-                return
+                pygame.quit()
+                sys.exit()
             # Standard "press-once" keys
             elif event.type == pygame.KEYDOWN:
                 # Never stop the user regaining control of their mouse with
