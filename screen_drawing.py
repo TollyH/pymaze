@@ -627,6 +627,9 @@ def draw_gun(screen: pygame.Surface, cfg: Config, gun_texture: pygame.Surface
     """
     Draw the third person gun on the screen with a crosshair in the centre.
     """
+    gun_texture = pygame.transform.scale(
+        gun_texture, (cfg.viewport_width, cfg.viewport_height)
+    )
     screen.blit(gun_texture, (0, 0, cfg.viewport_width, cfg.viewport_height))
     pygame.draw.circle(
         screen, BLACK, (cfg.viewport_width // 2, cfg.viewport_height // 2), 5
