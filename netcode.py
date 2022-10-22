@@ -35,7 +35,7 @@ def ping_server(sock: socket.socket, addr: Tuple[str, int], player_key: bytes,
     # Positions are sent as integers with 2 d.p of accuracy from the original
     # float.
     coords_b = bytes(net_data.Coords(*coords))
-    sock.sendto(server.PING + player_key + coords_b, addr)
+    sock.sendto(server.PING.to_bytes(1, "big") + player_key + coords_b, addr)
     player_list_bytes = sock.recvfrom(4096)[0]
     player_byte_size = net_data.Player.byte_size
     return [
@@ -52,7 +52,7 @@ def join_server(sock: socket.socket, addr: Tuple[str, int]) -> bytes:
     """
     # Player key is all 0 here as we don't have one yet, but all requests still
     # need to have one.
-    sock.sendto(server.JOIN + b'\x00' * 32, addr)
+    sock.sendto(server.JOIN.to_bytes(1, "big") + b'\x00' * 32, addr)
     return sock.recvfrom(32)[0]
 
 
@@ -66,7 +66,9 @@ def fire_gun(sock: socket.socket, addr: Tuple[str, int], player_key: bytes,
     # float.
     coords_b = bytes(net_data.Coords(*coords))
     facing_b = bytes(net_data.Coords(*facing))
-    sock.sendto(server.FIRE + player_key + coords_b + facing_b, addr)
+    sock.sendto(
+        server.FIRE.to_bytes(1, "big") + player_key + coords_b + facing_b, addr
+    )
 
 
 def respawn(sock: socket.socket, addr: Tuple[str, int], player_key: bytes
@@ -75,7 +77,7 @@ def respawn(sock: socket.socket, addr: Tuple[str, int], player_key: bytes
     Tell the server to reset our hits and position. This will only work if you
     are already dead.
     """
-    sock.sendto(server.RESPAWN + player_key, addr)
+    sock.sendto(server.RESPAWN.to_bytes(1, "big") + player_key, addr)
 
 
 def get_status(sock: socket.socket, addr: Tuple[str, int], player_key: bytes
@@ -83,7 +85,7 @@ def get_status(sock: socket.socket, addr: Tuple[str, int], player_key: bytes
     """
     Gets the current hits remaining until death from the server.
     """
-    sock.sendto(server.CHECK_DEAD + player_key, addr)
+    sock.sendto(server.CHECK_DEAD.to_bytes(1, "big") + player_key, addr)
     return sock.recvfrom(1)[0][0]
 
 
@@ -93,4 +95,4 @@ def leave_server(sock: socket.socket, addr: Tuple[str, int], player_key: bytes
     Tell the server we are leaving the game. Our player key will become
     immediately unusable after this.
     """
-    sock.sendto(server.LEAVE + player_key, addr)
+    sock.sendto(server.LEAVE.to_bytes(1, "big") + player_key, addr)

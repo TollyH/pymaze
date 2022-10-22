@@ -13,17 +13,17 @@ import net_data
 import raycasting
 
 # Request types
-PING = b'\x00'
-JOIN = b'\x01'
-FIRE = b'\x02'
-RESPAWN = b'\x03'
-CHECK_DEAD = b'\x04'
-LEAVE = b'\x05'
+PING = 0
+JOIN = 1
+FIRE = 2
+RESPAWN = 3
+CHECK_DEAD = 4
+LEAVE = 5
 
 SHOTS_UNTIL_DEAD = 10
 
+logging.basicConfig(level=logging.INFO)
 LOG = logging.getLogger("pymaze.server")
-LOG.setLevel(logging.INFO)
 
 
 def maze_server(*, level_json_path: str = "maze_levels.json",
@@ -42,8 +42,8 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
     players: Dict[bytes, net_data.PrivatePlayer] = {}
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.settimeout(1)
     sock.bind(('0.0.0.0', port))
+    LOG.info("Listening on UDP port %s", port)
     while True:
         try:
             data, addr = sock.recvfrom(4096)
