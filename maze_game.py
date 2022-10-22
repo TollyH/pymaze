@@ -86,6 +86,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
     other_players: List[net_data.Player] = []
     time_since_server_ping = 0.0
     hits_remaining = 1  # This will be updated later
+    last_killer_skin = 0  # This will be updated later
 
     # Minimum window resolution is 500×500
     screen = pygame.display.set_mode((
@@ -172,7 +173,9 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                 other_players = netcode.ping_server(
                     sock, addr, player_key, levels[current_level].player_coords
                 )
-                hits_remaining = netcode.get_status(sock, addr, player_key)
+                hits_remaining, last_killer_skin = netcode.get_status(
+                    sock, addr, player_key
+                )
                 if hits_remaining == 0:
                     levels[current_level].killed = True
         for event in pygame.event.get():
@@ -586,9 +589,11 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             if cfg.monster_sound_on_kill and has_started_level[current_level]:
                 resources.monster_jumpscare_sound.play()
                 has_started_level[current_level] = False
-            screen_drawing.draw_kill_screen(
-                screen, cfg, resources.jumpscare_monster_texture
-            )
+            if not is_multi:
+                selected_sprite = resources.jumpscare_monster_texture
+            else:
+                selected_sprite = resources.player_textures[last_killer_skin]
+            screen_drawing.draw_kill_screen(screen, cfg, selected_sprite)
         # Currently playing
         elif not is_reset_prompt_shown:
             if (not resources.audio_error_occurred

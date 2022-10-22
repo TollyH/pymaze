@@ -80,13 +80,18 @@ class PrivatePlayer(Player):
     server and the player themselves.
     """
     hits_remaining: int
-    byte_size: ClassVar[int] = Player.byte_size + 1
+    last_killer_skin: int = 0
+    byte_size: ClassVar[int] = Player.byte_size + 2
 
     def __bytes__(self) -> bytes:
         """
         Get the list of bytes ready to be transmitted over the network.
         """
-        return super().__bytes__() + self.hits_remaining.to_bytes(1, "big")
+        return (
+                super().__bytes__()
+                + self.hits_remaining.to_bytes(1, "big")
+                + self.last_killer_skin.to_bytes(1, "big")
+        )
 
     @classmethod
     def from_bytes(cls, player_bytes: bytes) -> 'PrivatePlayer':
@@ -97,7 +102,8 @@ class PrivatePlayer(Player):
         return cls(
             coords, (coords.x_pos.__trunc__(), coords.y_pos.__trunc__()),
             int.from_bytes(player_bytes[8:9], "big"),
-            int.from_bytes(player_bytes[9:10], "big")
+            int.from_bytes(player_bytes[9:10], "big"),
+            int.from_bytes(player_bytes[10:11], "big")
         )
 
     def strip_private_data(self) -> Player:

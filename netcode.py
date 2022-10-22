@@ -83,12 +83,14 @@ def respawn(sock: socket.socket, addr: Tuple[str, int], player_key: bytes
 
 
 def get_status(sock: socket.socket, addr: Tuple[str, int], player_key: bytes
-               ) -> int:
+               ) -> Tuple[int, int]:
     """
-    Gets the current hits remaining until death from the server.
+    Gets the current hits remaining until death and the skin of our last known
+    killer from the server.
     """
     sock.sendto(server.CHECK_DEAD.to_bytes(1, "big") + player_key, addr)
-    return sock.recvfrom(1)[0][0]
+    received_bytes = sock.recvfrom(2)[0]
+    return received_bytes[0], received_bytes[1]
 
 
 def leave_server(sock: socket.socket, addr: Tuple[str, int], player_key: bytes

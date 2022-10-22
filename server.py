@@ -103,6 +103,10 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                         hit_player = list_players[sprite.player_index]
                         if hit_player.hits_remaining > 0:
                             hit_player.hits_remaining -= 1
+                            if hit_player.hits_remaining <= 0:
+                                hit_player.last_killer_skin = players[
+                                    player_key
+                                ].skin
                         break
             elif rq_type == RESPAWN:
                 LOG.debug("Player respawned from %s", addr)
@@ -118,7 +122,9 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
             elif rq_type == CHECK_DEAD:
                 LOG.debug("Player checked health from %s", addr)
                 sock.sendto(
-                    players[player_key].hits_remaining.to_bytes(1, "big"), addr
+                    players[player_key].hits_remaining.to_bytes(1, "big")
+                    + players[player_key].last_killer_skin.to_bytes(1, "big"),
+                    addr
                 )
             elif rq_type == LEAVE:
                 LOG.info("Player left from %s", addr)
