@@ -69,7 +69,7 @@ def fire_gun(sock: socket.socket, addr: Tuple[str, int], player_key: bytes,
     sock.sendto(server.FIRE + player_key + coords_b + facing_b, addr)
 
 
-def respawn(sock: socket.socket, addr: Tuple[str, str], player_key: bytes
+def respawn(sock: socket.socket, addr: Tuple[str, int], player_key: bytes
             ) -> None:
     """
     Tell the server to reset our hits and position. This will only work if you
@@ -78,7 +78,7 @@ def respawn(sock: socket.socket, addr: Tuple[str, str], player_key: bytes
     sock.sendto(server.RESPAWN + player_key, addr)
 
 
-def get_status(sock: socket.socket, addr: Tuple[str, str], player_key: bytes
+def get_status(sock: socket.socket, addr: Tuple[str, int], player_key: bytes
                ) -> int:
     """
     Gets the current hits remaining until death from the server.
@@ -87,7 +87,7 @@ def get_status(sock: socket.socket, addr: Tuple[str, str], player_key: bytes
     return sock.recvfrom(1)[0][0]
 
 
-def leave_server(sock: socket.socket, addr: Tuple[str, str], player_key: bytes
+def leave_server(sock: socket.socket, addr: Tuple[str, int], player_key: bytes
                  ) -> None:
     """
     Tell the server we are leaving the game. Our player key will become
