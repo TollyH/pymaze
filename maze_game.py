@@ -76,7 +76,10 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
         sock = netcode.create_client_socket()
         assert multiplayer_server is not None
         addr = netcode.get_host_port(multiplayer_server)
-        player_key, current_level = netcode.join_server(sock, addr)
+        join_response = None
+        while join_response is None:
+            join_response = netcode.join_server(sock, addr)
+        player_key, current_level = join_response
     else:
         current_level = 0
         # Not needed in single player
@@ -140,7 +143,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
     compass_burned_out = [False] * len(levels)
     compass_charge_delays = [cfg.compass_charge_delay] * len(levels)
     key_sensor_times = [0.0] * len(levels)
-    has_gun = [is_multi] * len(levels)
+    has_gun: List[bool] = [is_multi] * len(levels)
     wall_place_cooldown = [0.0] * len(levels)
     flicker_time_remaining = [0.0] * len(levels)
     pickup_flash_time_remaining = 0.0
@@ -170,17 +173,19 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             time_since_server_ping += frame_time
             if time_since_server_ping >= 0.1:
                 time_since_server_ping = 0
-                other_players = netcode.ping_server(
+                new_other_players = netcode.ping_server(
                     sock, addr, player_key, levels[current_level].player_coords
                 )
-                previous_hits = hits_remaining
-                hits_remaining, last_killer_skin = netcode.get_status(
-                    sock, addr, player_key
-                )
-                if hits_remaining < previous_hits:
-                    resources.player_hit_sound.play()
-                if hits_remaining == 0:
-                    levels[current_level].killed = True
+                if new_other_players is not None:
+                    other_players = new_other_players
+                status_response = netcode.get_status(sock, addr, player_key)
+                if status_response is not None:
+                    previous_hits = hits_remaining
+                    hits_remaining, last_killer_skin = status_response
+                    if hits_remaining < previous_hits:
+                        resources.player_hit_sound.play()
+                    if hits_remaining == 0:
+                        levels[current_level].killed = True
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 if is_multi:
