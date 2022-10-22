@@ -145,6 +145,9 @@ def draw_kill_screen(screen: pygame.Surface, cfg: Config,
     Draw the red kill screen with the monster fullscreen.
     Also used in multiplayer to display the player's killer.
     """
+    jumpscare_monster_texture = pygame.transform.scale(
+        jumpscare_monster_texture, (cfg.viewport_width, cfg.viewport_height)
+    )
     screen.fill(RED)
     screen.blit(jumpscare_monster_texture, (
         0, 0, cfg.viewport_width, cfg.viewport_height
@@ -156,6 +159,9 @@ def draw_escape_screen(screen: pygame.Surface, cfg: Config,
     """
     Draw the monster fullscreen and prompt the user to spam W to escape.
     """
+    jumpscare_monster_texture = pygame.transform.scale(
+        jumpscare_monster_texture, (cfg.viewport_width, cfg.viewport_height)
+    )
     screen.blit(jumpscare_monster_texture, (
         random.randint(-5, 5), random.randint(-5, 5),
         cfg.viewport_width, cfg.viewport_height
