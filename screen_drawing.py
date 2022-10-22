@@ -644,3 +644,15 @@ def draw_gun(screen: pygame.Surface, cfg: Config, gun_texture: pygame.Surface
     pygame.draw.circle(
         screen, WHITE, (cfg.viewport_width // 2, cfg.viewport_height // 2), 3
     )
+
+
+def draw_remaining_hits(screen: pygame.Surface, cfg: Config, hits: int
+                        ) -> None:
+    """
+    Draw the number of hits the player can take before they die in the bottom
+    left corner.
+    """
+    remaining_text = FONT.render(
+        str(hits), True, RED
+    )
+    screen.blit(remaining_text, (10, cfg.viewport_height - 40))

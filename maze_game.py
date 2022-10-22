@@ -85,6 +85,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
         addr = ("", 0)
     other_players: List[net_data.Player] = []
     time_since_server_ping = 0.0
+    hits_remaining = 1  # This will be updated later
 
     # Minimum window resolution is 500×500
     screen = pygame.display.set_mode((
@@ -1000,6 +1001,9 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                 monster_escape_time[current_level] -= frame_time
                 if monster_escape_time[current_level] <= 0:
                     levels[current_level].killed = True
+
+            if is_multi and not levels[current_level].killed:
+                screen_drawing.draw_remaining_hits(screen, cfg, hits_remaining)
 
             last_level_frame[current_level] = screen.copy()
 
