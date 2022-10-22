@@ -3,9 +3,10 @@ Contains functions related to the raycast rendering used to generate pseudo-3D
 graphics.
 """
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import List, Optional, Sequence, Tuple
 
 import level
+import net_data
 
 # Sprite types
 END_POINT = 0
@@ -18,6 +19,7 @@ KEY_SENSOR = 6
 MONSTER_SPAWN = 7
 GUN = 8
 DECORATION = 9
+OTHER_PLAYER = 10
 
 # Wall directions
 NORTH = 0
@@ -59,13 +61,16 @@ class SpriteCollision(Collision):
     """
     Subclass of Collision. Represents a ray collision with a sprite of a
     particular type, being one of the constants defined in this file.
+    If the type is OTHER_PLAYER, player_index will contain the index of the
+    player that was hit in the provided players list.
     """
     type: int
+    player_index: Optional[int] = None
 
 
 def get_first_collision(current_level: level.Level,
                         direction: Tuple[float, float],
-                        edge_is_wall: bool
+                        edge_is_wall: bool, players: Sequence[net_data.Player]
                         ) -> Tuple[
                                 Optional[WallCollision], List[SpriteCollision]
                              ]:
@@ -216,6 +221,15 @@ def get_first_collision(current_level: level.Level,
                             (current_tile[0] + 0.5, current_tile[1] + 0.5)
                         ), current_tile, FLAG
                     ))
+                for i, plr in enumerate(players):
+                    if plr.grid_pos == current_tile:
+                        sprites.append(SpriteCollision(
+                            (current_tile[0] + 0.5, current_tile[1] + 0.5),
+                            no_sqrt_coord_distance(
+                                current_level.player_coords,
+                                (current_tile[0] + 0.5, current_tile[1] + 0.5)
+                            ), current_tile, OTHER_PLAYER, i
+                        ))
         else:
             # Edge of wall map has been reached, yet no wall in sight.
             if edge_is_wall:
@@ -244,7 +258,8 @@ def get_first_collision(current_level: level.Level,
 
 def get_columns_sprites(display_columns: int, current_level: level.Level,
                         edge_is_wall: bool, direction: Tuple[float, float],
-                        camera_plane: Tuple[float, float]
+                        camera_plane: Tuple[float, float],
+                        players: List[net_data.Player]
                         ) -> Tuple[List[WallCollision], List[SpriteCollision]]:
     """
     Get a list of the intersection positions and distances of each column's ray
@@ -262,7 +277,7 @@ def get_columns_sprites(display_columns: int, current_level: level.Level,
             direction[1] + camera_plane[1] * camera_x,
         )
         result, new_sprites = get_first_collision(
-            current_level, cast_direction, edge_is_wall
+            current_level, cast_direction, edge_is_wall, players
         )
         if result is None:
             columns.append(

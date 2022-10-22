@@ -86,8 +86,17 @@ algorithm for raycasting.
 
 ## Command Line Arguments (Optional)
 
+### Client
+
 - `-P=/path/to/maze_levels.json` or `--level-json-path=/path/to/maze_levels.json`
 - `-C=/path/to/config.ini` or `--config-ini-path=/path/to/config.ini`
+- `-S=host:port` or `--multiplayer-server=host:port`
+
+### Server
+
+- `-P=/path/to/maze_levels.json` or `--level-json-path=/path/to/maze_levels.json`
+- `-T=port` or `--port=port`
+- `-L=level_index` or `--level=level_index`
 
 ---
 

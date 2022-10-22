@@ -142,7 +142,8 @@ def draw_victory_screen(screen: pygame.Surface, cfg: Config,
 def draw_kill_screen(screen: pygame.Surface, cfg: Config,
                      jumpscare_monster_texture: pygame.Surface) -> None:
     """
-    Draw the red kill screen with the monster fullscreen
+    Draw the red kill screen with the monster fullscreen.
+    Also used in multiplayer to display the player's killer.
     """
     screen.fill(RED)
     screen.blit(jumpscare_monster_texture, (

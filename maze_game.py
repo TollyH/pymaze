@@ -7,6 +7,7 @@ import math
 import os
 import pickle
 import random
+import socket
 import sys
 import threading
 from typing import List, Optional, Set, Tuple
@@ -17,6 +18,8 @@ import config_editor
 import config_loader
 import level
 import maze_levels
+import net_data
+import netcode
 import raycasting
 import screen_drawing
 
@@ -26,6 +29,7 @@ TEXTURE_HEIGHT = 128
 
 def maze_game(*, level_json_path: str = "maze_levels.json",
               config_ini_path: str = "config.ini",
+              multiplayer_server: Optional[str] = None,
               process_command_args: bool = False) -> None:
     """
     Main function for the maze game. Manages all input, output, and timing.
@@ -46,13 +50,38 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                 if lower_key in ("--config-ini-path", "-c"):
                     config_ini_path = arg_pair[1]
                     continue
+                if lower_key in ("--multiplayer-server", "-s"):
+                    multiplayer_server = arg_pair[1]
+                    continue
             print(f"Unknown argument or missing value: '{arg}'")
             sys.exit(1)
 
+    is_multi = multiplayer_server is not None
+
     last_config_edit = os.path.getmtime(config_ini_path)
     cfg = config_loader.Config(config_ini_path)
-
     levels = maze_levels.load_level_json(level_json_path)
+    if is_multi:
+        for lvl in levels:
+            # Remove pickups and monsters from multiplayer matches.
+            lvl.original_exit_keys = frozenset()
+            lvl.exit_keys = set()
+            lvl.original_key_sensors = frozenset()
+            lvl.key_sensors = set()
+            lvl.original_guns = frozenset()
+            lvl.guns = set()
+            lvl.monster_start = None
+            lvl.monster_wait = None
+        sock = netcode.create_client_socket()
+        assert multiplayer_server is not None
+        host = netcode.get_host_port(multiplayer_server)
+        player_key = netcode.join_server(sock, host)
+    else:
+        # Not needed in single player
+        player_key = bytes()
+        sock = socket.socket()
+        host = ("", 0)
+    other_players: List[net_data.Player] = []
 
     # Minimum window resolution is 500×500
     screen = pygame.display.set_mode((
@@ -107,7 +136,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
     compass_burned_out = [False] * len(levels)
     compass_charge_delays = [cfg.compass_charge_delay] * len(levels)
     key_sensor_times = [0.0] * len(levels)
-    has_gun = [False] * len(levels)
+    has_gun = [is_multi] * len(levels)
     wall_place_cooldown = [0.0] * len(levels)
     flicker_time_remaining = [0.0] * len(levels)
     pickup_flash_time_remaining = 0.0
@@ -239,7 +268,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                             _, hit_sprites = raycasting.get_first_collision(
                                 levels[current_level],
                                 facing_directions[current_level],
-                                cfg.draw_maze_edge_as_wall
+                                cfg.draw_maze_edge_as_wall, other_players
                             )
                             for sprite in hit_sprites:
                                 if sprite.type == raycasting.MONSTER:
@@ -706,7 +735,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                     cfg.display_columns, levels[current_level],
                     cfg.draw_maze_edge_as_wall,
                     facing_directions[current_level],
-                    camera_planes[current_level]
+                    camera_planes[current_level], other_players
                 )
             else:
                 # Skip maze rendering if map is open as it will be obscuring
