@@ -207,6 +207,11 @@ try:
     ] = pygame.mixer.Sound(
         os.path.join("sounds", "light_flicker.wav")
     )
+    player_hit_sound: Union[
+        pygame.mixer.Sound, EmptySound
+    ] = pygame.mixer.Sound(
+        os.path.join("sounds", "player_hit.wav")
+    )
     # Used for the victory scene animations
     victory_increment: Union[
         pygame.mixer.Sound, EmptySound
@@ -237,5 +242,6 @@ except (FileNotFoundError, pygame.error):
     map_close_sound = empty_sound
     gunshot_sound = empty_sound
     light_flicker_sound = empty_sound
+    player_hit_sound = empty_sound
     victory_increment = empty_sound
     victory_next_block = empty_sound

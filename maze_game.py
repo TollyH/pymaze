@@ -173,9 +173,12 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                 other_players = netcode.ping_server(
                     sock, addr, player_key, levels[current_level].player_coords
                 )
+                previous_hits = hits_remaining
                 hits_remaining, last_killer_skin = netcode.get_status(
                     sock, addr, player_key
                 )
+                if hits_remaining < previous_hits:
+                    resources.player_hit_sound.play()
                 if hits_remaining == 0:
                     levels[current_level].killed = True
         for event in pygame.event.get():
