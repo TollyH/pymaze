@@ -72,6 +72,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             lvl.guns = set()
             lvl.monster_start = None
             lvl.monster_wait = None
+            lvl.end_point = (-1, -1)  # Make end inaccessible in multiplayer
         sock = netcode.create_client_socket()
         assert multiplayer_server is not None
         addr = netcode.get_host_port(multiplayer_server)
@@ -121,7 +122,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
 
     display_map = False
     display_compass = False
-    display_stats = True
+    display_stats = not is_multi
     display_rays = False
 
     is_reset_prompt_shown = False
@@ -229,9 +230,10 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                                 resources.compass_close_sound
                             ).play()
                     elif event.key == pygame.K_e:
-                        # Stats and map cannot be displayed together
-                        if not display_map or cfg.enable_cheat_map:
-                            display_stats = not display_stats
+                        if not is_multi:
+                            # Stats and map cannot be displayed together
+                            if not display_map or cfg.enable_cheat_map:
+                                display_stats = not display_stats
                     elif event.key in (pygame.K_LEFTBRACKET,
                                        pygame.K_RIGHTBRACKET):
                         if not is_multi:

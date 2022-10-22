@@ -60,7 +60,7 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                     players[player_key].pos.x_pos.__trunc__(),
                     players[player_key].pos.y_pos.__trunc__()
                 )
-                player_bytes = len(players).to_bytes(1, "big")
+                player_bytes = (len(players) - 1).to_bytes(1, "big")
                 for key, plr in players.items():
                     if key != player_key:
                         player_bytes += bytes(plr.strip_private_data())
