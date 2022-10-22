@@ -792,6 +792,16 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                             ]
                         except KeyError:
                             selected_sprite = resources.placeholder_texture
+                    elif collision_object.type == raycasting.OTHER_PLAYER:
+                        try:
+                            assert collision_object.player_index is not None
+                            selected_sprite = resources.player_textures[
+                                other_players[
+                                    collision_object.player_index
+                                ].skin
+                            ]
+                        except IndexError:
+                            selected_sprite = resources.placeholder_texture
                     else:
                         try:
                             selected_sprite = resources.sprite_textures[

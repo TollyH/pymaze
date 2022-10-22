@@ -224,7 +224,7 @@ def get_first_collision(current_level: level.Level,
                 for i, plr in enumerate(players):
                     if plr.grid_pos == current_tile:
                         sprites.append(SpriteCollision(
-                            (current_tile[0] + 0.5, current_tile[1] + 0.5),
+                            plr.pos.to_tuple(),
                             no_sqrt_coord_distance(
                                 current_level.player_coords,
                                 (current_tile[0] + 0.5, current_tile[1] + 0.5)

@@ -47,10 +47,14 @@ for _, (_, _surface_to_dark) in wall_textures.items():
 decoration_textures: Dict[str, pygame.Surface] = {
     os.path.split(x)[-1].split(".")[0]:
         pygame.image.load(x).convert_alpha()
-    for x in glob(
-        os.path.join("textures", "sprite", "decoration", "*.png"))
+    for x in glob(os.path.join("textures", "sprite", "decoration", "*.png"))
 }
 decoration_textures["placeholder"] = placeholder_texture
+
+player_textures: List[pygame.Surface] = [
+    pygame.image.load(x).convert_alpha()
+    for x in glob(os.path.join("textures", "player", "*.png"))
+]
 
 # {degradation_stage: (light_texture, dark_texture)}
 player_wall_textures: Dict[int, Tuple[pygame.Surface, pygame.Surface]] = {
@@ -60,9 +64,7 @@ player_wall_textures: Dict[int, Tuple[pygame.Surface, pygame.Surface]] = {
     for x in glob(os.path.join("textures", "player_wall", "*.png"))
 }
 if len(player_wall_textures) == 0:
-    player_wall_textures[0] = (
-        placeholder_texture, placeholder_texture.copy()
-    )
+    player_wall_textures[0] = placeholder_texture, placeholder_texture.copy()
 for _, (_, _surface_to_dark) in player_wall_textures.items():
     _surface_to_dark.blit(_darkener, (0, 0))
 
@@ -84,9 +86,7 @@ blank_icon = pygame.Surface((32, 32))
 # {screen_drawing.CONSTANT_VALUE: icon_texture}
 hud_icons = {
     getattr(screen_drawing, os.path.split(x)[-1].split(".")[0].upper()):
-        pygame.transform.scale(
-            pygame.image.load(x).convert_alpha(), (32, 32)
-        )
+        pygame.transform.scale(pygame.image.load(x).convert_alpha(), (32, 32))
     for x in glob(os.path.join('textures', 'hud_icons', '*.png'))
 }
 
@@ -94,25 +94,20 @@ try:
     first_person_gun = pygame.transform.scale(
         pygame.image.load(
             os.path.join('textures', 'gun_fp.png')
-        ).convert_alpha(),
-        (TEXTURE_WIDTH, TEXTURE_HEIGHT)
+        ).convert_alpha(), (TEXTURE_WIDTH, TEXTURE_HEIGHT)
     )
 except FileNotFoundError:
-    first_person_gun = pygame.Surface(
-        (TEXTURE_WIDTH, TEXTURE_HEIGHT)
-    )
+    first_person_gun = pygame.Surface((TEXTURE_WIDTH, TEXTURE_HEIGHT))
 
 try:
     jumpscare_monster_texture = pygame.transform.scale(
         pygame.image.load(
             os.path.join("textures", "death_monster.png")
-        ).convert_alpha(),
-        (TEXTURE_WIDTH, TEXTURE_HEIGHT)
+        ).convert_alpha(), (TEXTURE_WIDTH, TEXTURE_HEIGHT)
     )
 except FileNotFoundError:
     jumpscare_monster_texture = pygame.transform.scale(
-        placeholder_texture,
-        (TEXTURE_WIDTH, TEXTURE_HEIGHT)
+        placeholder_texture, (TEXTURE_WIDTH, TEXTURE_HEIGHT)
     )
 
 audio_error_occurred = False
