@@ -60,9 +60,9 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                     players[player_key].pos.x_pos.__trunc__(),
                     players[player_key].pos.y_pos.__trunc__()
                 )
-                player_bytes = (len(players) - 1).to_bytes(1, "big")
+                player_bytes = bytes()
                 for key, plr in players.items():
-                    if key != player_key:
+                    if key != player_key and plr.hits_remaining > 0:
                         player_bytes += bytes(plr.strip_private_data())
                 sock.sendto(player_bytes, addr)
             elif rq_type == JOIN:
@@ -100,7 +100,9 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                     if sprite.type == raycasting.OTHER_PLAYER:
                         # Player was hit by gun
                         assert sprite.player_index is not None
-                        list_players[sprite.player_index].hits_remaining -= 1
+                        hit_player = list_players[sprite.player_index]
+                        if hit_player.hits_remaining > 0:
+                            hit_player.hits_remaining -= 1
                         break
             elif rq_type == RESPAWN:
                 LOG.debug("Player respawned from %s", addr)

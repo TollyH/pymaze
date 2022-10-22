@@ -40,8 +40,8 @@ def ping_server(sock: socket.socket, addr: Tuple[str, int], player_key: bytes,
     player_byte_size = net_data.Player.byte_size
     return [
         net_data.Player.from_bytes(player_list_bytes[
-                i * player_byte_size + 1:(i + 1) * player_byte_size + 1
-        ]) for i in range(player_list_bytes[0])
+                i * player_byte_size:(i + 1) * player_byte_size
+        ]) for i in range(len(player_list_bytes) // player_byte_size)
     ]
 
 
