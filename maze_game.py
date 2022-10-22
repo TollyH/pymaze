@@ -95,7 +95,10 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
     screen = pygame.display.set_mode((
         max(cfg.viewport_width, 500), max(cfg.viewport_height, 500)
     ))
-    pygame.display.set_caption("PyMaze - Level 1")
+    if not is_multi:
+        pygame.display.set_caption("PyMaze - Level 1")
+    else:
+        pygame.display.set_caption("PyMaze Multiplayer")
     pygame.display.set_icon(
         pygame.image.load(os.path.join("window_icons", "main.png")).convert()
     )
