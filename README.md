@@ -15,6 +15,8 @@ algorithm for raycasting.
     - [Game Only](#game-only)
     - [Designer Only](#designer-only)
   - [Command Line Arguments (Optional)](#command-line-arguments-optional)
+    - [Client](#client)
+    - [Server](#server)
 
 ## Installation
 
