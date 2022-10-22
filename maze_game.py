@@ -75,8 +75,9 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
         sock = netcode.create_client_socket()
         assert multiplayer_server is not None
         addr = netcode.get_host_port(multiplayer_server)
-        player_key = netcode.join_server(sock, addr)
+        player_key, current_level = netcode.join_server(sock, addr)
     else:
+        current_level = 0
         # Not needed in single player
         player_key = bytes()
         sock = socket.socket()
@@ -125,7 +126,6 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
 
     is_reset_prompt_shown = False
 
-    current_level = 0
     monster_timeouts = [0.0] * len(levels)
     # How long since the monster was last spotted. Used to prevent the
     # "spotted" jumpscare sound playing repeatedly.

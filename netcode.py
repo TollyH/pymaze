@@ -45,15 +45,17 @@ def ping_server(sock: socket.socket, addr: Tuple[str, int], player_key: bytes,
     ]
 
 
-def join_server(sock: socket.socket, addr: Tuple[str, int]) -> bytes:
+def join_server(sock: socket.socket, addr: Tuple[str, int]
+                ) -> Tuple[bytes, int]:
     """
     Join a server at the specified address. Returns the private player key
-    assigned to us by the server.
+    assigned to us by the server, as well as the level the server is using.
     """
     # Player key is all 0 here as we don't have one yet, but all requests still
     # need to have one.
     sock.sendto(server.JOIN.to_bytes(1, "big") + b'\x00' * 32, addr)
-    return sock.recvfrom(32)[0]
+    received_bytes = sock.recvfrom(33)[0]
+    return received_bytes[:32], received_bytes[32]
 
 
 def fire_gun(sock: socket.socket, addr: Tuple[str, int], player_key: bytes,

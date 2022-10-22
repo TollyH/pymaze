@@ -77,7 +77,7 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                         current_level.start_point,
                         len(players) % skin_count, SHOTS_UNTIL_DEAD
                     )
-                    sock.sendto(new_key, addr)
+                    sock.sendto(new_key + level.to_bytes(1, "big"), addr)
                 else:
                     LOG.warning(
                         "Rejected player join from %s as server is full", addr
@@ -140,10 +140,10 @@ if __name__ == "__main__":
                 kwargs["config_ini_path"] = arg_pair[1]
                 continue
             if lower_key in ("--port", "-t"):
-                kwargs["port"] = arg_pair[1]
+                kwargs["port"] = int(arg_pair[1])
                 continue
             if lower_key in ("--level", "-l"):
-                kwargs["level"] = arg_pair[1]
+                kwargs["level"] = int(arg_pair[1])
                 continue
         print(f"Unknown argument or missing value: '{arg}'")
         sys.exit(1)
