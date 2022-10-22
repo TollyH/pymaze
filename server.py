@@ -1,5 +1,5 @@
 """
-Receives and gives multiplayer packets to all connected players,
+Receives and gives multiplayer packets to all connected players.
 """
 import logging
 import os
@@ -30,8 +30,8 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                 port: int = 13375, level: int = 0) -> None:
     """
     Launches the server required for playing multiplayer games. Stores and
-    provides player locations, health status, and custom walls, and does
-    collision checking for gun fires.
+    provides player locations, health status, and does collision checking
+    for gun fires.
     """
     # Change working directory to the directory where the script is located.
     # This prevents issues with required files not being found.
