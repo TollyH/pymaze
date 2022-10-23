@@ -93,7 +93,9 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                 current_level.player_grid_coords = (
                     coords.x_pos.__trunc__(), coords.y_pos.__trunc__()
                 )
-                list_players = list(players.values())
+                list_players = [
+                    x for x in players.values() if x.hits_remaining > 0
+                ]
                 _, hit_sprites = raycasting.get_first_collision(
                     current_level, facing.to_tuple(), False,
                     list_players
