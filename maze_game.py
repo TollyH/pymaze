@@ -188,6 +188,10 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                         resources.player_hit_sound.play()
                     if hits_remaining == 0:
                         levels[current_level].killed = True
+                    if levels[current_level].killed and hits_remaining != 0:
+                        # We were dead, but server has processed our respawn
+                        # so reset level to resurrect.
+                        levels[current_level].reset()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 if is_multi:
@@ -205,7 +209,6 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                     pygame.event.set_grab(False)
                 elif is_multi and levels[current_level].killed:
                     netcode.respawn(sock, addr, player_key)
-                    levels[current_level].reset()
                 elif not is_reset_prompt_shown:
                     if monster_escape_clicks[current_level] >= 0:
                         if event.key == pygame.K_w:
