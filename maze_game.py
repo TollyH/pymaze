@@ -75,18 +75,25 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             lvl.monster_start = None
             lvl.monster_wait = None
             lvl.end_point = (-1, -1)  # Make end inaccessible in multiplayer
-        sock = netcode.create_client_socket()
-        assert multiplayer_server is not None
-        addr = netcode.get_host_port(multiplayer_server)
-        join_response = None
-        retries = 0
-        while join_response is None and retries < 10:
-            join_response = netcode.join_server(sock, addr)
-            retries += 1
-            time.sleep(0.5)
-        if join_response is None:
+        try:
+            sock = netcode.create_client_socket()
+            assert multiplayer_server is not None
+            addr = netcode.get_host_port(multiplayer_server)
+            join_response = None
+            retries = 0
+            while join_response is None and retries < 10:
+                join_response = netcode.join_server(sock, addr)
+                retries += 1
+                time.sleep(0.5)
+            if join_response is None:
+                tkinter.messagebox.showerror(
+                    "Connection Error", "Could not connect to server."
+                )
+                sys.exit(1)
+        except Exception as e:
+            print(e)
             tkinter.messagebox.showerror(
-                "Connection Error", "Could not connect to server."
+                "Connection Error", "Invalid server information provided."
             )
             sys.exit(1)
         player_key, current_level = join_response

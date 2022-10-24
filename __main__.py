@@ -5,7 +5,9 @@ The script that launches the game, config editor, and level designer.
 """
 import os
 import sys
-from typing import Dict
+import tkinter.messagebox
+import tkinter.simpledialog
+from typing import Any, Dict
 
 import pygame
 
@@ -13,6 +15,7 @@ from config_editor import ConfigEditorApp
 from level_designer import LevelDesignerApp
 from maze_game import maze_game
 from screen_drawing import BLUE, GREEN, WHITE
+from server import maze_server
 
 
 def main() -> None:
@@ -92,6 +95,60 @@ def main() -> None:
                                 )
                             else:
                                 LevelDesignerApp()
+                elif event.button == pygame.BUTTON_RIGHT:
+                    clicked_pos = pygame.mouse.get_pos()
+                    if 108 <= clicked_pos[1] <= 158:
+                        host = tkinter.simpledialog.askstring(
+                            "Enter Server",
+                            "Enter the server address to connect to.\n"
+                            + "This will usually be an IP address."
+                        )
+                        port = tkinter.simpledialog.askinteger(
+                            "Enter Port",
+                            "Enter the port number to use.\nAsk the server" +
+                            " host if you are unsure what this is."
+                        )
+                        maze_game(
+                            **maze_game_kwargs,
+                            multiplayer_server=f'{host}:{port}',
+                            process_command_args=False
+                        )
+                elif event.button == pygame.BUTTON_MIDDLE:
+                    clicked_pos = pygame.mouse.get_pos()
+                    if 108 <= clicked_pos[1] <= 158:
+                        port = tkinter.simpledialog.askinteger(
+                            "Enter Port",
+                            "Enter the port number to host on. It is " +
+                            "recommended to use ports over 1024.\nBy default" +
+                            " this is 13375. Port numbers must be below " +
+                            "65535.\nIf a port number doesn't work, try a " +
+                            "different one, it may already be in use."
+                        )
+                        level = tkinter.simpledialog.askinteger(
+                            "Enter Level",
+                            "Enter the level number to use for this match."
+                        )
+                        server_kwargs: Dict[str, Any] = {}
+                        if "level_json_path" in maze_game_kwargs:
+                            server_kwargs["level_json_path"] = (
+                                maze_game_kwargs["level_json_path"]
+                            )
+                        if port is not None:
+                            server_kwargs["port"] = port
+                        if level is not None:
+                            # User inputs a 1-indexed level number, but
+                            # to the server levels are 0-indexed.
+                            server_kwargs["level"] = level - 1
+                        pygame.quit()
+                        tkinter.messagebox.showinfo(
+                            "Server starting",
+                            "The server will now (hopefully!) start on port " +
+                            f"{port}. In the event that it doesn't, try " +
+                            "another port.\nTo stop the server, close the " +
+                            "command line window that started with PyMaze."
+                        )
+                        maze_server(**server_kwargs)
+                        sys.exit(0)
         screen.fill(GREEN)
         screen.blit(title_text, (250 - title_text.get_width() // 2, 5))
         screen.blit(copyright_text,
