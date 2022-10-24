@@ -10,6 +10,8 @@ import random
 import socket
 import sys
 import threading
+import time
+import tkinter.messagebox
 from typing import List, Optional, Set, Tuple
 
 import pygame
@@ -77,8 +79,16 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
         assert multiplayer_server is not None
         addr = netcode.get_host_port(multiplayer_server)
         join_response = None
-        while join_response is None:
+        retries = 0
+        while join_response is None and retries < 10:
             join_response = netcode.join_server(sock, addr)
+            retries += 1
+            time.sleep(0.5)
+        if join_response is None:
+            tkinter.messagebox.showerror(
+                "Connection Error", "Could not connect to server."
+            )
+            sys.exit(1)
         player_key, current_level = join_response
     else:
         current_level = 0
