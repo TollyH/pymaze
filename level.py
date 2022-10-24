@@ -515,6 +515,19 @@ class Level:
             and 0 <= coord[1] < self.dimensions[1]
         )
 
+    def randomise_player_coords(self) -> None:
+        """
+        Move the player to a random valid position in the level. Used in
+        multiplayer for (re)spawning.
+        """
+        new_coord = None
+        while new_coord is None or self[new_coord, PLAYER_COLLIDE]:
+            new_coord = (
+                random.randint(0, self.dimensions[0] - 1) + 0.5,
+                random.randint(0, self.dimensions[1] - 1) + 0.5
+            )
+        self.move_player(new_coord, False, False, False)
+
     def _path_search(self, current_path: List[Tuple[int, int]],
                      targets: Set[Tuple[int, int]]
                      ) -> List[List[Tuple[int, int]]]:

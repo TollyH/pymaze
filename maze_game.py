@@ -64,17 +64,6 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
     cfg = config_loader.Config(config_ini_path)
     levels = maze_levels.load_level_json(level_json_path)
     if is_multi:
-        for lvl in levels:
-            # Remove pickups and monsters from multiplayer matches.
-            lvl.original_exit_keys = frozenset()
-            lvl.exit_keys = set()
-            lvl.original_key_sensors = frozenset()
-            lvl.key_sensors = set()
-            lvl.original_guns = frozenset()
-            lvl.guns = set()
-            lvl.monster_start = None
-            lvl.monster_wait = None
-            lvl.end_point = (-1, -1)  # Make end inaccessible in multiplayer
         try:
             sock = netcode.create_client_socket()
             assert multiplayer_server is not None
@@ -97,6 +86,19 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             )
             sys.exit(1)
         player_key, current_level = join_response
+        lvl = levels[current_level]
+        lvl.randomise_player_coords()
+        # Remove pickups and monsters from multiplayer matches.
+        lvl.original_exit_keys = frozenset()
+        lvl.exit_keys = set()
+        lvl.original_key_sensors = frozenset()
+        lvl.key_sensors = set()
+        lvl.original_guns = frozenset()
+        lvl.guns = set()
+        lvl.monster_start = None
+        lvl.monster_wait = None
+        lvl.end_point = (-1, -1)  # Make end inaccessible in multiplayer
+        lvl.start_point = (-1, -1)  # Hide start point in multiplayer
     else:
         current_level = 0
         # Not needed in single player
@@ -209,6 +211,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                         # We were dead, but server has processed our respawn
                         # so reset level to resurrect.
                         levels[current_level].reset()
+                        levels[current_level].randomise_player_coords()
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 if is_multi:

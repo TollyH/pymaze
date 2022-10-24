@@ -72,10 +72,7 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                 if len(players) < 255:
                     new_key = os.urandom(32)
                     players[new_key] = net_data.PrivatePlayer(
-                        net_data.Coords(
-                            current_level.start_point[0] + 0.5,
-                            current_level.start_point[1] + 0.5
-                        ),
+                        net_data.Coords(-1, -1),
                         current_level.start_point,
                         len(players) % skin_count, SHOTS_UNTIL_DEAD
                     )
