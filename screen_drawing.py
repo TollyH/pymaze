@@ -193,13 +193,21 @@ def draw_untextured_column(screen: pygame.Surface, cfg: Config, index: int,
     display_column_width = cfg.viewport_width // cfg.display_columns
     column_height = min(column_height, cfg.viewport_height)
     colour = WALL_GREY_LIGHT if side_was_ns else WALL_GREY_DARK
+    # The location on the screen to start drawing the column
+    draw_x = display_column_width * index
+    draw_y = max(0, -column_height // 2 + cfg.viewport_height // 2)
     pygame.draw.rect(
-        screen, colour, (
-            display_column_width * index,
-            max(0, -column_height // 2 + cfg.viewport_height // 2),
-            display_column_width, column_height
-        )
+        screen, colour, (draw_x, draw_y, display_column_width, column_height)
     )
+    if cfg.fog_strength > 0:
+        fog_overlay = pygame.Surface(
+            (display_column_width, min(column_height, cfg.viewport_height))
+        )
+        fog_overlay.fill(BLACK)
+        fog_overlay.set_alpha(round(
+            255 / (column_height / cfg.viewport_height * cfg.fog_strength)
+        ))
+        screen.blit(fog_overlay, (draw_x, draw_y))
 
 
 def draw_textured_column(screen: pygame.Surface, cfg: Config,
