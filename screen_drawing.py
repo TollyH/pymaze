@@ -28,6 +28,8 @@ PURPLE = (0x87, 0x23, 0xD9)
 GREY = (0xAA, 0xAA, 0xAA)
 DARK_GREY = (0x20, 0x20, 0x20)
 LIGHT_GREY = (0xCD, 0xCD, 0xCD)
+WALL_GREY_LIGHT = (0x55, 0x55, 0x55)
+WALL_GREY_DARK = (0x33, 0x33, 0x33)
 
 # HUD icons
 COMPASS = 0
@@ -190,7 +192,7 @@ def draw_untextured_column(screen: pygame.Surface, cfg: Config, index: int,
     """
     display_column_width = cfg.viewport_width // cfg.display_columns
     column_height = min(column_height, cfg.viewport_height)
-    colour = DARK_GREY if side_was_ns else BLACK
+    colour = WALL_GREY_LIGHT if side_was_ns else WALL_GREY_DARK
     pygame.draw.rect(
         screen, colour, (
             display_column_width * index,
