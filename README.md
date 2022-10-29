@@ -44,7 +44,6 @@ algorithm for raycasting.
 - `Space` — Toggle map
 - `C` — Toggle monster compass
 - `E` — Toggle statistics (time, moves, key counts)
-- `CTRL` + `/` — Open config window
 
 ## Cheat Map Controls
 

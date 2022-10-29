@@ -9,14 +9,12 @@ import pickle
 import random
 import socket
 import sys
-import threading
 import time
 import tkinter.messagebox
 from typing import Dict, List, Optional, Set, Tuple
 
 import pygame
 
-import config_editor
 import config_loader
 import level
 import maze_levels
@@ -338,14 +336,6 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                                     if display_map else
                                     resources.map_close_sound
                                 ).play()
-                    elif event.key == pygame.K_SLASH:
-                        pressed = pygame.key.get_pressed()
-                        if pressed[pygame.K_RCTRL] or pressed[pygame.K_LCTRL]:
-                            # Launch config editor in separate thread to
-                            # prevent blocking the main game.
-                            threading.Thread(
-                                target=config_editor.ConfigEditorApp
-                            ).start()
                 else:
                     if event.key == pygame.K_y:
                         # Resets almost all attributes related to the current
