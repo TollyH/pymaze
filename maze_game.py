@@ -12,7 +12,7 @@ import sys
 import threading
 import time
 import tkinter.messagebox
-from typing import List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 import pygame
 
@@ -31,8 +31,7 @@ TEXTURE_HEIGHT = 128
 
 def maze_game(*, level_json_path: str = "maze_levels.json",
               config_ini_path: str = "config.ini",
-              multiplayer_server: Optional[str] = None,
-              process_command_args: bool = False) -> None:
+              multiplayer_server: Optional[str] = None) -> None:
     """
     Main function for the maze game. Manages all input, output, and timing.
     """
@@ -40,23 +39,6 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
     # This prevents issues with required files not being found.
     os.chdir(os.path.dirname(__file__))
     pygame.init()
-
-    if process_command_args:
-        for arg in sys.argv[1:]:
-            arg_pair = arg.split("=")
-            if len(arg_pair) == 2:
-                lower_key = arg_pair[0].lower()
-                if lower_key in ("--level-json-path", "-p"):
-                    level_json_path = arg_pair[1]
-                    continue
-                if lower_key in ("--config-ini-path", "-c"):
-                    config_ini_path = arg_pair[1]
-                    continue
-                if lower_key in ("--multiplayer-server", "-s"):
-                    multiplayer_server = arg_pair[1]
-                    continue
-            print(f"Unknown argument or missing value: '{arg}'")
-            sys.exit(1)
 
     is_multi = multiplayer_server is not None
 
@@ -1095,4 +1077,20 @@ class EmptySound:
 
 
 if __name__ == "__main__":
-    maze_game(process_command_args=True)
+    kwargs: Dict[str, str] = {}
+    for arg in sys.argv[1:]:
+        arg_pair = arg.split("=")
+        if len(arg_pair) == 2:
+            lower_key = arg_pair[0].lower()
+            if lower_key in ("--level-json-path", "-p"):
+                kwargs["level_json_path"] = arg_pair[1]
+                continue
+            if lower_key in ("--config-ini-path", "-c"):
+                kwargs["config_ini_path"] = arg_pair[1]
+                continue
+            if lower_key in ("--multiplayer-server", "-s"):
+                kwargs["multiplayer_server"] = arg_pair[1]
+                continue
+        print(f"Unknown argument: '{arg}'")
+        sys.exit(1)
+    maze_game(**kwargs)

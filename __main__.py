@@ -84,9 +84,7 @@ def main() -> None:
                     if (250 - button_width // 2 <= clicked_pos[0]
                             <= 250 + button_width // 2):
                         if 108 <= clicked_pos[1] <= 158:
-                            maze_game(
-                                **maze_game_kwargs, process_command_args=False
-                            )
+                            maze_game(**maze_game_kwargs)
                         elif 224 <= clicked_pos[1] <= 274:
                             screen.fill(BLUE)
                             pygame.display.update()
@@ -115,8 +113,7 @@ def main() -> None:
                         )
                         maze_game(
                             **maze_game_kwargs,
-                            multiplayer_server=f'{host}:{port}',
-                            process_command_args=False
+                            multiplayer_server=f'{host}:{port}'
                         )
                 elif event.button == pygame.BUTTON_MIDDLE:
                     clicked_pos = pygame.mouse.get_pos()
