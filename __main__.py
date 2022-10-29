@@ -28,6 +28,11 @@ def main() -> None:
     os.chdir(os.path.dirname(__file__))
     pygame.init()
 
+    # Create a hidden root Tkinter window to allow tkinter.simpledialog to work
+    # on older versions of Python.
+    root = tkinter.Tk()
+    root.withdraw()
+
     # Minimum window resolution is 500×500
     screen = pygame.display.set_mode((500, 500))
     pygame.display.set_caption("PyMaze")
