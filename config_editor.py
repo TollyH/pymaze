@@ -15,7 +15,7 @@ class ConfigEditorApp:
     config file. While the app should still function if the file is erroneous
     or missing, unexpected behaviour may occur.
     """
-    def __init__(self) -> None:
+    def __init__(self, root: tkinter.Tk) -> None:
         # Change working directory to the directory where the script is located
         # This prevents issues with required files not being found.
         os.chdir(os.path.dirname(__file__))
@@ -30,7 +30,7 @@ class ConfigEditorApp:
             self.config['OPTIONS'] = {}
         self.config_options = self.config['OPTIONS']
 
-        self.window = tkinter.Tk()
+        self.window = tkinter.Toplevel(root)
         self.window.wm_title("PyMaze Config")
         self.window.wm_iconbitmap(
             self, os.path.join("window_icons", "config.ico")
@@ -629,7 +629,7 @@ class ConfigEditorApp:
         )
         self.gui_save_button.pack()
 
-        self.window.mainloop()
+        self.window.wait_window()
 
     def on_scale_change(self, field: str, new_value: str, decimal_places: int
                         ) -> None:
@@ -736,4 +736,6 @@ class ConfigEditorApp:
 
 
 if __name__ == "__main__":
-    ConfigEditorApp()
+    _root = tkinter.Tk()
+    _root.withdraw()
+    ConfigEditorApp(_root)

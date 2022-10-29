@@ -90,16 +90,16 @@ def main() -> None:
                         elif 224 <= clicked_pos[1] <= 274:
                             screen.fill(BLUE)
                             pygame.display.update()
-                            ConfigEditorApp()
+                            ConfigEditorApp(root)
                         elif 340 <= clicked_pos[1] <= 390:
                             screen.fill(BLUE)
                             pygame.display.update()
                             if "config_ini_path" in maze_game_kwargs:
                                 LevelDesignerApp(
-                                    maze_game_kwargs["config_ini_path"]
+                                    root, maze_game_kwargs["config_ini_path"]
                                 )
                             else:
-                                LevelDesignerApp()
+                                LevelDesignerApp(root)
                 elif event.button == pygame.BUTTON_RIGHT:
                     clicked_pos = pygame.mouse.get_pos()
                     if 108 <= clicked_pos[1] <= 158:
