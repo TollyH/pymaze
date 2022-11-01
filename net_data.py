@@ -51,7 +51,9 @@ class Player:
     pos: Coords
     grid_pos: Tuple[int, int]
     skin: int
-    byte_size: ClassVar[int] = Coords.byte_size + 1
+    kills: int
+    deaths: int
+    byte_size: ClassVar[int] = Coords.byte_size + 5
 
     def __bytes__(self) -> bytes:
         """
@@ -59,7 +61,12 @@ class Player:
         """
         # Positions are sent as integers with 2 d.p of accuracy from the
         # original float.
-        return bytes(self.pos) + self.skin.to_bytes(1, "big")
+        return (
+            bytes(self.pos)
+            + self.skin.to_bytes(1, "big")
+            + self.kills.to_bytes(2, "big")
+            + self.deaths.to_bytes(2, "big")
+        )
 
     @classmethod
     def from_bytes(cls, player_bytes: bytes) -> 'Player':
@@ -69,7 +76,9 @@ class Player:
         coords = Coords.from_bytes(player_bytes[:8])
         return cls(
             coords, (coords.x_pos.__trunc__(), coords.y_pos.__trunc__()),
-            int.from_bytes(player_bytes[8:9], "big")
+            int.from_bytes(player_bytes[8:9], "big"),
+            int.from_bytes(player_bytes[9:11], "big"),
+            int.from_bytes(player_bytes[11:13], "big")
         )
 
 
@@ -102,8 +111,10 @@ class PrivatePlayer(Player):
         return cls(
             coords, (coords.x_pos.__trunc__(), coords.y_pos.__trunc__()),
             int.from_bytes(player_bytes[8:9], "big"),
-            int.from_bytes(player_bytes[9:10], "big"),
-            int.from_bytes(player_bytes[10:11], "big")
+            int.from_bytes(player_bytes[9:11], "big"),
+            int.from_bytes(player_bytes[11:13], "big"),
+            int.from_bytes(player_bytes[13:14], "big"),
+            int.from_bytes(player_bytes[14:15], "big")
         )
 
     def strip_private_data(self) -> Player:
@@ -111,4 +122,6 @@ class PrivatePlayer(Player):
         Remove all private data from this class so that it is suitable to be
         sent to all players.
         """
-        return Player(self.pos, self.grid_pos, self.skin)
+        return Player(
+            self.pos, self.grid_pos, self.skin, self.kills, self.deaths
+        )

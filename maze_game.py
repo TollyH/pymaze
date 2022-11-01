@@ -90,6 +90,8 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
     time_since_server_ping = 0.0
     hits_remaining = 1  # This will be updated later
     last_killer_skin = 0  # This will be updated later
+    kills = 0
+    deaths = 0
 
     # Minimum window resolution is 500×500
     screen = pygame.display.set_mode((
@@ -213,9 +215,10 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                 )
                 if ping_response is not None:
                     previous_hits = hits_remaining
-                    hits_remaining, last_killer_skin, other_players = (
-                        ping_response
-                    )
+                    (
+                        hits_remaining, last_killer_skin, kills, deaths,
+                        other_players
+                    ) = ping_response
                     if hits_remaining < previous_hits:
                         resources.player_hit_sound.play()
                         hurt_flash_time_remaining = 1 / (hits_remaining + 1)
@@ -1045,6 +1048,8 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
 
             if is_multi and not levels[current_level].killed:
                 screen_drawing.draw_remaining_hits(screen, cfg, hits_remaining)
+                screen_drawing.draw_kill_count(screen, cfg, kills)
+                screen_drawing.draw_death_count(screen, cfg, deaths)
 
             last_level_frame[current_level] = screen.copy()
 

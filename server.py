@@ -73,6 +73,8 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                 player_bytes = (
                     players[player_key].hits_remaining.to_bytes(1, "big")
                     + players[player_key].last_killer_skin.to_bytes(1, "big")
+                    + players[player_key].kills.to_bytes(2, "big")
+                    + players[player_key].deaths.to_bytes(2, "big")
                 )
                 for key, plr in players.items():
                     if (key != player_key and plr.hits_remaining > 0
@@ -84,9 +86,8 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                 if len(players) < 255:
                     new_key = os.urandom(32)
                     players[new_key] = net_data.PrivatePlayer(
-                        net_data.Coords(-1, -1),
-                        current_level.start_point,
-                        len(players) % skin_count, SHOTS_UNTIL_DEAD
+                        net_data.Coords(-1, -1), (-1, -1),
+                        len(players) % skin_count, 0, 0, SHOTS_UNTIL_DEAD
                     )
                     first_ping_received[new_key] = False
                     sock.sendto(new_key + level.to_bytes(1, "big"), addr)
@@ -134,6 +135,8 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                                     hit_player.last_killer_skin = players[
                                         player_key
                                     ].skin
+                                    hit_player.deaths += 1
+                                    players[player_key].kills += 1
                                     first_ping_received[hit_key] = False
                                     sock.sendto(
                                         SHOT_KILLED.to_bytes(1, "big"), addr

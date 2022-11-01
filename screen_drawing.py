@@ -662,7 +662,27 @@ def draw_remaining_hits(screen: pygame.Surface, cfg: Config, hits: int
     Draw the number of hits the player can take before they die in the bottom
     left corner.
     """
-    remaining_text = FONT.render(
-        str(hits), True, RED
-    )
+    remaining_text = FONT.render(str(hits), True, RED)
     screen.blit(remaining_text, (10, cfg.viewport_height - 40))
+
+
+def draw_kill_count(screen: pygame.Surface, cfg: Config, kills: int) -> None:
+    """
+    Draw the number of kills the player has in the bottom right corner.
+    """
+    kills_text = FONT.render(str(kills), True, GREEN)
+    screen.blit(
+        kills_text,
+        (
+            cfg.viewport_width - 15 * len(str(kills)) - 15,
+            cfg.viewport_height - 40
+        )
+    )
+
+
+def draw_death_count(screen: pygame.Surface, cfg: Config, deaths: int) -> None:
+    """
+    Draw the number of deaths the player has in the bottom right corner.
+    """
+    deaths_text = FONT.render(str(deaths), True, DARK_RED)
+    screen.blit(deaths_text, (10, cfg.viewport_height - 90))

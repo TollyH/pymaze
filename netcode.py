@@ -29,7 +29,9 @@ def create_client_socket() -> socket.socket:
 
 def ping_server(sock: socket.socket, addr: Tuple[str, int], player_key: bytes,
                 coords: Tuple[float, float]
-                ) -> Optional[Tuple[int, int, List[net_data.Player]]]:
+                ) -> Optional[
+                        Tuple[int, int, int, int, List[net_data.Player]]
+                     ]:
     """
     Tell the server where we currently are, and get a list of where all other
     players are. Also gets current hits remaining until death and the skin of
@@ -44,10 +46,12 @@ def ping_server(sock: socket.socket, addr: Tuple[str, int], player_key: bytes,
         player_list_bytes = sock.recvfrom(4096)[0]
         hits_remaining = player_list_bytes[0]
         last_killer_skin = player_list_bytes[1]
+        kills = int.from_bytes(player_list_bytes[2:4], "big")
+        deaths = int.from_bytes(player_list_bytes[4:6], "big")
         player_byte_size = net_data.Player.byte_size
-        return hits_remaining, last_killer_skin, [
+        return hits_remaining, last_killer_skin, kills, deaths, [
             net_data.Player.from_bytes(player_list_bytes[
-                    i * player_byte_size + 2:(i + 1) * player_byte_size + 2
+                    i * player_byte_size + 6:(i + 1) * player_byte_size + 6
             ]) for i in range((len(player_list_bytes) - 2) // player_byte_size)
         ]
     except (socket.timeout, OSError):
