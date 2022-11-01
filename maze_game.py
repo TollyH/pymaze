@@ -162,6 +162,31 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
         for _ in range(len(levels))
     ]
 
+    # Used as both mouse and keyboard can be used to fire.
+    def _fire_gun() -> None:
+        if (not display_map or cfg.enable_cheat_map) and not (
+                levels[current_level].won
+                or levels[current_level].killed):
+            _, hit_sprites = raycasting.get_first_collision(
+                levels[current_level],
+                facing_directions[current_level],
+                cfg.draw_maze_edge_as_wall, other_players
+            )
+            for sprite in hit_sprites:
+                if sprite.type == raycasting.MONSTER:
+                    # Monster was hit by gun
+                    levels[current_level].monster_coords = None
+                    break
+            if is_multi:
+                netcode.fire_gun(
+                    sock, addr, player_key,
+                    levels[current_level].player_coords,
+                    facing_directions[current_level]
+                )
+            else:
+                has_gun[current_level] = False
+            resources.gunshot_sound.play()
+
     # Game loop
     while True:
         screen.fill(screen_drawing.BLACK)
@@ -298,28 +323,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                                 target, level.MONSTER_COLLIDE] = True
                             random.choice(resources.wall_place_sounds).play()
                     elif event.key == pygame.K_t and has_gun[current_level]:
-                        if (not display_map or cfg.enable_cheat_map) and not (
-                                levels[current_level].won
-                                or levels[current_level].killed):
-                            _, hit_sprites = raycasting.get_first_collision(
-                                levels[current_level],
-                                facing_directions[current_level],
-                                cfg.draw_maze_edge_as_wall, other_players
-                            )
-                            for sprite in hit_sprites:
-                                if sprite.type == raycasting.MONSTER:
-                                    # Monster was hit by gun
-                                    levels[current_level].monster_coords = None
-                                    break
-                            if is_multi:
-                                netcode.fire_gun(
-                                    sock, addr, player_key,
-                                    levels[current_level].player_coords,
-                                    facing_directions[current_level]
-                                )
-                            else:
-                                has_gun[current_level] = False
-                            resources.gunshot_sound.play()
+                        _fire_gun()
                     elif event.key in (pygame.K_r, pygame.K_ESCAPE):
                         if not is_multi:
                             is_reset_prompt_shown = True
@@ -393,18 +397,23 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                 mouse_coords = pygame.mouse.get_pos()
                 if (mouse_coords[0] <= cfg.viewport_width
                         and event.button == pygame.BUTTON_LEFT):
-                    enable_mouse_control = not enable_mouse_control
-                    if enable_mouse_control:
-                        pygame.mouse.set_pos(
-                            (cfg.viewport_width // 2, cfg.viewport_height // 2)
-                        )
-                        old_mouse_pos = (
-                            cfg.viewport_width // 2, cfg.viewport_height // 2
-                        )
-                    # Hide cursor and confine to window if controlling with
-                    # mouse
-                    pygame.mouse.set_visible(not enable_mouse_control)
-                    pygame.event.set_grab(enable_mouse_control)
+                    if enable_mouse_control and has_gun[current_level]:
+                        _fire_gun()
+                    else:
+                        enable_mouse_control = not enable_mouse_control
+                        if enable_mouse_control:
+                            pygame.mouse.set_pos((
+                                cfg.viewport_width // 2,
+                                cfg.viewport_height // 2
+                            ))
+                            old_mouse_pos = (
+                                cfg.viewport_width // 2,
+                                cfg.viewport_height // 2
+                            )
+                        # Hide cursor and confine to window if controlling with
+                        # mouse
+                        pygame.mouse.set_visible(not enable_mouse_control)
+                        pygame.event.set_grab(enable_mouse_control)
             elif (event.type == pygame.MOUSEMOTION and enable_mouse_control
                     and (not display_map or cfg.enable_cheat_map)
                     and not is_reset_prompt_shown):
@@ -578,8 +587,8 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                 )
                 highscores_updated = True
             if highscores_updated and not os.path.isdir("highscores.pickle"):
-                with open("highscores.pickle", 'wb') as file:
-                    pickle.dump(highscores, file)
+                with open("highscores.pickle", 'wb') as hs_file:
+                    pickle.dump(highscores, hs_file)
             screen_drawing.draw_victory_screen(
                 screen, cfg, last_level_frame[current_level],
                 highscores, current_level, time_scores[current_level],
