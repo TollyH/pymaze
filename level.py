@@ -295,7 +295,8 @@ class Level:
                 raise TypeError("Collision map entries must be bool")
 
     def move_player(self, vector: Tuple[float, float], has_gun: bool,
-                    relative: bool = True, collision_check: bool = True
+                    relative: bool = True, collision_check: bool = True,
+                    multiplayer: bool = False
                     ) -> Set[int]:
         """
         Moves the player either relative to their current position, or to an
@@ -308,7 +309,7 @@ class Level:
         example if MOVED_GRID_DIAGONALLY is returned, MOVED will also be.
         """
         events: Set[int] = set()
-        if self.won or self.killed:
+        if (self.won or self.killed) and not multiplayer:
             return events
         if relative:
             target = (
@@ -526,7 +527,7 @@ class Level:
                 random.randint(0, self.dimensions[0] - 1) + 0.5,
                 random.randint(0, self.dimensions[1] - 1) + 0.5
             )
-        self.move_player(new_coord, False, False, False)
+        self.move_player(new_coord, False, False, False, True)
 
     def _path_search(self, current_path: List[Tuple[int, int]],
                      targets: Set[Tuple[int, int]]

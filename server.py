@@ -62,7 +62,6 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                 LOG.warning("Invalid player key from %s", addr)
             if rq_type == PING:
                 LOG.debug("Player pinged from %s", addr)
-                first_ping_received[player_key] = True
                 players[player_key].pos = net_data.Coords.from_bytes(
                     data[33:41]
                 )
@@ -81,6 +80,8 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                             and first_ping_received[key]):
                         player_bytes += bytes(plr.strip_private_data())
                 sock.sendto(player_bytes, addr)
+                if players[player_key].hits_remaining > 0:
+                    first_ping_received[player_key] = True
             elif rq_type == JOIN:
                 LOG.info("Player join from %s", addr)
                 if len(players) < 255:
@@ -153,9 +154,6 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                 LOG.debug("Player respawned from %s", addr)
                 if players[player_key].hits_remaining <= 0:
                     players[player_key].hits_remaining = SHOTS_UNTIL_DEAD
-                    players[player_key].pos = net_data.Coords(
-                        *current_level.start_point
-                    )
                 else:
                     LOG.warning(
                         "Will not respawn from %s as player isn't dead", addr
