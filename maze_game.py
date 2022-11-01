@@ -206,7 +206,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
         frame_time = clock.tick(cfg.frame_rate_limit) / 1000
         if is_multi:
             time_since_server_ping += frame_time
-            if time_since_server_ping >= 0.1:
+            if time_since_server_ping >= 0.04:
                 time_since_server_ping = 0
                 ping_response = netcode.ping_server(
                     sock, addr, player_key, levels[current_level].player_coords
