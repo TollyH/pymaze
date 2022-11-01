@@ -684,5 +684,5 @@ def draw_death_count(screen: pygame.Surface, cfg: Config, deaths: int) -> None:
     """
     Draw the number of deaths the player has in the bottom right corner.
     """
-    deaths_text = FONT.render(str(deaths), True, DARK_RED)
+    deaths_text = FONT.render(str(deaths), True, RED)
     screen.blit(deaths_text, (10, cfg.viewport_height - 90))
