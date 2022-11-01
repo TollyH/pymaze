@@ -19,6 +19,12 @@ FIRE = 2
 RESPAWN = 3
 LEAVE = 4
 
+# Shot responses
+SHOT_DENIED = 0
+SHOT_MISSED = 1
+SHOT_HIT_NO_KILL = 2
+SHOT_KILLED = 3
+
 SHOTS_UNTIL_DEAD = 10
 
 logging.basicConfig(level=logging.INFO)
@@ -98,18 +104,29 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                     current_level, facing.to_tuple(), False,
                     list_players
                 )
+                hit = False
                 for sprite in hit_sprites:
                     if sprite.type == raycasting.OTHER_PLAYER:
                         # Player was hit by gun
                         assert sprite.player_index is not None
                         hit_player = list_players[sprite.player_index]
                         if hit_player.hits_remaining > 0:
+                            hit = True
                             hit_player.hits_remaining -= 1
                             if hit_player.hits_remaining <= 0:
                                 hit_player.last_killer_skin = players[
                                     player_key
                                 ].skin
+                                sock.sendto(
+                                    SHOT_KILLED.to_bytes(1, "big"), addr
+                                )
+                            else:
+                                sock.sendto(
+                                    SHOT_HIT_NO_KILL.to_bytes(1, "big"), addr
+                                )
                         break
+                if not hit:
+                    sock.sendto(SHOT_MISSED.to_bytes(1, "big"), addr)
             elif rq_type == RESPAWN:
                 LOG.debug("Player respawned from %s", addr)
                 if players[player_key].hits_remaining <= 0:

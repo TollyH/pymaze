@@ -22,6 +22,7 @@ import net_data
 import netcode
 import raycasting
 import screen_drawing
+import server
 
 TEXTURE_WIDTH = 128
 TEXTURE_HEIGHT = 128
@@ -165,6 +166,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
 
     # Used as both mouse and keyboard can be used to fire.
     def _fire_gun() -> None:
+        nonlocal pickup_flash_time_remaining
         if (not display_map or cfg.enable_cheat_map) and not (
                 levels[current_level].won
                 or levels[current_level].killed):
@@ -179,14 +181,19 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                     levels[current_level].monster_coords = None
                     break
             if is_multi:
-                netcode.fire_gun(
+                shot_response = netcode.fire_gun(
                     sock, addr, player_key,
                     levels[current_level].player_coords,
                     facing_directions[current_level]
                 )
+                if shot_response in (
+                        server.SHOT_HIT_NO_KILL, server.SHOT_KILLED):
+                    pickup_flash_time_remaining = 0.4
+                if shot_response not in (server.SHOT_DENIED, None):
+                    resources.gunshot_sound.play()
             else:
                 has_gun[current_level] = False
-            resources.gunshot_sound.play()
+                resources.gunshot_sound.play()
 
     # Game loop
     while True:

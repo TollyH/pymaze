@@ -72,10 +72,12 @@ def join_server(sock: socket.socket, addr: Tuple[str, int]
 
 
 def fire_gun(sock: socket.socket, addr: Tuple[str, int], player_key: bytes,
-             coords: Tuple[float, float], facing: Tuple[float, float]) -> None:
+             coords: Tuple[float, float], facing: Tuple[float, float]
+             ) -> Optional[int]:
     """
     Tell the server to fire a gunshot from the specified location in the
-    specified facing direction.
+    specified facing direction. Returns SHOT_DENIED, SHOT_MISSED,
+    SHOT_HIT_NO_KILL, SHOT_KILLED, or None if server does not respond.
     """
     # Positions are sent as integers with 2 d.p of accuracy from the original
     # float.
@@ -84,6 +86,10 @@ def fire_gun(sock: socket.socket, addr: Tuple[str, int], player_key: bytes,
     sock.sendto(
         server.FIRE.to_bytes(1, "big") + player_key + coords_b + facing_b, addr
     )
+    try:
+        return sock.recvfrom(1)[0][0]
+    except (socket.timeout, OSError):
+        return None
 
 
 def respawn(sock: socket.socket, addr: Tuple[str, int], player_key: bytes
