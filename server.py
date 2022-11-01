@@ -5,6 +5,7 @@ import logging
 import os
 import socket
 import sys
+import time
 from glob import glob
 from typing import Any, Dict
 
@@ -26,6 +27,7 @@ SHOT_HIT_NO_KILL = 2
 SHOT_KILLED = 3
 
 SHOTS_UNTIL_DEAD = 10
+SHOT_TIMEOUT = 0.3  # Seconds
 
 logging.basicConfig(level=logging.INFO)
 LOG = logging.getLogger("pymaze.server")
@@ -45,6 +47,7 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
     skin_count = len(glob(os.path.join("textures", "player", "*.png")))
     current_level = levels[level]
     players: Dict[bytes, net_data.PrivatePlayer] = {}
+    last_fire_time: Dict[bytes, float] = {}
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(('0.0.0.0', port))
@@ -89,44 +92,53 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                     )
             elif rq_type == FIRE:
                 LOG.debug("Player fired gun from %s", addr)
-                coords = net_data.Coords.from_bytes(data[33:41])
-                facing = net_data.Coords.from_bytes(data[41:49])
-                # Set these just for the raycasting function to work
-                current_level.player_coords = coords.to_tuple()
-                current_level.player_grid_coords = (
-                    coords.x_pos.__trunc__(), coords.y_pos.__trunc__()
-                )
-                list_players = [
-                    x for k, x in players.items()
-                    if x.hits_remaining > 0 and k != player_key
-                ]
-                _, hit_sprites = raycasting.get_first_collision(
-                    current_level, facing.to_tuple(), False,
-                    list_players
-                )
-                hit = False
-                for sprite in hit_sprites:
-                    if sprite.type == raycasting.OTHER_PLAYER:
-                        # Player was hit by gun
-                        assert sprite.player_index is not None
-                        hit_player = list_players[sprite.player_index]
-                        if hit_player.hits_remaining > 0:
-                            hit = True
-                            hit_player.hits_remaining -= 1
-                            if hit_player.hits_remaining <= 0:
-                                hit_player.last_killer_skin = players[
-                                    player_key
-                                ].skin
-                                sock.sendto(
-                                    SHOT_KILLED.to_bytes(1, "big"), addr
-                                )
-                            else:
-                                sock.sendto(
-                                    SHOT_HIT_NO_KILL.to_bytes(1, "big"), addr
-                                )
-                        break
-                if not hit:
-                    sock.sendto(SHOT_MISSED.to_bytes(1, "big"), addr)
+                now = time.time()
+                if now - last_fire_time.get(player_key, 0) < SHOT_TIMEOUT:
+                    LOG.warning(
+                        "Will not allow %s to shoot, firing too quickly", addr
+                    )
+                    sock.sendto(SHOT_DENIED.to_bytes(1, "big"), addr)
+                else:
+                    last_fire_time[player_key] = now
+                    coords = net_data.Coords.from_bytes(data[33:41])
+                    facing = net_data.Coords.from_bytes(data[41:49])
+                    # Set these just for the raycasting function to work
+                    current_level.player_coords = coords.to_tuple()
+                    current_level.player_grid_coords = (
+                        coords.x_pos.__trunc__(), coords.y_pos.__trunc__()
+                    )
+                    list_players = [
+                        x for k, x in players.items()
+                        if x.hits_remaining > 0 and k != player_key
+                    ]
+                    _, hit_sprites = raycasting.get_first_collision(
+                        current_level, facing.to_tuple(), False,
+                        list_players
+                    )
+                    hit = False
+                    for sprite in hit_sprites:
+                        if sprite.type == raycasting.OTHER_PLAYER:
+                            # Player was hit by gun
+                            assert sprite.player_index is not None
+                            hit_player = list_players[sprite.player_index]
+                            if hit_player.hits_remaining > 0:
+                                hit = True
+                                hit_player.hits_remaining -= 1
+                                if hit_player.hits_remaining <= 0:
+                                    hit_player.last_killer_skin = players[
+                                        player_key
+                                    ].skin
+                                    sock.sendto(
+                                        SHOT_KILLED.to_bytes(1, "big"), addr
+                                    )
+                                else:
+                                    sock.sendto(
+                                        SHOT_HIT_NO_KILL.to_bytes(1, "big"),
+                                        addr
+                                    )
+                            break
+                    if not hit:
+                        sock.sendto(SHOT_MISSED.to_bytes(1, "big"), addr)
             elif rq_type == RESPAWN:
                 LOG.debug("Player respawned from %s", addr)
                 if players[player_key].hits_remaining <= 0:
