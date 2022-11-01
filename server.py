@@ -48,6 +48,7 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
     current_level = levels[level]
     players: Dict[bytes, net_data.PrivatePlayer] = {}
     last_fire_time: Dict[bytes, float] = {}
+    first_ping_received: Dict[bytes, bool] = {}
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(('0.0.0.0', port))
@@ -61,6 +62,7 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                 LOG.warning("Invalid player key from %s", addr)
             if rq_type == PING:
                 LOG.debug("Player pinged from %s", addr)
+                first_ping_received[player_key] = True
                 players[player_key].pos = net_data.Coords.from_bytes(
                     data[33:41]
                 )
@@ -73,7 +75,8 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                     + players[player_key].last_killer_skin.to_bytes(1, "big")
                 )
                 for key, plr in players.items():
-                    if key != player_key and plr.hits_remaining > 0:
+                    if (key != player_key and plr.hits_remaining > 0
+                            and first_ping_received[key]):
                         player_bytes += bytes(plr.strip_private_data())
                 sock.sendto(player_bytes, addr)
             elif rq_type == JOIN:
@@ -85,6 +88,7 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                         current_level.start_point,
                         len(players) % skin_count, SHOTS_UNTIL_DEAD
                     )
+                    first_ping_received[new_key] = False
                     sock.sendto(new_key + level.to_bytes(1, "big"), addr)
                 else:
                     LOG.warning(
@@ -108,19 +112,21 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                         coords.x_pos.__trunc__(), coords.y_pos.__trunc__()
                     )
                     list_players = [
-                        x for k, x in players.items()
+                        (k, x) for k, x in players.items()
                         if x.hits_remaining > 0 and k != player_key
                     ]
                     _, hit_sprites = raycasting.get_first_collision(
                         current_level, facing.to_tuple(), False,
-                        list_players
+                        [x[1] for x in list_players]
                     )
                     hit = False
                     for sprite in hit_sprites:
                         if sprite.type == raycasting.OTHER_PLAYER:
                             # Player was hit by gun
                             assert sprite.player_index is not None
-                            hit_player = list_players[sprite.player_index]
+                            hit_key, hit_player = list_players[
+                                sprite.player_index
+                            ]
                             if hit_player.hits_remaining > 0:
                                 hit = True
                                 hit_player.hits_remaining -= 1
@@ -128,6 +134,7 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                                     hit_player.last_killer_skin = players[
                                         player_key
                                     ].skin
+                                    first_ping_received[hit_key] = False
                                     sock.sendto(
                                         SHOT_KILLED.to_bytes(1, "big"), addr
                                     )
