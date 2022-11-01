@@ -149,6 +149,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
     wall_place_cooldown = [0.0] * len(levels)
     flicker_time_remaining = [0.0] * len(levels)
     pickup_flash_time_remaining = 0.0
+    hurt_flash_time_remaining = 0.0
     time_to_breathing_finish = 0.0
     time_to_next_roam_sound = 0.0
 
@@ -210,6 +211,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                     )
                     if hits_remaining < previous_hits:
                         resources.player_hit_sound.play()
+                        hurt_flash_time_remaining = 1 / (hits_remaining + 1)
                     if hits_remaining == 0:
                         levels[current_level].killed = True
                     if levels[current_level].killed and hits_remaining != 0:
@@ -942,11 +944,22 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
 
             if pickup_flash_time_remaining > 0:
                 screen_drawing.flash_viewport(
-                    screen, cfg, False, pickup_flash_time_remaining
+                    screen, cfg, screen_drawing.WHITE,
+                    pickup_flash_time_remaining
                 )
                 pickup_flash_time_remaining -= frame_time
                 pickup_flash_time_remaining = max(
                     0.0, pickup_flash_time_remaining
+                )
+
+            if hurt_flash_time_remaining > 0:
+                screen_drawing.flash_viewport(
+                    screen, cfg, screen_drawing.RED,
+                    hurt_flash_time_remaining
+                )
+                hurt_flash_time_remaining -= frame_time
+                hurt_flash_time_remaining = max(
+                    0.0, hurt_flash_time_remaining
                 )
 
             monster_coords = levels[current_level].monster_coords
@@ -955,7 +968,9 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                 # Darken viewport intermittently based on monster distance
                 if cfg.monster_flicker_lights:
                     if flicker_time_remaining[current_level] > 0:
-                        screen_drawing.flash_viewport(screen, cfg, True, 0.5)
+                        screen_drawing.flash_viewport(
+                            screen, cfg, screen_drawing.BLACK, 0.5
+                        )
                         flicker_time_remaining[current_level] -= frame_time
                         flicker_time_remaining[current_level] = max(
                             0.0, flicker_time_remaining[current_level]

@@ -602,16 +602,16 @@ def draw_compass(screen: pygame.Surface, cfg: Config,
         )
 
 
-def flash_viewport(screen: pygame.Surface, cfg: Config, dark: bool,
-                   strength: float) -> None:
+def flash_viewport(screen: pygame.Surface, cfg: Config,
+                   color: Tuple[int, int, int], strength: float) -> None:
     """
-    Draw a transparent overlay over the entire viewport either lightening it or
-    darkening it. The strength should be a float between 0.0 and 1.0.
+    Draw a transparent overlay over the entire viewport. The strength should be
+    a float between 0.0 and 1.0.
     """
     viewport_overlay = pygame.Surface(
         (cfg.viewport_width, cfg.viewport_height)
     )
-    viewport_overlay.fill(BLACK if dark else WHITE)
+    viewport_overlay.fill(color)
     viewport_overlay.set_alpha(round(255 * strength))
     screen.blit(viewport_overlay, (0, 0))
 
