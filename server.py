@@ -62,13 +62,15 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                 LOG.warning("Invalid player key from %s", addr)
             if rq_type == PING:
                 LOG.debug("Player pinged from %s", addr)
-                players[player_key].pos = net_data.Coords.from_bytes(
-                    data[33:41]
-                )
-                players[player_key].grid_pos = (
-                    players[player_key].pos.x_pos.__trunc__(),
-                    players[player_key].pos.y_pos.__trunc__()
-                )
+                first_ping_received[player_key] = True
+                if players[player_key].hits_remaining > 0:
+                    players[player_key].pos = net_data.Coords.from_bytes(
+                        data[33:41]
+                    )
+                    players[player_key].grid_pos = (
+                        players[player_key].pos.x_pos.__trunc__(),
+                        players[player_key].pos.y_pos.__trunc__()
+                    )
                 player_bytes = (
                     players[player_key].hits_remaining.to_bytes(1, "big")
                     + players[player_key].last_killer_skin.to_bytes(1, "big")
@@ -76,12 +78,9 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                     + players[player_key].deaths.to_bytes(2, "big")
                 )
                 for key, plr in players.items():
-                    if (key != player_key and plr.hits_remaining > 0
-                            and first_ping_received[key]):
+                    if key != player_key:
                         player_bytes += bytes(plr.strip_private_data())
                 sock.sendto(player_bytes, addr)
-                if players[player_key].hits_remaining > 0:
-                    first_ping_received[player_key] = True
             elif rq_type == JOIN:
                 LOG.info("Player join from %s", addr)
                 if len(players) < 255:
@@ -139,7 +138,8 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                                     ].skin
                                     hit_player.deaths += 1
                                     players[player_key].kills += 1
-                                    first_ping_received[hit_key] = False
+                                    # Hide dead players in level
+                                    hit_player.pos = net_data.Coords(-1, -1)
                                     sock.sendto(
                                         SHOT_KILLED.to_bytes(1, "big"), addr
                                     )
