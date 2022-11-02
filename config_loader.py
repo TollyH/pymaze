@@ -179,6 +179,13 @@ class Config:
         self.run_multiplier = self._parse_float('RUN_MULTIPLIER', 2.0)
         self.crawl_multiplier = self._parse_float('CRAWL_MULTIPLIER', 0.5)
 
+        # The maximum size that sprites will be stretched to before they are
+        # culled to save on resources. Decreasing this will improve performance
+        # at the cost of closer sprites not appearing.
+        self.sprite_scale_limit = self._parse_int(
+            'SPRITE_SCALE_LIMIT', 750
+        )
+
     def _parse_int(self, field_name: str, default_value: int) -> int:
         if field_name not in self.config_options:
             return default_value

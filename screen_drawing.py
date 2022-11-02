@@ -305,10 +305,8 @@ def draw_sprite(screen: pygame.Surface, cfg: Config,
         )
     )
     # Prevent divisions by 0
-    transformation = (
-        transformation[0] if transformation[0] != 0 else 1e-5,
-        transformation[1] if transformation[1] != 0 else 1e-5
-    )
+    if transformation[1] == 0:
+        return
     screen_x_pos = (
         (filled_screen_width / 2) * (1 + transformation[0] / transformation[1])
     ).__trunc__()
@@ -320,6 +318,9 @@ def draw_sprite(screen: pygame.Surface, cfg: Config,
         abs(filled_screen_width // transformation[1]),
         abs(cfg.viewport_height // transformation[1])
     )
+    if (sprite_size[0] > cfg.sprite_scale_limit
+            or sprite_size[1] > cfg.sprite_scale_limit):
+        return
     scaled_texture = pygame.transform.scale(texture, sprite_size)
     if cfg.fog_strength > 0:
         fog_overlay = pygame.Surface(sprite_size)

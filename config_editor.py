@@ -624,6 +624,28 @@ class ConfigEditorApp:
         )
         self.gui_enable_monster_killing_check.pack(fill="x", anchor=tkinter.NW)
 
+        self.gui_sprite_scale_label = tkinter.Label(
+            self.gui_advanced_config_frame, anchor=tkinter.W,
+            text="Sprite scale limit — "
+                 + f"({self.parse_int('SPRITE_SCALE_LIMIT', 750)})"
+        )
+        self.gui_sprite_scale_info_label = tkinter.Label(
+            self.gui_advanced_config_frame, anchor=tkinter.W, fg="blue",
+            text="Note: Lower values will make closer sprites disappear"
+        )
+        self.scale_labels['SPRITE_SCALE_LIMIT'] = (
+            self.gui_sprite_scale_label,
+            "Sprite scale limit — ({})"
+        )
+        self.gui_sprite_scale_slider = tkinter.ttk.Scale(
+            self.gui_advanced_config_frame, from_=1, to=10000,
+            value=self.parse_int('SPRITE_SCALE_LIMIT', 750),
+            command=lambda x: self.on_scale_change('SPRITE_SCALE_LIMIT', x, 0)
+        )
+        self.gui_sprite_scale_label.pack(fill="x", anchor=tkinter.NW)
+        self.gui_sprite_scale_info_label.pack(fill="x", anchor=tkinter.NW)
+        self.gui_sprite_scale_slider.pack(fill="x", anchor=tkinter.NW)
+
         self.gui_save_button = tkinter.ttk.Button(
             self.window, command=self.save_config, text="Save"
         )

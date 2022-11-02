@@ -288,10 +288,9 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                                 resources.compass_close_sound
                             ).play()
                     elif event.key == pygame.K_e:
-                        if not is_multi:
-                            # Stats and map cannot be displayed together
-                            if not display_map or cfg.enable_cheat_map:
-                                display_stats = not display_stats
+                        # Stats and map cannot be displayed together
+                        if not display_map or cfg.enable_cheat_map:
+                            display_stats = not display_stats
                     elif event.key in (pygame.K_LEFTBRACKET,
                                        pygame.K_RIGHTBRACKET):
                         if not is_multi:

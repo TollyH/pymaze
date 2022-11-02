@@ -129,18 +129,22 @@ def get_first_collision(current_level: level.Level,
     side_was_ns = False
     tile_found = False
     sprites: List[SpriteCollision] = []
+    first_check = True
     while not tile_found:
-        # Move along ray
-        if dimension_ray_length[0] < dimension_ray_length[1]:
-            current_tile = (current_tile[0] + step[0], current_tile[1])
-            distance = dimension_ray_length[0]
-            dimension_ray_length[0] += step_size[0]
-            side_was_ns = False
-        else:
-            current_tile = (current_tile[0], current_tile[1] + step[1])
-            distance = dimension_ray_length[1]
-            dimension_ray_length[1] += step_size[1]
-            side_was_ns = True
+        # Move along ray, unless this is the first check in which case we want
+        # to check our current square.
+        if not first_check:
+            if dimension_ray_length[0] < dimension_ray_length[1]:
+                current_tile = (current_tile[0] + step[0], current_tile[1])
+                distance = dimension_ray_length[0]
+                dimension_ray_length[0] += step_size[0]
+                side_was_ns = False
+            else:
+                current_tile = (current_tile[0], current_tile[1] + step[1])
+                distance = dimension_ray_length[1]
+                dimension_ray_length[1] += step_size[1]
+                side_was_ns = True
+        first_check = False
 
         if current_level.is_coord_in_bounds(current_tile):
             # Collision check
