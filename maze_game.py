@@ -1043,6 +1043,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                         time_scores[current_level], has_gun[current_level]
                     )
                 else:
+                    assert multiplayer_name is not None
                     screen_drawing.draw_leaderboard(
                         screen, cfg, other_players + [net_data.Player(
                             multiplayer_name,
