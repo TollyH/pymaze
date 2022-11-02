@@ -10,6 +10,7 @@ from typing import Dict, List, Optional, Tuple, Union
 import pygame
 
 import maze_levels
+import net_data
 from config_loader import Config
 from level import Level
 from maze_game import TEXTURE_WIDTH, TEXTURE_HEIGHT, EmptySound
@@ -43,6 +44,7 @@ GUN = 7
 
 pygame.font.init()
 FONT = pygame.font.SysFont('Tahoma', 24, True)
+TITLE_FONT = pygame.font.SysFont('Tahoma', 30, True)
 
 pygame.init()
 
@@ -673,9 +675,8 @@ def draw_kill_count(screen: pygame.Surface, cfg: Config, kills: int) -> None:
     """
     kills_text = FONT.render(str(kills), True, GREEN)
     screen.blit(
-        kills_text,
-        (
-            cfg.viewport_width - 15 * len(str(kills)) - 15,
+        kills_text, (
+            cfg.viewport_width - kills_text.get_width() - 15,
             cfg.viewport_height - 40
         )
     )
@@ -683,7 +684,63 @@ def draw_kill_count(screen: pygame.Surface, cfg: Config, kills: int) -> None:
 
 def draw_death_count(screen: pygame.Surface, cfg: Config, deaths: int) -> None:
     """
-    Draw the number of deaths the player has in the bottom right corner.
+    Draw the number of deaths the player has in the bottom left corner.
     """
     deaths_text = FONT.render(str(deaths), True, RED)
     screen.blit(deaths_text, (10, cfg.viewport_height - 90))
+
+
+def draw_leaderboard(screen: pygame.Surface, cfg: Config,
+                     players: List[net_data.Player]) -> None:
+    """
+    Draw an ordered list of players in the server, and the kills and deaths
+    they currently have.
+    """
+    sorted_players = sorted(players, key=lambda x: x.kills - x.deaths)
+    viewport_overlay = pygame.Surface(
+        (cfg.viewport_width, cfg.viewport_height)
+    )
+    viewport_overlay.fill(GREEN)
+    viewport_overlay.set_alpha(180)
+    screen.blit(viewport_overlay, (0, 0))
+    leaderboard_title_text = TITLE_FONT.render("Leaderboard", True, BLUE)
+    screen.blit(
+        leaderboard_title_text, (
+            cfg.viewport_width // 2 - leaderboard_title_text.get_width() // 2,
+            10
+        )
+    )
+    header_kills = FONT.render("K", True, BLUE)
+    header_deaths = FONT.render("D", True, BLUE)
+    header_diff = FONT.render("S", True, BLUE)
+    screen.blit(
+        header_kills,
+        (cfg.viewport_width - 175 - header_kills.get_width() // 2, 55)
+    )
+    screen.blit(
+        header_deaths,
+        (cfg.viewport_width - 105 - header_deaths.get_width() // 2, 55)
+    )
+    screen.blit(
+        header_diff,
+        (cfg.viewport_width - 35 - header_diff.get_width() // 2, 55)
+    )
+    for i, plr in enumerate(sorted_players, 1):
+        name_text = FONT.render(plr.name, True, BLUE)
+        kills_text = FONT.render(str(plr.kills), True, BLUE)
+        deaths_text = FONT.render(str(plr.deaths), True, BLUE)
+        diff_text = FONT.render(str(plr.kills - plr.deaths), True, BLUE)
+        line_y = 33 * i + 65
+        screen.blit(name_text, (20, line_y))
+        screen.blit(
+            kills_text,
+            (cfg.viewport_width - 175 - kills_text.get_width() // 2, line_y)
+        )
+        screen.blit(
+            deaths_text,
+            (cfg.viewport_width - 105 - deaths_text.get_width() // 2, line_y)
+        )
+        screen.blit(
+            diff_text,
+            (cfg.viewport_width - 35 - diff_text.get_width() // 2, line_y)
+        )

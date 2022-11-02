@@ -1013,34 +1013,43 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                 )
 
             if display_stats and (not display_map or cfg.enable_cheat_map):
-                time_score = (
-                    time_scores[current_level]
-                    if has_started_level[current_level] else
-                    highscores[current_level][0]
-                )
-                move_score = (
-                    move_scores[current_level]
-                    if has_started_level[current_level] else
-                    highscores[current_level][1]
-                )
-                current_player_wall = player_walls[current_level]
-                screen_drawing.draw_stats(
-                    screen, cfg,
-                    levels[current_level].monster_coords is not None,
-                    time_score, move_score,
-                    len(levels[current_level].original_exit_keys)
-                    - len(levels[current_level].exit_keys),
-                    len(levels[current_level].original_exit_keys),
-                    resources.hud_icons, resources.blank_icon,
-                    key_sensor_times[current_level],
-                    compass_times[current_level],
-                    compass_burned_out[current_level],
-                    None
-                    if current_player_wall is None else
-                    current_player_wall[2],
-                    wall_place_cooldown[current_level],
-                    time_scores[current_level], has_gun[current_level]
-                )
+                if not is_multi:
+                    time_score = (
+                        time_scores[current_level]
+                        if has_started_level[current_level] else
+                        highscores[current_level][0]
+                    )
+                    move_score = (
+                        move_scores[current_level]
+                        if has_started_level[current_level] else
+                        highscores[current_level][1]
+                    )
+                    current_player_wall = player_walls[current_level]
+                    screen_drawing.draw_stats(
+                        screen, cfg,
+                        levels[current_level].monster_coords is not None,
+                        time_score, move_score,
+                        len(levels[current_level].original_exit_keys)
+                        - len(levels[current_level].exit_keys),
+                        len(levels[current_level].original_exit_keys),
+                        resources.hud_icons, resources.blank_icon,
+                        key_sensor_times[current_level],
+                        compass_times[current_level],
+                        compass_burned_out[current_level],
+                        None
+                        if current_player_wall is None else
+                        current_player_wall[2],
+                        wall_place_cooldown[current_level],
+                        time_scores[current_level], has_gun[current_level]
+                    )
+                else:
+                    screen_drawing.draw_leaderboard(
+                        screen, cfg, other_players + [net_data.Player(
+                            multiplayer_name,
+                            net_data.Coords(0, 0), (0, 0), 0,  # Not needed
+                            kills, deaths
+                        )]
+                    )
 
             if monster_escape_clicks[current_level] >= 0:
                 screen_drawing.draw_escape_screen(
@@ -1050,7 +1059,9 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                 if monster_escape_time[current_level] <= 0:
                     levels[current_level].killed = True
 
-            if is_multi and not levels[current_level].killed:
+            if (is_multi and not levels[current_level].killed
+                    and not display_stats
+                    and (not display_map or cfg.enable_cheat_map)):
                 screen_drawing.draw_remaining_hits(screen, cfg, hits_remaining)
                 screen_drawing.draw_kill_count(screen, cfg, kills)
                 screen_drawing.draw_death_count(screen, cfg, deaths)
