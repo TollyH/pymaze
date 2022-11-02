@@ -280,7 +280,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                         # Compass and map cannot be displayed together
                         if (not display_map or cfg.enable_cheat_map) and not (
                                 levels[current_level].won
-                                or levels[current_level].killed):
+                                or levels[current_level].killed or is_multi):
                             display_compass = not display_compass
                             (
                                 resources.compass_open_sound
