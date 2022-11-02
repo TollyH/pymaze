@@ -230,7 +230,12 @@ def get_first_collision(current_level: level.Level,
                         plr_pos = plr.pos.to_tuple()
                         sprites.append(SpriteCollision(
                             plr_pos, no_sqrt_coord_distance(
-                                current_level.player_coords, plr_pos
+                                current_level.player_coords, (
+                                    current_level.player_coords[0]
+                                    + direction[0] * distance,
+                                    current_level.player_coords[1]
+                                    + direction[1] * distance
+                                )
                             ), current_tile, OTHER_PLAYER, i
                         ))
         else:
