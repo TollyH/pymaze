@@ -48,7 +48,6 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
     current_level = levels[level]
     players: Dict[bytes, net_data.PrivatePlayer] = {}
     last_fire_time: Dict[bytes, float] = {}
-    first_ping_received: Dict[bytes, bool] = {}
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(('0.0.0.0', port))
@@ -62,7 +61,6 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                 LOG.warning("Invalid player key from %s", addr)
             if rq_type == PING:
                 LOG.debug("Player pinged from %s", addr)
-                first_ping_received[player_key] = True
                 if players[player_key].hits_remaining > 0:
                     players[player_key].pos = net_data.Coords.from_bytes(
                         data[33:41]
@@ -90,7 +88,6 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                         name, net_data.Coords(-1, -1), (-1, -1),
                         len(players) % skin_count, 0, 0, SHOTS_UNTIL_DEAD
                     )
-                    first_ping_received[new_key] = False
                     sock.sendto(new_key + level.to_bytes(1, "big"), addr)
                 else:
                     LOG.warning(
