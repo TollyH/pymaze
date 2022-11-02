@@ -43,7 +43,7 @@ def ping_server(sock: socket.socket, addr: Tuple[str, int], player_key: bytes,
     coords_b = bytes(net_data.Coords(*coords))
     sock.sendto(server.PING.to_bytes(1, "big") + player_key + coords_b, addr)
     try:
-        player_list_bytes = sock.recvfrom(4096)[0]
+        player_list_bytes = sock.recvfrom(16384)[0]
         hits_remaining = player_list_bytes[0]
         last_killer_skin = player_list_bytes[1]
         kills = int.from_bytes(player_list_bytes[2:4], "big")
