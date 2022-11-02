@@ -489,7 +489,8 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             if pressed_keys[pygame.K_RCTRL] or pressed_keys[pygame.K_LCTRL]:
                 move_multiplier *= cfg.crawl_multiplier
             if pressed_keys[pygame.K_RSHIFT] or pressed_keys[pygame.K_LSHIFT]:
-                move_multiplier *= cfg.run_multiplier
+                if not is_multi:
+                    move_multiplier *= cfg.run_multiplier
             # Ensure framerate does not affect speed values
             turn_speed_mod = frame_time * cfg.turn_speed
             move_speed_mod = min(
