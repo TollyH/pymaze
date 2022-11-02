@@ -696,7 +696,9 @@ def draw_leaderboard(screen: pygame.Surface, cfg: Config,
     Draw an ordered list of players in the server, and the kills and deaths
     they currently have.
     """
-    sorted_players = sorted(players, key=lambda x: x.kills - x.deaths)
+    sorted_players = sorted(
+        players, key=lambda x: x.kills - x.deaths, reverse=True
+    )
     viewport_overlay = pygame.Surface(
         (cfg.viewport_width, cfg.viewport_height)
     )
