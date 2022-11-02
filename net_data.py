@@ -48,12 +48,13 @@ class Player:
     Represents publicly known information about a player: their position and
     skin.
     """
+    name: str
     pos: Coords
     grid_pos: Tuple[int, int]
     skin: int
     kills: int
     deaths: int
-    byte_size: ClassVar[int] = Coords.byte_size + 5
+    byte_size: ClassVar[int] = Coords.byte_size + 29
 
     def __bytes__(self) -> bytes:
         """
@@ -62,7 +63,8 @@ class Player:
         # Positions are sent as integers with 2 d.p of accuracy from the
         # original float.
         return (
-            bytes(self.pos)
+            bytes.rjust(self.name.encode('ascii', 'ignore')[:24], 24, b'\x00')
+            + bytes(self.pos)
             + self.skin.to_bytes(1, "big")
             + self.kills.to_bytes(2, "big")
             + self.deaths.to_bytes(2, "big")
@@ -73,12 +75,13 @@ class Player:
         """
         Get an instance of this class from bytes transmitted over the network.
         """
-        coords = Coords.from_bytes(player_bytes[:8])
+        name = player_bytes[:24].strip(b'\x00').decode('ascii', 'ignore')
+        coords = Coords.from_bytes(player_bytes[24:32])
         return cls(
-            coords, (coords.x_pos.__trunc__(), coords.y_pos.__trunc__()),
-            int.from_bytes(player_bytes[8:9], "big"),
-            int.from_bytes(player_bytes[9:11], "big"),
-            int.from_bytes(player_bytes[11:13], "big")
+            name, coords, (coords.x_pos.__trunc__(), coords.y_pos.__trunc__()),
+            int.from_bytes(player_bytes[32:33], "big"),
+            int.from_bytes(player_bytes[33:35], "big"),
+            int.from_bytes(player_bytes[35:37], "big")
         )
 
 
@@ -108,8 +111,9 @@ class PrivatePlayer(Player):
         Get an instance of this class from bytes transmitted over the network.
         """
         coords = Coords.from_bytes(player_bytes[:8])
+        name = player_bytes[:24].strip(b'\x00').decode('ascii', 'ignore')
         return cls(
-            coords, (coords.x_pos.__trunc__(), coords.y_pos.__trunc__()),
+            name, coords, (coords.x_pos.__trunc__(), coords.y_pos.__trunc__()),
             int.from_bytes(player_bytes[8:9], "big"),
             int.from_bytes(player_bytes[9:11], "big"),
             int.from_bytes(player_bytes[11:13], "big"),
@@ -123,5 +127,6 @@ class PrivatePlayer(Player):
         sent to all players.
         """
         return Player(
-            self.pos, self.grid_pos, self.skin, self.kills, self.deaths
+            self.name, self.pos, self.grid_pos, self.skin, self.kills,
+            self.deaths
         )

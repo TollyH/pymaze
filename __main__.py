@@ -111,9 +111,15 @@ def main() -> None:
                             "Enter the port number to use.\nAsk the server" +
                             " host if you are unsure what this is."
                         )
+                        name = tkinter.simpledialog.askstring(
+                            "Enter Your Name",
+                            "Enter the name to use.\n"
+                            + "There is a limit of 24 characters."
+                        )
                         maze_game(
                             **maze_game_kwargs,
-                            multiplayer_server=f'{host}:{port}'
+                            multiplayer_server=f'{host}:{port}',
+                            multiplayer_name=name
                         )
                 elif event.button == pygame.BUTTON_MIDDLE:
                     clicked_pos = pygame.mouse.get_pos()

@@ -85,9 +85,10 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
             elif rq_type == JOIN:
                 LOG.info("Player join from %s", addr)
                 if len(players) < 255:
+                    name = data[33:57].strip(b"\x00").decode("ascii", "ignore")
                     new_key = os.urandom(32)
                     players[new_key] = net_data.PrivatePlayer(
-                        net_data.Coords(-1, -1), (-1, -1),
+                        name, net_data.Coords(-1, -1), (-1, -1),
                         len(players) % skin_count, 0, 0, SHOTS_UNTIL_DEAD
                     )
                     first_ping_received[new_key] = False

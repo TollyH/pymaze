@@ -30,7 +30,8 @@ TEXTURE_HEIGHT = 128
 
 def maze_game(*, level_json_path: str = "maze_levels.json",
               config_ini_path: str = "config.ini",
-              multiplayer_server: Optional[str] = None) -> None:
+              multiplayer_server: Optional[str] = None,
+              multiplayer_name: Optional[str] = None) -> None:
     """
     Main function for the maze game. Manages all input, output, and timing.
     """
@@ -49,10 +50,14 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             sock = netcode.create_client_socket()
             assert multiplayer_server is not None
             addr = netcode.get_host_port(multiplayer_server)
+            if multiplayer_name is None:
+                multiplayer_name = "Unnamed"
             join_response = None
             retries = 0
             while join_response is None and retries < 10:
-                join_response = netcode.join_server(sock, addr)
+                join_response = netcode.join_server(
+                    sock, addr, multiplayer_name
+                )
                 retries += 1
                 time.sleep(0.5)
             if join_response is None:
