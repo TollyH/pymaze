@@ -243,12 +243,12 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                             # respawn.
                             levels[current_level].killed = False
                 else:
-                    ping_response = netcode.ping_server_coop(
+                    ping_response_coop = netcode.ping_server_coop(
                         sock, addr, player_key,
                         levels[current_level].player_coords
                     )
-                    if ping_response is not None:
-                        other_players, item_coords = ping_response
+                    if ping_response_coop is not None:
+                        other_players, item_coords = ping_response_coop
                         lvl = levels[current_level]
                         # Remove items no longer present on the server
                         lvl.exit_keys &= item_coords
