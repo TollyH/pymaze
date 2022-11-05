@@ -141,7 +141,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
 
     display_map = False
     display_compass = False
-    display_stats = not is_multi
+    display_stats = (not is_multi) or is_coop
     display_rays = False
 
     is_reset_prompt_shown = False
@@ -1035,7 +1035,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                 )
 
             if display_stats and (not display_map or cfg.enable_cheat_map):
-                if not is_multi:
+                if (not is_multi) or is_coop:
                     time_score = (
                         time_scores[current_level]
                         if has_started_level[current_level] else
@@ -1062,7 +1062,8 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                         if current_player_wall is None else
                         current_player_wall[2],
                         wall_place_cooldown[current_level],
-                        time_scores[current_level], has_gun[current_level]
+                        time_scores[current_level], has_gun[current_level],
+                        is_coop
                     )
                 else:
                     assert multiplayer_name is not None
