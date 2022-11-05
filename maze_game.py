@@ -219,23 +219,41 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             time_since_server_ping += frame_time
             if time_since_server_ping >= 0.04:
                 time_since_server_ping = 0
-                ping_response = netcode.ping_server(
-                    sock, addr, player_key, levels[current_level].player_coords
-                )
-                if ping_response is not None:
-                    previous_hits = hits_remaining
-                    (
-                        hits_remaining, last_killer_skin, kills, deaths,
-                        other_players
-                    ) = ping_response
-                    if hits_remaining < previous_hits:
-                        resources.player_hit_sound.play()
-                        hurt_flash_time_remaining = 1 / (hits_remaining + 1)
-                    if hits_remaining == 0:
-                        levels[current_level].killed = True
-                    if levels[current_level].killed and hits_remaining != 0:
-                        # We were dead, but server has processed our respawn.
-                        levels[current_level].killed = False
+                if not is_coop:
+                    ping_response = netcode.ping_server(
+                        sock, addr, player_key,
+                        levels[current_level].player_coords
+                    )
+                    if ping_response is not None:
+                        previous_hits = hits_remaining
+                        (
+                            hits_remaining, last_killer_skin, kills, deaths,
+                            other_players
+                        ) = ping_response
+                        if hits_remaining < previous_hits:
+                            resources.player_hit_sound.play()
+                            hurt_flash_time_remaining = 1 / (
+                                hits_remaining + 1
+                            )
+                        if hits_remaining == 0:
+                            levels[current_level].killed = True
+                        if (levels[current_level].killed
+                                and hits_remaining != 0):
+                            # We were dead, but server has processed our
+                            # respawn.
+                            levels[current_level].killed = False
+                else:
+                    ping_response = netcode.ping_server_coop(
+                        sock, addr, player_key,
+                        levels[current_level].player_coords
+                    )
+                    if ping_response is not None:
+                        other_players, item_coords = ping_response
+                        lvl = levels[current_level]
+                        # Remove items no longer present on the server
+                        lvl.exit_keys &= item_coords
+                        lvl.key_sensors &= item_coords
+                        lvl.guns &= item_coords
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 if is_multi:

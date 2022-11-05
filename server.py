@@ -69,15 +69,29 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                         players[player_key].pos.x_pos.__trunc__(),
                         players[player_key].pos.y_pos.__trunc__()
                     )
-                player_bytes = (
-                    players[player_key].hits_remaining.to_bytes(1, "big")
-                    + players[player_key].last_killer_skin.to_bytes(1, "big")
-                    + players[player_key].kills.to_bytes(2, "big")
-                    + players[player_key].deaths.to_bytes(2, "big")
-                )
+                if not coop:
+                    player_bytes = (
+                        players[player_key].hits_remaining.to_bytes(1, "big")
+                        + players[player_key].last_killer_skin.to_bytes(
+                            1, "big"
+                        )
+                        + players[player_key].kills.to_bytes(2, "big")
+                        + players[player_key].deaths.to_bytes(2, "big")
+                    )
+                else:
+                    grid_pos = players[player_key].grid_pos
+                    current_level.exit_keys.discard(grid_pos)
+                    current_level.key_sensors.discard(grid_pos)
+                    current_level.guns.discard(grid_pos)
+                    player_bytes = (len(players) - 1).to_bytes(1, "big")
                 for key, plr in players.items():
                     if key != player_key:
                         player_bytes += bytes(plr.strip_private_data())
+                if coop:
+                    for item in (current_level.exit_keys
+                                 | current_level.key_sensors
+                                 | current_level.guns):
+                        player_bytes += bytes(net_data.Coords(*item))
                 sock.sendto(player_bytes, addr)
             elif rq_type == JOIN:
                 LOG.info("Player join from %s", addr)
@@ -176,6 +190,7 @@ if __name__ == "__main__":
             lower_key = arg_pair[0].lower()
             if lower_key in ("--coop", "-o"):
                 kwargs["coop"] = True
+                continue
         elif len(arg_pair) == 2:
             lower_key = arg_pair[0].lower()
             if lower_key in ("--level-json-path", "-p"):

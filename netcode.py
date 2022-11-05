@@ -3,7 +3,7 @@ Manages the client-side connections to the multiplayer server, both
 broadcasting and requesting packets.
 """
 import socket
-from typing import List, Optional, Tuple
+from typing import List, Optional, Set, Tuple
 
 import net_data
 import server
@@ -54,6 +54,41 @@ def ping_server(sock: socket.socket, addr: Tuple[str, int], player_key: bytes,
                     i * player_byte_size + 6:(i + 1) * player_byte_size + 6
             ]) for i in range((len(player_list_bytes) - 2) // player_byte_size)
         ]
+    except (socket.timeout, OSError):
+        return None
+
+
+def ping_server_coop(sock: socket.socket, addr: Tuple[str, int],
+                     player_key: bytes, coords: Tuple[float, float],
+                     ) -> Optional[Tuple[
+                            List[net_data.Player], Set[Tuple[int, int]]
+                          ]]:
+    """
+    Tell the server where we currently are, and get a list of where all
+    other players are and what items they've picked up.
+    Returns None if a response doesn't arrive in a timely manner.
+    """
+    # Positions are sent as integers with 2 d.p of accuracy from the original
+    # float.
+    coords_b = bytes(net_data.Coords(*coords))
+    sock.sendto(server.PING.to_bytes(1, "big") + player_key + coords_b, addr)
+    try:
+        player_list_bytes = sock.recvfrom(16384)[0]
+        player_byte_size = net_data.Player.byte_size
+        player_count = player_list_bytes[0]
+        offset = player_byte_size * player_count + 1
+        coords_size = net_data.Coords.byte_size
+        return [
+            net_data.Player.from_bytes(player_list_bytes[
+                    i * player_byte_size + 1:(i + 1) * player_byte_size + 1
+            ]) for i in range(player_count)
+        ], {
+            net_data.Coords.from_bytes(player_list_bytes[
+                    i * coords_size + offset:(i + 1) * coords_size + offset
+            ]).to_int_tuple() for i in range(
+                (len(player_list_bytes) - offset) // coords_size
+            )
+        }
     except (socket.timeout, OSError):
         return None
 
