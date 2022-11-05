@@ -41,6 +41,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
     pygame.init()
 
     is_multi = multiplayer_server is not None
+    is_coop = False
 
     last_config_edit = os.path.getmtime(config_ini_path)
     cfg = config_loader.Config(config_ini_path)
@@ -71,20 +72,21 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                 "Connection Error", "Invalid server information provided."
             )
             sys.exit(1)
-        player_key, current_level = join_response
-        lvl = levels[current_level]
-        lvl.randomise_player_coords()
-        # Remove pickups and monsters from multiplayer matches.
-        lvl.original_exit_keys = frozenset()
-        lvl.exit_keys = set()
-        lvl.original_key_sensors = frozenset()
-        lvl.key_sensors = set()
-        lvl.original_guns = frozenset()
-        lvl.guns = set()
-        lvl.monster_start = None
-        lvl.monster_wait = None
-        lvl.end_point = (-1, -1)  # Make end inaccessible in multiplayer
-        lvl.start_point = (-1, -1)  # Hide start point in multiplayer
+        player_key, current_level, is_coop = join_response
+        if not is_coop:
+            lvl = levels[current_level]
+            lvl.randomise_player_coords()
+            # Remove pickups and monsters from deathmatches.
+            lvl.original_exit_keys = frozenset()
+            lvl.exit_keys = set()
+            lvl.original_key_sensors = frozenset()
+            lvl.key_sensors = set()
+            lvl.original_guns = frozenset()
+            lvl.guns = set()
+            lvl.monster_start = None
+            lvl.monster_wait = None
+            lvl.end_point = (-1, -1)  # Make end inaccessible in deathmatches
+            lvl.start_point = (-1, -1)  # Hide start point in deathmatches
     else:
         current_level = 0
         # Not needed in single player
@@ -104,8 +106,10 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
     ))
     if not is_multi:
         pygame.display.set_caption("PyMaze - Level 1")
+    elif is_coop:
+        pygame.display.set_caption(f"PyMaze Co-op - Level {current_level + 1}")
     else:
-        pygame.display.set_caption("PyMaze Multiplayer")
+        pygame.display.set_caption("PyMaze Deathmatch")
     pygame.display.set_icon(
         pygame.image.load(os.path.join("window_icons", "main.png")).convert()
     )

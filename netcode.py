@@ -59,11 +59,11 @@ def ping_server(sock: socket.socket, addr: Tuple[str, int], player_key: bytes,
 
 
 def join_server(sock: socket.socket, addr: Tuple[str, int], name: str
-                ) -> Optional[Tuple[bytes, int]]:
+                ) -> Optional[Tuple[bytes, int, bool]]:
     """
     Join a server at the specified address. Returns the private player key
-    assigned to us by the server, as well as the level the server is using.
-    Returns None if a response doesn't arrive in a timely manner.
+    assigned to us by the server, the level the server is using, and whether
+    the match is co-op or not.
     """
     # Player key is all 0 here as we don't have one yet, but all requests still
     # need to have one.
@@ -72,8 +72,10 @@ def join_server(sock: socket.socket, addr: Tuple[str, int], name: str
         + bytes.rjust(name.encode('ascii', 'ignore')[:24], 24, b'\x00'), addr
     )
     try:
-        received_bytes = sock.recvfrom(33)[0]
-        return received_bytes[:32], received_bytes[32]
+        received_bytes = sock.recvfrom(34)[0]
+        return (
+            received_bytes[:32], received_bytes[32], bool(received_bytes[33])
+        )
     except (socket.timeout, OSError):
         return None
 

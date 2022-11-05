@@ -34,7 +34,7 @@ LOG = logging.getLogger("pymaze.server")
 
 
 def maze_server(*, level_json_path: str = "maze_levels.json",
-                port: int = 13375, level: int = 0) -> None:
+                port: int = 13375, level: int = 0, coop: bool = False) -> None:
     """
     Launches the server required for playing multiplayer games. Stores and
     provides player locations, health status, and does collision checking
@@ -88,7 +88,10 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                         name, net_data.Coords(-1, -1), (-1, -1),
                         len(players) % skin_count, 0, 0, SHOTS_UNTIL_DEAD
                     )
-                    sock.sendto(new_key + level.to_bytes(1, "big"), addr)
+                    sock.sendto(
+                        new_key + level.to_bytes(1, "big")
+                        + coop.to_bytes(1, "big"), addr
+                    )
                 else:
                     LOG.warning(
                         "Rejected player join from %s as server is full", addr
@@ -169,7 +172,11 @@ if __name__ == "__main__":
     kwargs: Dict[str, Any] = {}
     for arg in sys.argv[1:]:
         arg_pair = arg.split("=")
-        if len(arg_pair) == 2:
+        if len(arg_pair) == 1:
+            lower_key = arg_pair[0].lower()
+            if lower_key in ("--coop", "-o"):
+                kwargs["coop"] = True
+        elif len(arg_pair) == 2:
             lower_key = arg_pair[0].lower()
             if lower_key in ("--level-json-path", "-p"):
                 kwargs["level_json_path"] = arg_pair[1]

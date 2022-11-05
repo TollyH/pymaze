@@ -107,6 +107,7 @@ Right-clicking on the play button on the title screen will prompt for a server a
 - `-P=/path/to/maze_levels.json` or `--level-json-path=/path/to/maze_levels.json`
 - `-T=port` or `--port=port`
 - `-L=level_index` or `--level=level_index`
+- `-O` or `--coop`
 
 ---
 
