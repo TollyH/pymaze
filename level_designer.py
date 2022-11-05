@@ -63,7 +63,8 @@ class LevelDesignerApp:
     level JSON files. The game will always load from 'maze_levels.json',
     however you can load and save to wherever you like with this editor.
     """
-    def __init__(self, config_file_path: str = "config.ini") -> None:
+    def __init__(self, root: tkinter.Tk, config_file_path: str = "config.ini"
+                 ) -> None:
         # Change working directory to the directory where the script is located
         # This prevents issues with required files not being found.
         os.chdir(os.path.dirname(__file__))
@@ -86,7 +87,7 @@ class LevelDesignerApp:
         # setting widget values.
         self.do_updates = True
 
-        self.window = tkinter.Tk()
+        self.window = tkinter.Toplevel(root)
         self.window.wm_title("Level Designer - No File")
         self.window.wm_iconbitmap(
             os.path.join("window_icons", "editor.ico")
@@ -471,7 +472,7 @@ class LevelDesignerApp:
                 i, uniform="true", weight=1
             )
 
-        self.window.mainloop()
+        self.window.wait_window()
 
     def open_file(self) -> None:
         """
@@ -1300,4 +1301,6 @@ class LevelDesignerApp:
 
 
 if __name__ == "__main__":
-    LevelDesignerApp()
+    _root = tkinter.Tk()
+    _root.withdraw()
+    LevelDesignerApp(_root)

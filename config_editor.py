@@ -15,7 +15,7 @@ class ConfigEditorApp:
     config file. While the app should still function if the file is erroneous
     or missing, unexpected behaviour may occur.
     """
-    def __init__(self) -> None:
+    def __init__(self, root: tkinter.Tk) -> None:
         # Change working directory to the directory where the script is located
         # This prevents issues with required files not being found.
         os.chdir(os.path.dirname(__file__))
@@ -30,7 +30,7 @@ class ConfigEditorApp:
             self.config['OPTIONS'] = {}
         self.config_options = self.config['OPTIONS']
 
-        self.window = tkinter.Tk()
+        self.window = tkinter.Toplevel(root)
         self.window.wm_title("PyMaze Config")
         self.window.wm_iconbitmap(
             self, os.path.join("window_icons", "config.ico")
@@ -232,12 +232,12 @@ class ConfigEditorApp:
 
         self.gui_monster_presses_to_escape_label = tkinter.Label(
             self.gui_basic_config_frame, anchor=tkinter.W,
-            text="Total key presses to escape monster (seconds) — "
+            text="Total key presses to escape monster — "
                  + f"({self.parse_int('MONSTER_PRESSES_TO_ESCAPE', 10)})"
         )
         self.scale_labels['MONSTER_PRESSES_TO_ESCAPE'] = (
             self.gui_monster_presses_to_escape_label,
-            "Total key presses to escape monster (seconds) — ({})"
+            "Total key presses to escape monster — ({})"
         )
         self.gui_monster_presses_to_escape_slider = tkinter.ttk.Scale(
             self.gui_basic_config_frame, from_=0, to=60,
@@ -552,7 +552,7 @@ class ConfigEditorApp:
         )
         self.gui_texture_scale_info_label = tkinter.Label(
             self.gui_advanced_config_frame, anchor=tkinter.W, fg="blue",
-            text="Note: Higher values will make nearby textures appear jagged"
+            text="Note: Lower values will make nearby textures appear jagged"
         )
         self.scale_labels['TEXTURE_SCALE_LIMIT'] = (
             self.gui_texture_scale_label,
@@ -646,12 +646,34 @@ class ConfigEditorApp:
             fill="x", anchor=tkinter.NW
         )
 
+        self.gui_sprite_scale_label = tkinter.Label(
+            self.gui_advanced_config_frame, anchor=tkinter.W,
+            text="Sprite scale limit — "
+                 + f"({self.parse_int('SPRITE_SCALE_LIMIT', 750)})"
+        )
+        self.gui_sprite_scale_info_label = tkinter.Label(
+            self.gui_advanced_config_frame, anchor=tkinter.W, fg="blue",
+            text="Note: Lower values will make closer sprites disappear"
+        )
+        self.scale_labels['SPRITE_SCALE_LIMIT'] = (
+            self.gui_sprite_scale_label,
+            "Sprite scale limit — ({})"
+        )
+        self.gui_sprite_scale_slider = tkinter.ttk.Scale(
+            self.gui_advanced_config_frame, from_=1, to=10000,
+            value=self.parse_int('SPRITE_SCALE_LIMIT', 750),
+            command=lambda x: self.on_scale_change('SPRITE_SCALE_LIMIT', x, 0)
+        )
+        self.gui_sprite_scale_label.pack(fill="x", anchor=tkinter.NW)
+        self.gui_sprite_scale_info_label.pack(fill="x", anchor=tkinter.NW)
+        self.gui_sprite_scale_slider.pack(fill="x", anchor=tkinter.NW)
+
         self.gui_save_button = tkinter.ttk.Button(
             self.window, command=self.save_config, text="Save"
         )
         self.gui_save_button.pack()
 
-        self.window.mainloop()
+        self.window.wait_window()
 
     def on_scale_change(self, field: str, new_value: str, decimal_places: int
                         ) -> None:
@@ -758,4 +780,6 @@ class ConfigEditorApp:
 
 
 if __name__ == "__main__":
-    ConfigEditorApp()
+    _root = tkinter.Tk()
+    _root.withdraw()
+    ConfigEditorApp(_root)

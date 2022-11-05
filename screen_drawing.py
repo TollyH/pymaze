@@ -1,20 +1,19 @@
 """
 Contains functions for performing most display related tasks, including
 drawing columns, sprites, and HUD elements. Most audio and texture
-loading/selection is handled in maze_game.py rather than here, apart from the
-victory screen audio, which is handled here.
+loading/selection is handled in resources.py rather than here.
 """
 import math
-import os
 import random
 from typing import Dict, List, Optional, Tuple, Union
 
 import pygame
 
 import maze_levels
+import net_data
 from config_loader import Config
 from level import Level
-from maze_game import EmptySound
+from maze_game import TEXTURE_WIDTH, TEXTURE_HEIGHT, EmptySound
 
 WHITE = (0xFF, 0xFF, 0xFF)
 BLACK = (0x00, 0x00, 0x00)
@@ -30,6 +29,8 @@ PURPLE = (0x87, 0x23, 0xD9)
 GREY = (0xAA, 0xAA, 0xAA)
 DARK_GREY = (0x20, 0x20, 0x20)
 LIGHT_GREY = (0xCD, 0xCD, 0xCD)
+WALL_GREY_LIGHT = (0x55, 0x55, 0x55)
+WALL_GREY_DARK = (0x33, 0x33, 0x33)
 
 # HUD icons
 COMPASS = 0
@@ -43,30 +44,9 @@ GUN = 7
 
 pygame.font.init()
 FONT = pygame.font.SysFont('Tahoma', 24, True)
+TITLE_FONT = pygame.font.SysFont('Tahoma', 30, True)
 
-# Change working directory to the directory where the script is located.
-# This prevents issues with required files not being found.
-os.chdir(os.path.dirname(__file__))
 pygame.init()
-
-audio_error_occurred = False
-try:
-    # Used for the victory scene animations
-    pygame.mixer.init()
-    VICTORY_INCREMENT: Union[
-        pygame.mixer.Sound, EmptySound
-    ] = pygame.mixer.Sound(
-        os.path.join("sounds", "victory_increment.wav")
-    )
-    VICTORY_NEXT_BLOCK: Union[
-        pygame.mixer.Sound, EmptySound
-    ] = pygame.mixer.Sound(
-        os.path.join("sounds", "victory_next_block.wav")
-    )
-except (FileNotFoundError, pygame.error):
-    audio_error_occurred = True
-    VICTORY_INCREMENT = EmptySound()
-    VICTORY_NEXT_BLOCK = EmptySound()
 
 total_time_on_screen: List[float] = []
 victory_sounds_played: List[int] = []
@@ -76,7 +56,13 @@ def draw_victory_screen(screen: pygame.Surface, cfg: Config,
                         background: pygame.Surface,
                         highscores: List[Tuple[float, float]],
                         current_level: int, time_score: float,
-                        move_score: float, frame_time: float) -> None:
+                        move_score: float, frame_time: float,
+                        victory_increment: Union[
+                            pygame.mixer.Sound, EmptySound
+                        ],
+                        victory_next_block: Union[
+                            pygame.mixer.Sound, EmptySound
+                        ]) -> None:
     """
     Draw the victory screen seen after beating a level. Displays numerous
     scores to the player in a gradual animation.
@@ -101,11 +87,11 @@ def draw_victory_screen(screen: pygame.Surface, cfg: Config,
     )
     if time_on_screen < 2 and victory_sounds_played[current_level] == 0:
         victory_sounds_played[current_level] = 1
-        VICTORY_INCREMENT.play()
+        victory_increment.play()
     screen.blit(time_score_text, (10, 10))
     if time_on_screen >= 2 and victory_sounds_played[current_level] == 1:
         victory_sounds_played[current_level] = 2
-        VICTORY_NEXT_BLOCK.play()
+        victory_next_block.play()
     if time_on_screen >= 2.5:
         move_score_text = FONT.render(
             "Move Score: "
@@ -114,11 +100,11 @@ def draw_victory_screen(screen: pygame.Surface, cfg: Config,
         )
         if victory_sounds_played[current_level] == 2:
             victory_sounds_played[current_level] = 3
-            VICTORY_INCREMENT.play()
+            victory_increment.play()
         screen.blit(move_score_text, (10, 40))
         if time_on_screen >= 4.5 and victory_sounds_played[current_level] == 3:
             victory_sounds_played[current_level] = 4
-            VICTORY_NEXT_BLOCK.play()
+            victory_next_block.play()
     if time_on_screen >= 5.5:
         best_time_score_text = FONT.render(
             f"Best Time Score: {highscores[current_level][0]:.1f}", True,
@@ -132,7 +118,7 @@ def draw_victory_screen(screen: pygame.Surface, cfg: Config,
         screen.blit(best_move_score_text, (10, 120))
         if victory_sounds_played[current_level] == 4:
             victory_sounds_played[current_level] = 5
-            VICTORY_NEXT_BLOCK.play()
+            victory_next_block.play()
     if time_on_screen >= 6.5:
         best_total_time_score_text = FONT.render(
             f"Best Game Time Score: {sum(x[0] for x in highscores):.1f}", True,
@@ -146,7 +132,7 @@ def draw_victory_screen(screen: pygame.Surface, cfg: Config,
         screen.blit(best_total_move_score_text, (10, 230))
         if victory_sounds_played[current_level] == 5:
             victory_sounds_played[current_level] = 6
-            VICTORY_NEXT_BLOCK.play()
+            victory_next_block.play()
     if time_on_screen >= 7.5 and current_level < level_count - 1:
         lower_hint_text = FONT.render(
             "Press `]` to go to next level", True, DARK_RED
@@ -154,14 +140,18 @@ def draw_victory_screen(screen: pygame.Surface, cfg: Config,
         screen.blit(lower_hint_text, (10, 280))
         if victory_sounds_played[current_level] == 6:
             victory_sounds_played[current_level] = 0  # Reset
-            VICTORY_NEXT_BLOCK.play()
+            victory_next_block.play()
 
 
 def draw_kill_screen(screen: pygame.Surface, cfg: Config,
                      jumpscare_monster_texture: pygame.Surface) -> None:
     """
-    Draw the red kill screen with the monster fullscreen
+    Draw the red kill screen with the monster fullscreen.
+    Also used in multiplayer to display the player's killer.
     """
+    jumpscare_monster_texture = pygame.transform.scale(
+        jumpscare_monster_texture, (cfg.viewport_width, cfg.viewport_height)
+    )
     screen.fill(RED)
     screen.blit(jumpscare_monster_texture, (
         0, 0, cfg.viewport_width, cfg.viewport_height
@@ -173,6 +163,9 @@ def draw_escape_screen(screen: pygame.Surface, cfg: Config,
     """
     Draw the monster fullscreen and prompt the user to spam W to escape.
     """
+    jumpscare_monster_texture = pygame.transform.scale(
+        jumpscare_monster_texture, (cfg.viewport_width, cfg.viewport_height)
+    )
     screen.blit(jumpscare_monster_texture, (
         random.randint(-5, 5), random.randint(-5, 5),
         cfg.viewport_width, cfg.viewport_height
@@ -201,14 +194,22 @@ def draw_untextured_column(screen: pygame.Surface, cfg: Config, index: int,
     """
     display_column_width = cfg.viewport_width // cfg.display_columns
     column_height = min(column_height, cfg.viewport_height)
-    colour = DARK_GREY if side_was_ns else BLACK
+    colour = WALL_GREY_LIGHT if side_was_ns else WALL_GREY_DARK
+    # The location on the screen to start drawing the column
+    draw_x = display_column_width * index
+    draw_y = max(0, -column_height // 2 + cfg.viewport_height // 2)
     pygame.draw.rect(
-        screen, colour, (
-            display_column_width * index,
-            max(0, -column_height // 2 + cfg.viewport_height // 2),
-            display_column_width, column_height
-        )
+        screen, colour, (draw_x, draw_y, display_column_width, column_height)
     )
+    if cfg.fog_strength > 0:
+        fog_overlay = pygame.Surface(
+            (display_column_width, min(column_height, cfg.viewport_height))
+        )
+        fog_overlay.fill(BLACK)
+        fog_overlay.set_alpha(round(
+            255 / (column_height / cfg.viewport_height * cfg.fog_strength)
+        ))
+        screen.blit(fog_overlay, (draw_x, draw_y))
 
 
 def draw_textured_column(screen: pygame.Surface, cfg: Config,
@@ -225,21 +226,21 @@ def draw_textured_column(screen: pygame.Surface, cfg: Config,
     # decimal part of the collision coordinate.
     display_column_width = cfg.viewport_width // cfg.display_columns
     position_along_wall = coord[int(not side_was_ns)] % 1
-    texture_x = (position_along_wall * cfg.texture_width).__trunc__()
+    texture_x = (position_along_wall * TEXTURE_WIDTH).__trunc__()
     camera_x = 2 * index / cfg.display_columns - 1
     cast_direction = (
         facing[0] + camera_plane[0] * camera_x,
         facing[1] + camera_plane[1] * camera_x,
     )
     if not side_was_ns and cast_direction[0] < 0:
-        texture_x = cfg.texture_width - texture_x - 1
+        texture_x = TEXTURE_WIDTH - texture_x - 1
     elif side_was_ns and cast_direction[1] > 0:
-        texture_x = cfg.texture_width - texture_x - 1
+        texture_x = TEXTURE_WIDTH - texture_x - 1
     # The location on the screen to start drawing the column
     draw_x = display_column_width * index
     draw_y = max(0, -column_height // 2 + cfg.viewport_height // 2)
     # Get a single column of pixels
-    pixel_column = texture.subsurface(texture_x, 0, 1, cfg.texture_height)
+    pixel_column = texture.subsurface(texture_x, 0, 1, TEXTURE_HEIGHT)
     if (column_height > cfg.viewport_height
             and column_height > cfg.texture_scale_limit):
         # Crop the column so we are only scaling pixels that will be within the
@@ -248,10 +249,10 @@ def draw_textured_column(screen: pygame.Surface, cfg: Config,
         # value in texture_scale_limit.
         overlap = (
             (column_height - cfg.viewport_height)
-            / ((column_height - cfg.texture_height) / cfg.texture_height)
+            / ((column_height - TEXTURE_HEIGHT) / TEXTURE_HEIGHT)
         ).__trunc__()
         pixel_column = pixel_column.subsurface(
-            0, overlap // 2, 1, cfg.texture_height - overlap
+            0, overlap // 2, 1, TEXTURE_HEIGHT - overlap
         )
     # Scale the pixel column to fill required height
     pixel_column = pygame.transform.scale(
@@ -318,21 +319,22 @@ def draw_sprite(screen: pygame.Surface, cfg: Config,
         )
     )
     # Prevent divisions by 0
-    transformation = (
-        transformation[0] if transformation[0] != 0 else 1e-5,
-        transformation[1] if transformation[1] != 0 else 1e-5
-    )
+    if transformation[1] == 0:
+        return
     screen_x_pos = (
         (filled_screen_width / 2) * (1 + transformation[0] / transformation[1])
     ).__trunc__()
-    if (screen_x_pos > filled_screen_width + cfg.texture_width // 2
-            or screen_x_pos < -cfg.texture_width // 2):
+    if (screen_x_pos > filled_screen_width + TEXTURE_WIDTH // 2
+            or screen_x_pos < -TEXTURE_WIDTH // 2):
         # Sprite is fully off screen - don't render it
         return
     sprite_size = (
         abs(filled_screen_width // transformation[1]),
         abs(cfg.viewport_height // transformation[1])
     )
+    if (sprite_size[0] > cfg.sprite_scale_limit
+            or sprite_size[1] > cfg.sprite_scale_limit):
+        return
     scaled_texture = pygame.transform.scale(texture, sprite_size)
     if cfg.fog_strength > 0:
         fog_overlay = pygame.Surface(sprite_size)
@@ -403,16 +405,16 @@ def draw_sky_texture(screen: pygame.Surface, cfg: Config,
             facing[1] + camera_plane[1] * camera_x,
         )
         angle = math.atan2(*cast_direction)
-        texture_x = math.floor(angle / math.pi * cfg.texture_width)
+        texture_x = math.floor(angle / math.pi * TEXTURE_WIDTH)
         # Creates a "mirror" effect preventing a seam when the texture repeats.
         texture_x = (
-            texture_x % cfg.texture_width
+            texture_x % TEXTURE_WIDTH
             if angle >= 0 else
-            cfg.texture_width - (texture_x % cfg.texture_width) - 1
+            TEXTURE_WIDTH - (texture_x % TEXTURE_WIDTH) - 1
         )
         # Get a single column of pixels
         scaled_pixel_column = pygame.transform.scale(
-            sky_texture.subsurface(texture_x, 0, 1, cfg.texture_height),
+            sky_texture.subsurface(texture_x, 0, 1, TEXTURE_HEIGHT),
             (display_column_width, cfg.viewport_height // 2)
         )
         screen.blit(scaled_pixel_column, (index * display_column_width, 0))
@@ -637,16 +639,16 @@ def draw_compass(screen: pygame.Surface, cfg: Config,
         )
 
 
-def flash_viewport(screen: pygame.Surface, cfg: Config, dark: bool,
-                   strength: float) -> None:
+def flash_viewport(screen: pygame.Surface, cfg: Config,
+                   color: Tuple[int, int, int], strength: float) -> None:
     """
-    Draw a transparent overlay over the entire viewport either lightening it or
-    darkening it. The strength should be a float between 0.0 and 1.0.
+    Draw a transparent overlay over the entire viewport. The strength should be
+    a float between 0.0 and 1.0.
     """
     viewport_overlay = pygame.Surface(
         (cfg.viewport_width, cfg.viewport_height)
     )
-    viewport_overlay.fill(BLACK if dark else WHITE)
+    viewport_overlay.fill(color)
     viewport_overlay.set_alpha(round(255 * strength))
     screen.blit(viewport_overlay, (0, 0))
 
@@ -679,6 +681,9 @@ def draw_gun(screen: pygame.Surface, cfg: Config, gun_texture: pygame.Surface
     """
     Draw the third person gun on the screen with a crosshair in the centre.
     """
+    gun_texture = pygame.transform.scale(
+        gun_texture, (cfg.viewport_width, cfg.viewport_height)
+    )
     screen.blit(gun_texture, (0, 0, cfg.viewport_width, cfg.viewport_height))
     pygame.draw.circle(
         screen, BLACK, (cfg.viewport_width // 2, cfg.viewport_height // 2), 5
@@ -686,3 +691,92 @@ def draw_gun(screen: pygame.Surface, cfg: Config, gun_texture: pygame.Surface
     pygame.draw.circle(
         screen, WHITE, (cfg.viewport_width // 2, cfg.viewport_height // 2), 3
     )
+
+
+def draw_remaining_hits(screen: pygame.Surface, cfg: Config, hits: int
+                        ) -> None:
+    """
+    Draw the number of hits the player can take before they die in the bottom
+    left corner.
+    """
+    remaining_text = FONT.render(str(hits), True, RED)
+    screen.blit(remaining_text, (10, cfg.viewport_height - 40))
+
+
+def draw_kill_count(screen: pygame.Surface, cfg: Config, kills: int) -> None:
+    """
+    Draw the number of kills the player has in the bottom right corner.
+    """
+    kills_text = FONT.render(str(kills), True, GREEN)
+    screen.blit(
+        kills_text, (
+            cfg.viewport_width - kills_text.get_width() - 15,
+            cfg.viewport_height - 40
+        )
+    )
+
+
+def draw_death_count(screen: pygame.Surface, cfg: Config, deaths: int) -> None:
+    """
+    Draw the number of deaths the player has in the bottom left corner.
+    """
+    deaths_text = FONT.render(str(deaths), True, RED)
+    screen.blit(deaths_text, (10, cfg.viewport_height - 90))
+
+
+def draw_leaderboard(screen: pygame.Surface, cfg: Config,
+                     players: List[net_data.Player]) -> None:
+    """
+    Draw an ordered list of players in the server, and the kills and deaths
+    they currently have.
+    """
+    sorted_players = sorted(
+        players, key=lambda x: x.kills - x.deaths, reverse=True
+    )
+    viewport_overlay = pygame.Surface(
+        (cfg.viewport_width, cfg.viewport_height)
+    )
+    viewport_overlay.fill(GREEN)
+    viewport_overlay.set_alpha(180)
+    screen.blit(viewport_overlay, (0, 0))
+    leaderboard_title_text = TITLE_FONT.render("Leaderboard", True, BLUE)
+    screen.blit(
+        leaderboard_title_text, (
+            cfg.viewport_width // 2 - leaderboard_title_text.get_width() // 2,
+            10
+        )
+    )
+    header_kills = FONT.render("K", True, BLUE)
+    header_deaths = FONT.render("D", True, BLUE)
+    header_diff = FONT.render("S", True, BLUE)
+    screen.blit(
+        header_kills,
+        (cfg.viewport_width - 175 - header_kills.get_width() // 2, 55)
+    )
+    screen.blit(
+        header_deaths,
+        (cfg.viewport_width - 105 - header_deaths.get_width() // 2, 55)
+    )
+    screen.blit(
+        header_diff,
+        (cfg.viewport_width - 35 - header_diff.get_width() // 2, 55)
+    )
+    for i, plr in enumerate(sorted_players, 1):
+        name_text = FONT.render(plr.name, True, BLUE)
+        kills_text = FONT.render(str(plr.kills), True, BLUE)
+        deaths_text = FONT.render(str(plr.deaths), True, BLUE)
+        diff_text = FONT.render(str(plr.kills - plr.deaths), True, BLUE)
+        line_y = 33 * i + 65
+        screen.blit(name_text, (20, line_y))
+        screen.blit(
+            kills_text,
+            (cfg.viewport_width - 175 - kills_text.get_width() // 2, line_y)
+        )
+        screen.blit(
+            deaths_text,
+            (cfg.viewport_width - 105 - deaths_text.get_width() // 2, line_y)
+        )
+        screen.blit(
+            diff_text,
+            (cfg.viewport_width - 35 - diff_text.get_width() // 2, line_y)
+        )

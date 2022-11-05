@@ -138,10 +138,6 @@ class Config:
         # A value of 0 disables fog entirely.
         self.fog_strength = self._parse_float('FOG_STRENGTH', 7.5)
 
-        # The dimensions of all the PNGs found in the textures folder.
-        self.texture_width = self._parse_int('TEXTURE_WIDTH', 128)
-        self.texture_height = self._parse_int('TEXTURE_HEIGHT', 128)
-
         # The maximum height that textures will be stretched to internally
         # before they start getting cropped to save on resources. Decreasing
         # this will improve performance, at the cost of nearby textures looking
@@ -186,6 +182,13 @@ class Config:
         self.move_speed = self._parse_float('MOVE_SPEED', 4.0)
         self.run_multiplier = self._parse_float('RUN_MULTIPLIER', 2.0)
         self.crawl_multiplier = self._parse_float('CRAWL_MULTIPLIER', 0.5)
+
+        # The maximum size that sprites will be stretched to before they are
+        # culled to save on resources. Decreasing this will improve performance
+        # at the cost of closer sprites not appearing.
+        self.sprite_scale_limit = self._parse_int(
+            'SPRITE_SCALE_LIMIT', 750
+        )
 
     def _parse_int(self, field_name: str, default_value: int) -> int:
         if field_name not in self.config_options:
