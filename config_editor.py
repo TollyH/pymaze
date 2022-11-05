@@ -624,6 +624,28 @@ class ConfigEditorApp:
         )
         self.gui_enable_monster_killing_check.pack(fill="x", anchor=tkinter.NW)
 
+        self.checkbuttons['DRAW_REFLECTIONS'] = tkinter.IntVar()
+        self.draw_reflections_check = tkinter.Checkbutton(
+            self.gui_advanced_config_frame, anchor=tkinter.W,
+            variable=self.checkbuttons['DRAW_REFLECTIONS'],
+            text="Draw wall and sky reflections on maze floor"
+        )
+        self.draw_reflections_check_warning_label = tkinter.Label(
+            self.gui_advanced_config_frame, anchor=tkinter.W,
+            text="Warning: This will have a major negative performance impact",
+            fg="darkorange"
+        )
+        if self.parse_bool('DRAW_REFLECTIONS', True):
+            self.draw_reflections_check.select()
+        # Set command after select to prevent it from being called
+        self.draw_reflections_check.config(
+            command=lambda: self.on_checkbutton_click('DRAW_REFLECTIONS')
+        )
+        self.draw_reflections_check.pack(fill="x", anchor=tkinter.NW)
+        self.draw_reflections_check_warning_label.pack(
+            fill="x", anchor=tkinter.NW
+        )
+
         self.gui_save_button = tkinter.ttk.Button(
             self.window, command=self.save_config, text="Save"
         )

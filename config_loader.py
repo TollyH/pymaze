@@ -130,6 +130,10 @@ class Config:
             'SKY_TEXTURES_ENABLED', True
         )
 
+        # Whether reflections should be drawn on the maze floor.
+        # Impacts performance heavily.
+        self.draw_reflections = self._parse_bool('DRAW_REFLECTIONS', False)
+
         # The strength of the fog effect. Lower values result in stronger fog.
         # A value of 0 disables fog entirely.
         self.fog_strength = self._parse_float('FOG_STRENGTH', 7.5)
