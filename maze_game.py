@@ -248,8 +248,11 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                         levels[current_level].player_coords
                     )
                     if ping_response_coop is not None:
-                        other_players, item_coords = ping_response_coop
                         lvl = levels[current_level]
+                        (
+                            lvl.killed, lvl.monster_coords, other_players,
+                            item_coords
+                        ) = ping_response_coop
                         # Remove items no longer present on the server
                         lvl.exit_keys &= item_coords
                         lvl.key_sensors &= item_coords
@@ -642,7 +645,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             if cfg.monster_sound_on_kill and has_started_level[current_level]:
                 resources.monster_jumpscare_sound.play()
                 has_started_level[current_level] = False
-            if not is_multi:
+            if (not is_multi) or is_coop:
                 selected_sprite = resources.jumpscare_monster_texture
             else:
                 selected_sprite = resources.player_textures[last_killer_skin]
@@ -734,10 +737,11 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                         and monster_timeouts[current_level]
                         > cfg.monster_movement_wait
                         and monster_escape_clicks[current_level] == -1):
-                    if (levels[current_level].move_monster()
-                            and cfg.enable_monster_killing):
-                        monster_escape_clicks[current_level] = 0
-                        display_map = False
+                    if not is_coop:
+                        if (levels[current_level].move_monster()
+                                and cfg.enable_monster_killing):
+                            monster_escape_clicks[current_level] = 0
+                            display_map = False
                     monster_timeouts[current_level] = 0
                     monster_coords = levels[current_level].monster_coords
                     if (monster_coords is not None

@@ -61,11 +61,13 @@ def ping_server(sock: socket.socket, addr: Tuple[str, int], player_key: bytes,
 def ping_server_coop(sock: socket.socket, addr: Tuple[str, int],
                      player_key: bytes, coords: Tuple[float, float],
                      ) -> Optional[Tuple[
+                            bool, Optional[Tuple[int, int]],
                             List[net_data.Player], Set[Tuple[int, int]]
                           ]]:
     """
-    Tell the server where we currently are, and get a list of where all
-    other players are and what items they've picked up.
+    Tell the server where we currently are, and get whether we're dead, where
+    the monster is, and a list of where all other players are and what items
+    they've picked up.
     Returns None if a response doesn't arrive in a timely manner.
     """
     # Positions are sent as integers with 2 d.p of accuracy from the original
@@ -74,19 +76,26 @@ def ping_server_coop(sock: socket.socket, addr: Tuple[str, int],
     sock.sendto(server.PING.to_bytes(1, "big") + player_key + coords_b, addr)
     try:
         player_list_bytes = sock.recvfrom(16384)[0]
-        player_byte_size = net_data.Player.byte_size
-        player_count = player_list_bytes[0]
-        offset = player_byte_size * player_count + 1
+        killed = bool(player_list_bytes[0])
         coords_size = net_data.Coords.byte_size
-        return [
+        monster_coords: Optional[Tuple[int, int]] = net_data.Coords.from_bytes(
+            player_list_bytes[1:coords_size + 1]
+        ).to_int_tuple()
+        if monster_coords == (-1, -1):
+            monster_coords = None
+        player_size = net_data.Player.byte_size
+        player_count = player_list_bytes[coords_size + 1]
+        offset_1 = coords_size + 2
+        offset_2 = player_size * player_count + offset_1
+        return killed, monster_coords, [
             net_data.Player.from_bytes(player_list_bytes[
-                    i * player_byte_size + 1:(i + 1) * player_byte_size + 1
+                    i * player_size + offset_1:(i + 1) * player_size + offset_1
             ]) for i in range(player_count)
         ], {
             net_data.Coords.from_bytes(player_list_bytes[
-                    i * coords_size + offset:(i + 1) * coords_size + offset
+                    i * coords_size + offset_2:(i + 1) * coords_size + offset_2
             ]).to_int_tuple() for i in range(
-                (len(player_list_bytes) - offset) // coords_size
+                (len(player_list_bytes) - offset_2) // coords_size
             )
         }
     except (socket.timeout, OSError):

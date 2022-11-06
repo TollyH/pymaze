@@ -378,7 +378,7 @@ class Level:
             events.add(WON)
         return events
 
-    def move_monster(self) -> bool:
+    def move_monster(self, coop: bool = False) -> bool:
         """
         Moves the monster one space in a random available direction, unless
         the player is in the unobstructed view of one of the cardinal
@@ -393,45 +393,46 @@ class Level:
         if self.monster_start is None:
             return False
         if (self.monster_coords is None and
-                raycasting.no_sqrt_coord_distance(
+                (raycasting.no_sqrt_coord_distance(
                     self.player_grid_coords, self.monster_start
-                ) >= 4):
+                ) >= 4 or coop)):
             self.monster_coords = self.monster_start
         elif self.monster_coords is not None:
             # 0 — Not in line of sight.
             # 1 — Line of sight on Y axis.
             # 2 — Line of sight on X axis.
             line_of_sight = 0
-            if self.player_grid_coords[0] == self.monster_coords[0]:
-                min_y_coord = min(
-                    self.player_grid_coords[1], self.monster_coords[1]
-                )
-                max_y_coord = max(
-                    self.player_grid_coords[1], self.monster_coords[1]
-                )
-                collided = False
-                for y_coord in range(min_y_coord, max_y_coord + 1):
-                    if self[(self.player_grid_coords[0], y_coord),
-                            MONSTER_COLLIDE]:
-                        collided = True
-                        break
-                if not collided:
-                    line_of_sight = 1
-            elif self.player_grid_coords[1] == self.monster_coords[1]:
-                min_x_coord = min(
-                    self.player_grid_coords[0], self.monster_coords[0]
-                )
-                max_x_coord = max(
-                    self.player_grid_coords[0], self.monster_coords[0]
-                )
-                collided = False
-                for x_coord in range(min_x_coord, max_x_coord + 1):
-                    if self[(x_coord, self.player_grid_coords[1]),
-                            MONSTER_COLLIDE]:
-                        collided = True
-                        break
-                if not collided:
-                    line_of_sight = 2
+            if not coop:
+                if self.player_grid_coords[0] == self.monster_coords[0]:
+                    min_y_coord = min(
+                        self.player_grid_coords[1], self.monster_coords[1]
+                    )
+                    max_y_coord = max(
+                        self.player_grid_coords[1], self.monster_coords[1]
+                    )
+                    collided = False
+                    for y_coord in range(min_y_coord, max_y_coord + 1):
+                        if self[(self.player_grid_coords[0], y_coord),
+                                MONSTER_COLLIDE]:
+                            collided = True
+                            break
+                    if not collided:
+                        line_of_sight = 1
+                elif self.player_grid_coords[1] == self.monster_coords[1]:
+                    min_x_coord = min(
+                        self.player_grid_coords[0], self.monster_coords[0]
+                    )
+                    max_x_coord = max(
+                        self.player_grid_coords[0], self.monster_coords[0]
+                    )
+                    collided = False
+                    for x_coord in range(min_x_coord, max_x_coord + 1):
+                        if self[(x_coord, self.player_grid_coords[1]),
+                                MONSTER_COLLIDE]:
+                            collided = True
+                            break
+                    if not collided:
+                        line_of_sight = 2
             if line_of_sight == 1:
                 if self.player_grid_coords[1] > self.monster_coords[1]:
                     self.monster_coords = (
