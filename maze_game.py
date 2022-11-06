@@ -1163,6 +1163,9 @@ if __name__ == "__main__":
             if lower_key in ("--multiplayer-server", "-s"):
                 kwargs["multiplayer_server"] = arg_pair[1]
                 continue
+            if lower_key in ("--multiplayer_name", "-n"):
+                kwargs["multiplayer_name"] = arg_pair[1]
+                continue
         print(f"Unknown argument: '{arg}'")
         sys.exit(1)
     maze_game(**kwargs)
