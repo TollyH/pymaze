@@ -272,7 +272,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                     # Return the mouse to normal
                     pygame.mouse.set_visible(True)
                     pygame.event.set_grab(False)
-                elif is_multi and levels[current_level].killed:
+                elif is_multi and not is_coop and levels[current_level].killed:
                     netcode.respawn(sock, addr, player_key)
                     levels[current_level].randomise_player_coords()
                 elif not is_reset_prompt_shown:
@@ -514,7 +514,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             if pressed_keys[pygame.K_RCTRL] or pressed_keys[pygame.K_LCTRL]:
                 move_multiplier *= cfg.crawl_multiplier
             if pressed_keys[pygame.K_RSHIFT] or pressed_keys[pygame.K_LSHIFT]:
-                if not is_multi:
+                if (not is_multi) or is_coop:
                     move_multiplier *= cfg.run_multiplier
             # Ensure framerate does not affect speed values
             turn_speed_mod = frame_time * cfg.turn_speed
@@ -1088,7 +1088,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                 if monster_escape_time[current_level] <= 0:
                     levels[current_level].killed = True
 
-            if (is_multi and not levels[current_level].killed
+            if (is_multi and not is_coop and not levels[current_level].killed
                     and not display_stats
                     and (not display_map or cfg.enable_cheat_map)):
                 screen_drawing.draw_remaining_hits(screen, cfg, hits_remaining)
