@@ -28,13 +28,14 @@ SHOT_KILLED = 3
 
 SHOTS_UNTIL_DEAD = 10
 SHOT_TIMEOUT = 0.3  # Seconds
+MONSTER_MOVEMENT_WAIT = 0.5
 
 logging.basicConfig(level=logging.INFO)
 LOG = logging.getLogger("pymaze.server")
 
 
 def maze_server(*, level_json_path: str = "maze_levels.json",
-                port: int = 13375, level: int = 0) -> None:
+                port: int = 13375, level: int = 0, coop: bool = False) -> None:
     """
     Launches the server required for playing multiplayer games. Stores and
     provides player locations, health status, and does collision checking
@@ -46,6 +47,10 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
     levels = maze_levels.load_level_json(level_json_path)
     skin_count = len(glob(os.path.join("textures", "player", "*.png")))
     current_level = levels[level]
+    if coop:
+        # Monster starts immediately in co-op matches
+        current_level.move_monster(True)
+    last_monster_move = time.time()
     players: Dict[bytes, net_data.PrivatePlayer] = {}
     last_fire_time: Dict[bytes, float] = {}
 
@@ -61,6 +66,15 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                 LOG.warning("Invalid player key from %s", addr)
             if rq_type == PING:
                 LOG.debug("Player pinged from %s", addr)
+                if (coop and time.time() - last_monster_move
+                        >= MONSTER_MOVEMENT_WAIT):
+                    last_monster_move = time.time()
+                    current_level.move_monster(True)
+                for plr in players.values():
+                    if plr.grid_pos == current_level.monster_coords:
+                        plr.hits_remaining = 0
+                        # Hide dead players in level
+                        plr.pos = net_data.Coords(-1, -1)
                 if players[player_key].hits_remaining > 0:
                     players[player_key].pos = net_data.Coords.from_bytes(
                         data[33:41]
@@ -69,15 +83,39 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                         players[player_key].pos.x_pos.__trunc__(),
                         players[player_key].pos.y_pos.__trunc__()
                     )
-                player_bytes = (
-                    players[player_key].hits_remaining.to_bytes(1, "big")
-                    + players[player_key].last_killer_skin.to_bytes(1, "big")
-                    + players[player_key].kills.to_bytes(2, "big")
-                    + players[player_key].deaths.to_bytes(2, "big")
-                )
+                if not coop:
+                    player_bytes = (
+                        players[player_key].hits_remaining.to_bytes(1, "big")
+                        + players[player_key].last_killer_skin.to_bytes(
+                            1, "big"
+                        )
+                        + players[player_key].kills.to_bytes(2, "big")
+                        + players[player_key].deaths.to_bytes(2, "big")
+                    )
+                else:
+                    grid_pos = players[player_key].grid_pos
+                    current_level.exit_keys.discard(grid_pos)
+                    current_level.key_sensors.discard(grid_pos)
+                    current_level.guns.discard(grid_pos)
+                    if current_level.monster_coords is None:
+                        monster_coords = (-1, -1)
+                    else:
+                        monster_coords = current_level.monster_coords
+                    player_bytes = (
+                        (not bool(
+                            players[player_key].hits_remaining
+                        )).to_bytes(1, "big") + bytes(
+                            net_data.Coords(*monster_coords)
+                        ) + (len(players) - 1).to_bytes(1, "big")
+                    )
                 for key, plr in players.items():
                     if key != player_key:
                         player_bytes += bytes(plr.strip_private_data())
+                if coop:
+                    for item in (current_level.exit_keys
+                                 | current_level.key_sensors
+                                 | current_level.guns):
+                        player_bytes += bytes(net_data.Coords(*item))
                 sock.sendto(player_bytes, addr)
             elif rq_type == JOIN:
                 LOG.info("Player join from %s", addr)
@@ -86,9 +124,13 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                     new_key = os.urandom(32)
                     players[new_key] = net_data.PrivatePlayer(
                         name, net_data.Coords(-1, -1), (-1, -1),
-                        len(players) % skin_count, 0, 0, SHOTS_UNTIL_DEAD
+                        len(players) % skin_count, 0, 0,
+                        1 if coop else SHOTS_UNTIL_DEAD
                     )
-                    sock.sendto(new_key + level.to_bytes(1, "big"), addr)
+                    sock.sendto(
+                        new_key + level.to_bytes(1, "big")
+                        + coop.to_bytes(1, "big"), addr
+                    )
                 else:
                     LOG.warning(
                         "Rejected player join from %s as server is full", addr
@@ -96,7 +138,8 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
             elif rq_type == FIRE:
                 LOG.debug("Player fired gun from %s", addr)
                 now = time.time()
-                if now - last_fire_time.get(player_key, 0) < SHOT_TIMEOUT:
+                if (now - last_fire_time.get(player_key, 0) < SHOT_TIMEOUT
+                        and not coop):
                     LOG.warning(
                         "Will not allow %s to shoot, firing too quickly", addr
                     )
@@ -110,7 +153,7 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                     current_level.player_grid_coords = (
                         coords.x_pos.__trunc__(), coords.y_pos.__trunc__()
                     )
-                    list_players = [
+                    list_players = [] if coop else [
                         (k, x) for k, x in players.items()
                         if x.hits_remaining > 0 and k != player_key
                     ]
@@ -120,7 +163,7 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                     )
                     hit = False
                     for sprite in hit_sprites:
-                        if sprite.type == raycasting.OTHER_PLAYER:
+                        if sprite.type == raycasting.OTHER_PLAYER and not coop:
                             # Player was hit by gun
                             assert sprite.player_index is not None
                             hit_key, hit_player = list_players[
@@ -146,6 +189,12 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                                         addr
                                     )
                             break
+                        elif sprite.type == raycasting.MONSTER and coop:
+                            # Monster was hit by gun
+                            hit = True
+                            current_level.monster_coords = None
+                            sock.sendto(SHOT_KILLED.to_bytes(1, "big"), addr)
+                            break
                     if not hit:
                         sock.sendto(SHOT_MISSED.to_bytes(1, "big"), addr)
             elif rq_type == RESPAWN:
@@ -169,7 +218,12 @@ if __name__ == "__main__":
     kwargs: Dict[str, Any] = {}
     for arg in sys.argv[1:]:
         arg_pair = arg.split("=")
-        if len(arg_pair) == 2:
+        if len(arg_pair) == 1:
+            lower_key = arg_pair[0].lower()
+            if lower_key in ("--coop", "-o"):
+                kwargs["coop"] = True
+                continue
+        elif len(arg_pair) == 2:
             lower_key = arg_pair[0].lower()
             if lower_key in ("--level-json-path", "-p"):
                 kwargs["level_json_path"] = arg_pair[1]

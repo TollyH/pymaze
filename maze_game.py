@@ -41,6 +41,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
     pygame.init()
 
     is_multi = multiplayer_server is not None
+    is_coop = False
 
     last_config_edit = os.path.getmtime(config_ini_path)
     cfg = config_loader.Config(config_ini_path)
@@ -71,20 +72,21 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                 "Connection Error", "Invalid server information provided."
             )
             sys.exit(1)
-        player_key, current_level = join_response
-        lvl = levels[current_level]
-        lvl.randomise_player_coords()
-        # Remove pickups and monsters from multiplayer matches.
-        lvl.original_exit_keys = frozenset()
-        lvl.exit_keys = set()
-        lvl.original_key_sensors = frozenset()
-        lvl.key_sensors = set()
-        lvl.original_guns = frozenset()
-        lvl.guns = set()
-        lvl.monster_start = None
-        lvl.monster_wait = None
-        lvl.end_point = (-1, -1)  # Make end inaccessible in multiplayer
-        lvl.start_point = (-1, -1)  # Hide start point in multiplayer
+        player_key, current_level, is_coop = join_response
+        if not is_coop:
+            lvl = levels[current_level]
+            lvl.randomise_player_coords()
+            # Remove pickups and monsters from deathmatches.
+            lvl.original_exit_keys = frozenset()
+            lvl.exit_keys = set()
+            lvl.original_key_sensors = frozenset()
+            lvl.key_sensors = set()
+            lvl.original_guns = frozenset()
+            lvl.guns = set()
+            lvl.monster_start = None
+            lvl.monster_wait = None
+            lvl.end_point = (-1, -1)  # Make end inaccessible in deathmatches
+            lvl.start_point = (-1, -1)  # Hide start point in deathmatches
     else:
         current_level = 0
         # Not needed in single player
@@ -104,8 +106,10 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
     ))
     if not is_multi:
         pygame.display.set_caption("PyMaze - Level 1")
+    elif is_coop:
+        pygame.display.set_caption(f"PyMaze Co-op - Level {current_level + 1}")
     else:
-        pygame.display.set_caption("PyMaze Multiplayer")
+        pygame.display.set_caption("PyMaze Deathmatch")
     pygame.display.set_icon(
         pygame.image.load(os.path.join("window_icons", "main.png")).convert()
     )
@@ -137,7 +141,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
 
     display_map = False
     display_compass = False
-    display_stats = not is_multi
+    display_stats = (not is_multi) or is_coop
     display_rays = False
 
     is_reset_prompt_shown = False
@@ -153,7 +157,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
     compass_burned_out = [False] * len(levels)
     compass_charge_delays = [cfg.compass_charge_delay] * len(levels)
     key_sensor_times = [0.0] * len(levels)
-    has_gun: List[bool] = [is_multi] * len(levels)
+    has_gun: List[bool] = [is_multi and not is_coop] * len(levels)
     wall_place_cooldown = [0.0] * len(levels)
     flicker_time_remaining = [0.0] * len(levels)
     pickup_flash_time_remaining = 0.0
@@ -193,11 +197,13 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                     levels[current_level].player_coords,
                     facing_directions[current_level]
                 )
-                if shot_response in (
+                if not is_coop and shot_response in (
                         server.SHOT_HIT_NO_KILL, server.SHOT_KILLED):
                     pickup_flash_time_remaining = 0.4
                 if shot_response not in (server.SHOT_DENIED, None):
                     resources.gunshot_sound.play()
+                if is_coop:
+                    has_gun[current_level] = False
             else:
                 has_gun[current_level] = False
                 resources.gunshot_sound.play()
@@ -215,23 +221,44 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             time_since_server_ping += frame_time
             if time_since_server_ping >= 0.04:
                 time_since_server_ping = 0
-                ping_response = netcode.ping_server(
-                    sock, addr, player_key, levels[current_level].player_coords
-                )
-                if ping_response is not None:
-                    previous_hits = hits_remaining
-                    (
-                        hits_remaining, last_killer_skin, kills, deaths,
-                        other_players
-                    ) = ping_response
-                    if hits_remaining < previous_hits:
-                        resources.player_hit_sound.play()
-                        hurt_flash_time_remaining = 1 / (hits_remaining + 1)
-                    if hits_remaining == 0:
-                        levels[current_level].killed = True
-                    if levels[current_level].killed and hits_remaining != 0:
-                        # We were dead, but server has processed our respawn.
-                        levels[current_level].killed = False
+                if not is_coop:
+                    ping_response = netcode.ping_server(
+                        sock, addr, player_key,
+                        levels[current_level].player_coords
+                    )
+                    if ping_response is not None:
+                        previous_hits = hits_remaining
+                        (
+                            hits_remaining, last_killer_skin, kills, deaths,
+                            other_players
+                        ) = ping_response
+                        if hits_remaining < previous_hits:
+                            resources.player_hit_sound.play()
+                            hurt_flash_time_remaining = 1 / (
+                                hits_remaining + 1
+                            )
+                        if hits_remaining == 0:
+                            levels[current_level].killed = True
+                        if (levels[current_level].killed
+                                and hits_remaining != 0):
+                            # We were dead, but server has processed our
+                            # respawn.
+                            levels[current_level].killed = False
+                else:
+                    ping_response_coop = netcode.ping_server_coop(
+                        sock, addr, player_key,
+                        levels[current_level].player_coords
+                    )
+                    if ping_response_coop is not None:
+                        lvl = levels[current_level]
+                        (
+                            lvl.killed, lvl.monster_coords, other_players,
+                            item_coords
+                        ) = ping_response_coop
+                        # Remove items no longer present on the server
+                        lvl.exit_keys &= item_coords
+                        lvl.key_sensors &= item_coords
+                        lvl.guns &= item_coords
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 if is_multi:
@@ -247,7 +274,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                     # Return the mouse to normal
                     pygame.mouse.set_visible(True)
                     pygame.event.set_grab(False)
-                elif is_multi and levels[current_level].killed:
+                elif is_multi and not is_coop and levels[current_level].killed:
                     netcode.respawn(sock, addr, player_key)
                     levels[current_level].randomise_player_coords()
                 elif not is_reset_prompt_shown:
@@ -280,7 +307,8 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                         # Compass and map cannot be displayed together
                         if (not display_map or cfg.enable_cheat_map) and not (
                                 levels[current_level].won
-                                or levels[current_level].killed or is_multi):
+                                or levels[current_level].killed) and (
+                                    (not is_multi) or is_coop):
                             display_compass = not display_compass
                             (
                                 resources.compass_open_sound
@@ -488,7 +516,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             if pressed_keys[pygame.K_RCTRL] or pressed_keys[pygame.K_LCTRL]:
                 move_multiplier *= cfg.crawl_multiplier
             if pressed_keys[pygame.K_RSHIFT] or pressed_keys[pygame.K_LSHIFT]:
-                if not is_multi:
+                if (not is_multi) or is_coop:
                     move_multiplier *= cfg.run_multiplier
             # Ensure framerate does not affect speed values
             turn_speed_mod = frame_time * cfg.turn_speed
@@ -579,7 +607,8 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             # integer boundary.
             if move_scores[current_level] // 2 > old_move_score // 2:
                 random.choice(resources.footstep_sounds).play()
-            if level.MONSTER_CAUGHT in events and cfg.enable_monster_killing:
+            if (level.MONSTER_CAUGHT in events and cfg.enable_monster_killing
+                    and not is_coop):
                 monster_escape_clicks[current_level] = 0
                 display_map = False
 
@@ -608,7 +637,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             screen_drawing.draw_victory_screen(
                 screen, cfg, last_level_frame[current_level],
                 highscores, current_level, time_scores[current_level],
-                move_scores[current_level], frame_time,
+                move_scores[current_level], frame_time, is_coop,
                 resources.victory_increment, resources.victory_next_block
             )
         # Death screen
@@ -619,7 +648,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             if cfg.monster_sound_on_kill and has_started_level[current_level]:
                 resources.monster_jumpscare_sound.play()
                 has_started_level[current_level] = False
-            if not is_multi:
+            if (not is_multi) or is_coop:
                 selected_sprite = resources.jumpscare_monster_texture
             else:
                 selected_sprite = resources.player_textures[last_killer_skin]
@@ -711,10 +740,11 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                         and monster_timeouts[current_level]
                         > cfg.monster_movement_wait
                         and monster_escape_clicks[current_level] == -1):
-                    if (levels[current_level].move_monster()
-                            and cfg.enable_monster_killing):
-                        monster_escape_clicks[current_level] = 0
-                        display_map = False
+                    if not is_coop:
+                        if (levels[current_level].move_monster()
+                                and cfg.enable_monster_killing):
+                            monster_escape_clicks[current_level] = 0
+                            display_map = False
                     monster_timeouts[current_level] = 0
                     monster_coords = levels[current_level].monster_coords
                     if (monster_coords is not None
@@ -1013,7 +1043,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                 )
 
             if display_stats and (not display_map or cfg.enable_cheat_map):
-                if not is_multi:
+                if (not is_multi) or is_coop:
                     time_score = (
                         time_scores[current_level]
                         if has_started_level[current_level] else
@@ -1040,7 +1070,8 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                         if current_player_wall is None else
                         current_player_wall[2],
                         wall_place_cooldown[current_level],
-                        time_scores[current_level], has_gun[current_level]
+                        time_scores[current_level], has_gun[current_level],
+                        is_coop
                     )
                 else:
                     assert multiplayer_name is not None
@@ -1060,7 +1091,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                 if monster_escape_time[current_level] <= 0:
                     levels[current_level].killed = True
 
-            if (is_multi and not levels[current_level].killed
+            if (is_multi and not is_coop and not levels[current_level].killed
                     and not display_stats
                     and (not display_map or cfg.enable_cheat_map)):
                 screen_drawing.draw_remaining_hits(screen, cfg, hits_remaining)
@@ -1132,6 +1163,9 @@ if __name__ == "__main__":
                 continue
             if lower_key in ("--multiplayer-server", "-s"):
                 kwargs["multiplayer_server"] = arg_pair[1]
+                continue
+            if lower_key in ("--multiplayer_name", "-n"):
+                kwargs["multiplayer_name"] = arg_pair[1]
                 continue
         print(f"Unknown argument: '{arg}'")
         sys.exit(1)

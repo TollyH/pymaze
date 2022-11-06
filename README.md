@@ -11,6 +11,9 @@ algorithm for raycasting.
   - [Cheat Map Controls](#cheat-map-controls)
   - [Instructions](#instructions)
     - [Multiplayer](#multiplayer)
+      - [Death-match](#death-match)
+      - [Co-op](#co-op)
+      - [How-to](#how-to)
   - [Map Colours](#map-colours)
     - [Game and Designer](#game-and-designer)
     - [Game Only](#game-only)
@@ -64,7 +67,17 @@ algorithm for raycasting.
 
 ### Multiplayer
 
-PyMaze also has a multiplayer death-match mode, operating with a simple client/server model. In this mode, the monster and all pickups are removed, and instead you must simply shoot at other players to kill them. You start with a gun, and have infinite ammo.
+PyMaze also has two multiplayer modes, operating with a simple client/server model.
+
+#### Death-match
+
+In this mode, the monster and all pickups are removed, and instead you must simply shoot at other players to kill them. You start with a gun, and have infinite ammo. The stats screen is replaced with a leaderboard showing (K)ills, (D)eaths, and (S)core, which is the difference between a player's kills and deaths. Your remaining lives are shown in the very bottom left corner, with your total deaths just above, as you can respawn after death in this mode. Your kills are displayed in the bottom right corner.
+
+#### Co-op
+
+Co-op mode plays almost identically to single-player PyMaze, however you, as multiple players, must work together to collect all the keys. Keys, key sensors, and guns are synced between players, so once one player has grabbed something, no other player will need or be able to. The monster has become impatient with so many people in his maze, and so spawns immediately once the level begins, and will kill you immediately if he catches you. Will all the noise, he has become somewhat confused, however, and so will always move around randomly instead of chasing anybody.
+
+#### How-to
 
 Right-clicking on the play button on the title screen will prompt for a server address and port to connect to, and middle-clicking will start hosting a server from your machine. You can play with people on the same network as you by giving them your private IP address (usually in the form `192.168.xxx.xxx` - lookup online how to find this). If you want to play over a wider area, you will need to find your public IP address and setup port forwarding, tutorials for which can also be found online.
 
@@ -98,15 +111,17 @@ Right-clicking on the play button on the title screen will prompt for a server a
 
 ### Client
 
-- `-P=/path/to/maze_levels.json` or `--level-json-path=/path/to/maze_levels.json`
-- `-C=/path/to/config.ini` or `--config-ini-path=/path/to/config.ini`
+- `-P="/path/to/maze_levels.json"` or `--level-json-path="/path/to/maze_levels.json"`
+- `-C="/path/to/config.ini"` or `--config-ini-path="/path/to/config.ini"`
 - `-S="host:port"` or `--multiplayer-server="host:port"`
+- `-N="host:port"` or `--multiplayer-name="Your Name"`
 
 ### Server
 
 - `-P=/path/to/maze_levels.json` or `--level-json-path=/path/to/maze_levels.json`
 - `-T=port` or `--port=port`
 - `-L=level_index` or `--level=level_index`
+- `-O` or `--coop`
 
 ---
 

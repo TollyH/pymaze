@@ -56,7 +56,7 @@ def draw_victory_screen(screen: pygame.Surface, cfg: Config,
                         background: pygame.Surface,
                         highscores: List[Tuple[float, float]],
                         current_level: int, time_score: float,
-                        move_score: float, frame_time: float,
+                        move_score: float, frame_time: float, is_coop: bool,
                         victory_increment: Union[
                             pygame.mixer.Sound, EmptySound
                         ],
@@ -133,9 +133,11 @@ def draw_victory_screen(screen: pygame.Surface, cfg: Config,
         if victory_sounds_played[current_level] == 5:
             victory_sounds_played[current_level] = 6
             victory_next_block.play()
-    if time_on_screen >= 7.5 and current_level < level_count - 1:
+    if (time_on_screen >= 7.5
+            and (current_level < level_count - 1 or is_coop)):
         lower_hint_text = FONT.render(
-            "Press `]` to go to next level", True, DARK_RED
+            "Restart the server to play another level"
+            if is_coop else "Press `]` to go to next level", True, DARK_RED
         )
         screen.blit(lower_hint_text, (10, 280))
         if victory_sounds_played[current_level] == 6:
@@ -517,7 +519,8 @@ def draw_stats(screen: pygame.Surface, cfg: Config, monster_spawned: bool,
                blank_icon: pygame.Surface, key_sensor_time: float,
                compass_time: float, compass_burned: bool,
                player_wall_time: Optional[float], wall_place_cooldown: float,
-               current_level_time: float, has_gun: bool) -> None:
+               current_level_time: float, has_gun: bool, is_coop: bool
+               ) -> None:
     """
     Draw a time, move count, and key counts to the bottom left-hand corner of
     the screen with a transparent black background if the monster hasn't
@@ -538,7 +541,7 @@ def draw_stats(screen: pygame.Surface, cfg: Config, monster_spawned: bool,
     screen.blit(move_score_text, (10, cfg.viewport_height - 70))
     screen.blit(keys_text, (10, cfg.viewport_height - 40))
 
-    top_background = pygame.Surface((260, 75))
+    top_background = pygame.Surface((130 if is_coop else 260, 75))
     top_background.fill(BLACK)
     top_background.set_alpha(127)
     screen.blit(top_background, (0, 0))
@@ -551,35 +554,40 @@ def draw_stats(screen: pygame.Surface, cfg: Config, monster_spawned: bool,
     )
     screen.blit(cropped_key, (5, 5))
 
-    screen.blit(hud_icons.get(FLAG, blank_icon), (47, 5))
-    screen.blit(FONT.render("F", True, WHITE), (54, 40))
+    if not is_coop:
+        screen.blit(hud_icons.get(FLAG, blank_icon), (47, 5))
+        screen.blit(FONT.render("F", True, WHITE), (54, 40))
+
+        pygame.draw.circle(
+            screen, DARK_GREEN if player_wall_time is None else RED, (106, 21),
+            round(16 * (
+                (1 - wall_place_cooldown / cfg.player_wall_cooldown)
+                if player_wall_time is None else
+                (
+                    1 - (current_level_time - player_wall_time)
+                    / cfg.player_wall_time
+                )
+            ))
+        )
+        screen.blit(hud_icons.get(PLACE_WALL, blank_icon), (89, 5))
+        screen.blit(FONT.render("Q", True, WHITE), (96, 40))
 
     pygame.draw.circle(
-        screen, DARK_GREEN if player_wall_time is None else RED, (106, 21),
-        round(16 * (
-            (1 - wall_place_cooldown / cfg.player_wall_cooldown)
-            if player_wall_time is None else
-            (
-                1 -
-                (current_level_time - player_wall_time) / cfg.player_wall_time
-            )
-        ))
-    )
-    screen.blit(hud_icons.get(PLACE_WALL, blank_icon), (89, 5))
-    screen.blit(FONT.render("Q", True, WHITE), (96, 40))
-
-    pygame.draw.circle(
-        screen, RED if compass_burned else DARK_GREEN, (148, 21),
+        screen, RED if compass_burned else DARK_GREEN,
+        (64 if is_coop else 148, 21),
         round(15 * (compass_time / cfg.compass_time))
     )
-    screen.blit(hud_icons.get(COMPASS, blank_icon), (131, 5))
-    screen.blit(FONT.render("C", True, WHITE), (139, 40))
+    screen.blit(
+        hud_icons.get(COMPASS, blank_icon), (47 if is_coop else 131, 5)
+    )
+    screen.blit(FONT.render("C", True, WHITE), (54 if is_coop else 139, 40))
 
-    screen.blit(hud_icons.get(PAUSE, blank_icon), (173, 5))
-    screen.blit(FONT.render("R", True, WHITE), (181, 40))
+    if not is_coop:
+        screen.blit(hud_icons.get(PAUSE, blank_icon), (173, 5))
+        screen.blit(FONT.render("R", True, WHITE), (181, 40))
 
-    screen.blit(hud_icons.get(STATS, blank_icon), (215, 5))
-    screen.blit(FONT.render("E", True, WHITE), (223, 40))
+    screen.blit(hud_icons.get(STATS, blank_icon), (89 if is_coop else 215, 5))
+    screen.blit(FONT.render("E", True, WHITE), (96 if is_coop else 223, 40))
 
     if has_gun:
         gun_background = pygame.Surface((45, 75))

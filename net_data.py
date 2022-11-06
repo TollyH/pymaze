@@ -41,6 +41,12 @@ class Coords:
         """
         return self.x_pos, self.y_pos
 
+    def to_int_tuple(self) -> Tuple[int, int]:
+        """
+        Convert Coords back to a tuple of 2 integers.
+        """
+        return self.x_pos.__trunc__(), self.y_pos.__trunc__()
+
 
 @dataclass
 class Player:

@@ -70,6 +70,9 @@ def main() -> None:
             if lower_key in ("--multiplayer-server", "-s"):
                 maze_game_kwargs["multiplayer_server"] = arg_pair[1]
                 continue
+            if lower_key in ("--multiplayer_name", "-n"):
+                maze_game_kwargs["multiplayer_name"] = arg_pair[1]
+                continue
         print(f"Unknown argument: '{arg}'")
         sys.exit(1)
 
@@ -136,6 +139,11 @@ def main() -> None:
                             "Enter Level",
                             "Enter the level number to use for this match."
                         )
+                        coop = tkinter.messagebox.askyesno(
+                            "Game mode",
+                            "Do you want this game to be a co-operative match?"
+                            + "\nIf not, it will instead be a death-match."
+                        )
                         server_kwargs: Dict[str, Any] = {}
                         if "level_json_path" in maze_game_kwargs:
                             server_kwargs["level_json_path"] = (
@@ -147,6 +155,7 @@ def main() -> None:
                             # User inputs a 1-indexed level number, but
                             # to the server levels are 0-indexed.
                             server_kwargs["level"] = level - 1
+                        server_kwargs["coop"] = coop
                         pygame.quit()
                         tkinter.messagebox.showinfo(
                             "Server starting",
