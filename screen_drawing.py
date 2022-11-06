@@ -56,7 +56,7 @@ def draw_victory_screen(screen: pygame.Surface, cfg: Config,
                         background: pygame.Surface,
                         highscores: List[Tuple[float, float]],
                         current_level: int, time_score: float,
-                        move_score: float, frame_time: float,
+                        move_score: float, frame_time: float, is_coop: bool,
                         victory_increment: Union[
                             pygame.mixer.Sound, EmptySound
                         ],
@@ -133,9 +133,11 @@ def draw_victory_screen(screen: pygame.Surface, cfg: Config,
         if victory_sounds_played[current_level] == 5:
             victory_sounds_played[current_level] = 6
             victory_next_block.play()
-    if time_on_screen >= 7.5 and current_level < level_count - 1:
+    if (time_on_screen >= 7.5
+            and (current_level < level_count - 1 or is_coop)):
         lower_hint_text = FONT.render(
-            "Press `]` to go to next level", True, DARK_RED
+            "Restart the server to play another level"
+            if is_coop else "Press `]` to go to next level", True, DARK_RED
         )
         screen.blit(lower_hint_text, (10, 280))
         if victory_sounds_played[current_level] == 6:
