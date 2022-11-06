@@ -135,7 +135,8 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
             elif rq_type == FIRE:
                 LOG.debug("Player fired gun from %s", addr)
                 now = time.time()
-                if now - last_fire_time.get(player_key, 0) < SHOT_TIMEOUT:
+                if (now - last_fire_time.get(player_key, 0) < SHOT_TIMEOUT
+                        and not coop):
                     LOG.warning(
                         "Will not allow %s to shoot, firing too quickly", addr
                     )
@@ -149,7 +150,7 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                     current_level.player_grid_coords = (
                         coords.x_pos.__trunc__(), coords.y_pos.__trunc__()
                     )
-                    list_players = [
+                    list_players = [] if coop else [
                         (k, x) for k, x in players.items()
                         if x.hits_remaining > 0 and k != player_key
                     ]
@@ -159,7 +160,7 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                     )
                     hit = False
                     for sprite in hit_sprites:
-                        if sprite.type == raycasting.OTHER_PLAYER:
+                        if sprite.type == raycasting.OTHER_PLAYER and not coop:
                             # Player was hit by gun
                             assert sprite.player_index is not None
                             hit_key, hit_player = list_players[
@@ -184,6 +185,12 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                                         SHOT_HIT_NO_KILL.to_bytes(1, "big"),
                                         addr
                                     )
+                            break
+                        elif sprite.type == raycasting.MONSTER and coop:
+                            # Monster was hit by gun
+                            hit = True
+                            current_level.monster_coords = None
+                            sock.sendto(SHOT_KILLED.to_bytes(1, "big"), addr)
                             break
                     if not hit:
                         sock.sendto(SHOT_MISSED.to_bytes(1, "big"), addr)

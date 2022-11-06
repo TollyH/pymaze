@@ -197,11 +197,13 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                     levels[current_level].player_coords,
                     facing_directions[current_level]
                 )
-                if shot_response in (
+                if not is_coop and shot_response in (
                         server.SHOT_HIT_NO_KILL, server.SHOT_KILLED):
                     pickup_flash_time_remaining = 0.4
                 if shot_response not in (server.SHOT_DENIED, None):
                     resources.gunshot_sound.play()
+                if is_coop:
+                    has_gun[current_level] = False
             else:
                 has_gun[current_level] = False
                 resources.gunshot_sound.play()
