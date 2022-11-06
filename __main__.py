@@ -139,6 +139,11 @@ def main() -> None:
                             "Enter Level",
                             "Enter the level number to use for this match."
                         )
+                        coop = tkinter.messagebox.askyesno(
+                            "Game mode",
+                            "Do you want this game to be a co-operative match?"
+                            + "\nIf not, it will instead be a death-match."
+                        )
                         server_kwargs: Dict[str, Any] = {}
                         if "level_json_path" in maze_game_kwargs:
                             server_kwargs["level_json_path"] = (
@@ -150,6 +155,7 @@ def main() -> None:
                             # User inputs a 1-indexed level number, but
                             # to the server levels are 0-indexed.
                             server_kwargs["level"] = level - 1
+                        server_kwargs["coop"] = coop
                         pygame.quit()
                         tkinter.messagebox.showinfo(
                             "Server starting",
