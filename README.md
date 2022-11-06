@@ -111,9 +111,10 @@ Right-clicking on the play button on the title screen will prompt for a server a
 
 ### Client
 
-- `-P=/path/to/maze_levels.json` or `--level-json-path=/path/to/maze_levels.json`
-- `-C=/path/to/config.ini` or `--config-ini-path=/path/to/config.ini`
+- `-P="/path/to/maze_levels.json"` or `--level-json-path="/path/to/maze_levels.json"`
+- `-C="/path/to/config.ini"` or `--config-ini-path="/path/to/config.ini"`
 - `-S="host:port"` or `--multiplayer-server="host:port"`
+- `-N="host:port"` or `--multiplayer-name="Your Name"`
 
 ### Server
 
