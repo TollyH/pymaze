@@ -70,9 +70,11 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                         >= MONSTER_MOVEMENT_WAIT):
                     last_monster_move = time.time()
                     current_level.move_monster(True)
-                    for plr in players.values():
-                        if plr.grid_pos == current_level.monster_coords:
-                            plr.hits_remaining = 0
+                for plr in players.values():
+                    if plr.grid_pos == current_level.monster_coords:
+                        plr.hits_remaining = 0
+                        # Hide dead players in level
+                        plr.pos = net_data.Coords(-1, -1)
                 if players[player_key].hits_remaining > 0:
                     players[player_key].pos = net_data.Coords.from_bytes(
                         data[33:41]

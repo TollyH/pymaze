@@ -607,7 +607,8 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             # integer boundary.
             if move_scores[current_level] // 2 > old_move_score // 2:
                 random.choice(resources.footstep_sounds).play()
-            if level.MONSTER_CAUGHT in events and cfg.enable_monster_killing:
+            if (level.MONSTER_CAUGHT in events and cfg.enable_monster_killing
+                    and not is_coop):
                 monster_escape_clicks[current_level] = 0
                 display_map = False
 
