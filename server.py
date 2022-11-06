@@ -66,7 +66,8 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                 LOG.warning("Invalid player key from %s", addr)
             if rq_type == PING:
                 LOG.debug("Player pinged from %s", addr)
-                if time.time() - last_monster_move >= MONSTER_MOVEMENT_WAIT:
+                if (coop and time.time() - last_monster_move
+                        >= MONSTER_MOVEMENT_WAIT):
                     last_monster_move = time.time()
                     current_level.move_monster(True)
                     for plr in players.values():
