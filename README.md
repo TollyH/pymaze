@@ -75,7 +75,7 @@ In this mode, the monster and all pickups are removed, and instead you must simp
 
 #### Co-op
 
-Co-op mode plays almost identically to single-player PyMaze, however you, as multiple players, must work together to collect all the keys. Keys, key sensors, and guns are synced between players, so once one player has grabbed something, no other player will need or be able to. The monster has become impatient with so many people in his maze, and so spawns immediately once the level begins. Will all the noise, he has become somewhat confused, however, and so will always move around randomly instead of chasing anybody.
+Co-op mode plays almost identically to single-player PyMaze, however you, as multiple players, must work together to collect all the keys. Keys, key sensors, and guns are synced between players, so once one player has grabbed something, no other player will need or be able to. The monster has become impatient with so many people in his maze, and so spawns immediately once the level begins, and will kill you immediately if he catches you. Will all the noise, he has become somewhat confused, however, and so will always move around randomly instead of chasing anybody.
 
 #### How-to
 
