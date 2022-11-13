@@ -519,7 +519,7 @@ class LevelDesignerApp:
             )
             return
 
-    def save_file(self, filepath: str = None) -> None:
+    def save_file(self, filepath: Optional[str] = None) -> None:
         """
         Prompt the user to provide a location to save a JSON file then do so.
         If filepath is given, the user file prompt will be skipped.
@@ -1038,7 +1038,7 @@ class LevelDesignerApp:
         self.update_map_canvas()
         self.update_properties_frame()
 
-    def bulk_select_all_walls(self, _: tkinter.Event = None) -> None:
+    def bulk_select_all_walls(self, _: Optional[tkinter.Event] = None) -> None:
         """
         Called when the user presses 'a'. Bulk selects all walls in the current
         level. Only works if the currently selected tile is a wall.
