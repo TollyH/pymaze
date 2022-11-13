@@ -24,7 +24,7 @@ algorithm for raycasting.
 
 ## Installation
 
-*Python 3.7 or greater is required.*
+*Python 3.8 or greater is required.*
 
 1. Download the files by pressing the green "Code" button above, followed by "Download ZIP" — extracting all the files once the download is complete.
    - Alternatively, if you have git installed, run `git clone https://github.com/TollyH/pymaze.git` in a terminal to download the repository.
