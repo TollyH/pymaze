@@ -151,78 +151,81 @@ def get_first_collision(current_level: level.Level,
             if current_level[current_tile, level.PRESENCE]:
                 tile_found = True
             else:
+                sprite_apparent_pos = (
+                    current_tile[0] + 0.5, current_tile[1] + 0.5
+                )
                 if current_tile in current_level.exit_keys:
                     sprites.append(SpriteCollision(
-                        (current_tile[0] + 0.5, current_tile[1] + 0.5),
+                        sprite_apparent_pos,
                         no_sqrt_coord_distance(
                             current_level.player_coords,
-                            (current_tile[0] + 0.5, current_tile[1] + 0.5)
+                            sprite_apparent_pos
                         ), current_tile, KEY
                     ))
                 elif current_tile in current_level.key_sensors:
                     sprites.append(SpriteCollision(
-                        (current_tile[0] + 0.5, current_tile[1] + 0.5),
+                        sprite_apparent_pos,
                         no_sqrt_coord_distance(
                             current_level.player_coords,
-                            (current_tile[0] + 0.5, current_tile[1] + 0.5)
+                            sprite_apparent_pos
                         ), current_tile, KEY_SENSOR
                     ))
                 elif current_tile in current_level.guns:
                     sprites.append(SpriteCollision(
-                        (current_tile[0] + 0.5, current_tile[1] + 0.5),
+                        sprite_apparent_pos,
                         no_sqrt_coord_distance(
                             current_level.player_coords,
-                            (current_tile[0] + 0.5, current_tile[1] + 0.5)
+                            sprite_apparent_pos
                         ), current_tile, GUN
                     ))
                 elif current_tile in current_level.decorations:
                     sprites.append(SpriteCollision(
-                        (current_tile[0] + 0.5, current_tile[1] + 0.5),
+                        sprite_apparent_pos,
                         no_sqrt_coord_distance(
                             current_level.player_coords,
-                            (current_tile[0] + 0.5, current_tile[1] + 0.5)
+                            sprite_apparent_pos
                         ), current_tile, DECORATION
                     ))
                 elif current_level.end_point == current_tile:
                     sprites.append(SpriteCollision(
-                        (current_tile[0] + 0.5, current_tile[1] + 0.5),
+                        sprite_apparent_pos,
                         no_sqrt_coord_distance(
                             current_level.player_coords,
-                            (current_tile[0] + 0.5, current_tile[1] + 0.5)
+                            sprite_apparent_pos
                         ), current_tile, END_POINT
                         if len(current_level.exit_keys) > 0 else
                         END_POINT_ACTIVE
                     ))
                 elif current_level.monster_start == current_tile:
                     sprites.append(SpriteCollision(
-                        (current_tile[0] + 0.5, current_tile[1] + 0.5),
+                        sprite_apparent_pos,
                         no_sqrt_coord_distance(
                             current_level.player_coords,
-                            (current_tile[0] + 0.5, current_tile[1] + 0.5)
+                            sprite_apparent_pos
                         ), current_tile, MONSTER_SPAWN
                     ))
                 elif current_level.start_point == current_tile:
                     sprites.append(SpriteCollision(
-                        (current_tile[0] + 0.5, current_tile[1] + 0.5),
+                        sprite_apparent_pos,
                         no_sqrt_coord_distance(
                             current_level.player_coords,
-                            (current_tile[0] + 0.5, current_tile[1] + 0.5)
+                            sprite_apparent_pos
                         ), current_tile, START_POINT
                     ))
                 if current_level.monster_coords == current_tile:
                     sprites.append(SpriteCollision(
-                        (current_tile[0] + 0.5, current_tile[1] + 0.5),
+                        sprite_apparent_pos,
                         no_sqrt_coord_distance(
                             current_level.player_coords,
-                            (current_tile[0] + 0.5, current_tile[1] + 0.5)
+                            sprite_apparent_pos
                         ), current_tile, MONSTER
                     ))
                 if current_tile in current_level.player_flags:
                     sprites.append(SpriteCollision(
-                        (current_tile[0] + 0.5, current_tile[1] + 0.5),
+                        sprite_apparent_pos,
                         no_sqrt_coord_distance(
                             current_level.player_coords,
-                            (current_tile[0] + 0.5, current_tile[1] + 0.5)
+                            sprite_apparent_pos
                         ), current_tile, FLAG
                     ))
                 for i, plr in enumerate(players):
