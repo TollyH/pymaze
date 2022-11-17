@@ -638,7 +638,8 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                 screen, cfg, last_level_frame[current_level],
                 highscores, current_level, time_scores[current_level],
                 move_scores[current_level], frame_time, is_coop,
-                resources.victory_increment, resources.victory_next_block
+                resources.victory_increment, resources.victory_next_block,
+                level_json_path
             )
         # Death screen
         elif levels[current_level].killed:

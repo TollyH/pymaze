@@ -62,12 +62,12 @@ def draw_victory_screen(screen: pygame.Surface, cfg: Config,
                         ],
                         victory_next_block: Union[
                             pygame.mixer.Sound, EmptySound
-                        ]) -> None:
+                        ], level_json_path: str) -> None:
     """
     Draw the victory screen seen after beating a level. Displays numerous
     scores to the player in a gradual animation.
     """
-    level_count = len(maze_levels.load_level_json("maze_levels.json"))
+    level_count = len(maze_levels.load_level_json(level_json_path))
     while len(total_time_on_screen) < level_count:
         total_time_on_screen.append(0.0)
     while len(victory_sounds_played) < level_count:
