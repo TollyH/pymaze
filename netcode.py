@@ -52,7 +52,7 @@ def ping_server(sock: socket.socket, addr: Tuple[str, int], player_key: bytes,
         return hits_remaining, last_killer_skin, kills, deaths, [
             net_data.Player.from_bytes(player_list_bytes[
                     i * player_byte_size + 6:(i + 1) * player_byte_size + 6
-            ]) for i in range((len(player_list_bytes) - 2) // player_byte_size)
+            ]) for i in range((len(player_list_bytes) - 6) // player_byte_size)
         ]
     except (socket.timeout, OSError):
         return None
