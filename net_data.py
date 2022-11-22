@@ -69,7 +69,7 @@ class Player:
         # Positions are sent as integers with 2 d.p of accuracy from the
         # original float.
         return (
-            bytes.rjust(self.name.encode('ascii', 'ignore')[:24], 24, b'\x00')
+            bytes.ljust(self.name.encode('ascii', 'ignore')[:24], 24, b'\x00')
             + bytes(self.pos)
             + self.skin.to_bytes(1, "big")
             + self.kills.to_bytes(2, "big")

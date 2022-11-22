@@ -113,7 +113,7 @@ def join_server(sock: socket.socket, addr: Tuple[str, int], name: str
     # need to have one.
     sock.sendto(
         server.JOIN.to_bytes(1, "big") + b'\x00' * 32
-        + bytes.rjust(name.encode('ascii', 'ignore')[:24], 24, b'\x00'), addr
+        + bytes.ljust(name.encode('ascii', 'ignore')[:24], 24, b'\x00'), addr
     )
     try:
         received_bytes = sock.recvfrom(34)[0]
