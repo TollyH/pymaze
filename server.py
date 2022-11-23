@@ -64,6 +64,7 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
             player_key = data[1:33]
             if player_key not in players and rq_type != JOIN:
                 LOG.warning("Invalid player key from %s", addr)
+                continue
             if rq_type == PING:
                 LOG.debug("Player pinged from %s", addr)
                 if (coop and time.time() - last_monster_move
