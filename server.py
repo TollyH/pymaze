@@ -229,9 +229,6 @@ if __name__ == "__main__":
             if lower_key in ("--level-json-path", "-p"):
                 kwargs["level_json_path"] = arg_pair[1]
                 continue
-            if lower_key in ("--config-ini-path", "-c"):
-                kwargs["config_ini_path"] = arg_pair[1]
-                continue
             if lower_key in ("--port", "-t"):
                 kwargs["port"] = int(arg_pair[1])
                 continue
