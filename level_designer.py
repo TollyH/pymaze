@@ -1231,7 +1231,7 @@ class LevelDesignerApp:
                 ) + self.scroll_offset[0] - 1,
                 max(
                     (
-                        current_level.dimensions[0] * self.zoom_level
+                        current_level.dimensions[1] * self.zoom_level
                     ).__trunc__(), 1
                 ) + self.scroll_offset[1] - 1))):
             # Zoomed out enough to have current offset go over level boundary,
