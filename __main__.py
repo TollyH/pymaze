@@ -88,6 +88,8 @@ def main() -> None:
                             <= 250 + button_width // 2):
                         if 108 <= clicked_pos[1] <= 158:
                             maze_game(**maze_game_kwargs)
+                            root.destroy()
+                            return
                         elif 224 <= clicked_pos[1] <= 274:
                             screen.fill(BLUE)
                             pygame.display.update()
@@ -186,4 +188,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    while True:
+        main()

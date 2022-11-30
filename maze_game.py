@@ -263,8 +263,13 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             if event.type == pygame.QUIT:
                 if is_multi:
                     netcode.leave_server(sock, addr, player_key)
-                pygame.quit()
-                sys.exit()
+                if __name__ == "__main__":
+                    pygame.quit()
+                    sys.exit()
+                else:
+                    if pygame.mixer.music.get_busy():
+                        pygame.mixer.music.stop()
+                    return
             # Standard "press-once" keys
             elif event.type == pygame.KEYDOWN:
                 # Never stop the user regaining control of their mouse with
