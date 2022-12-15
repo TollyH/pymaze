@@ -44,6 +44,8 @@ def ping_server(sock: socket.socket, addr: Tuple[str, int], player_key: bytes,
     sock.sendto(server.PING.to_bytes(1, "big") + player_key + coords_b, addr)
     try:
         player_list_bytes = sock.recvfrom(16384)[0]
+        if len(player_list_bytes) < 6:
+            raise Exception("Invalid packet for ping. Ignoring.")
         hits_remaining = player_list_bytes[0]
         last_killer_skin = player_list_bytes[1]
         kills = int.from_bytes(player_list_bytes[2:4], "big")
@@ -54,7 +56,8 @@ def ping_server(sock: socket.socket, addr: Tuple[str, int], player_key: bytes,
                     i * player_byte_size + 6:(i + 1) * player_byte_size + 6
             ]) for i in range((len(player_list_bytes) - 6) // player_byte_size)
         ]
-    except (socket.timeout, OSError):
+    except Exception as e:
+        print(e)
         return None
 
 
@@ -75,9 +78,11 @@ def ping_server_coop(sock: socket.socket, addr: Tuple[str, int],
     coords_b = bytes(net_data.Coords(*coords))
     sock.sendto(server.PING.to_bytes(1, "big") + player_key + coords_b, addr)
     try:
-        player_list_bytes = sock.recvfrom(16384)[0]
-        killed = bool(player_list_bytes[0])
         coords_size = net_data.Coords.byte_size
+        player_list_bytes = sock.recvfrom(16384)[0]
+        if len(player_list_bytes) < coords_size + 2:
+            raise Exception("Invalid packet for ping. Ignoring.")
+        killed = bool(player_list_bytes[0])
         monster_coords: Optional[Tuple[int, int]] = net_data.Coords.from_bytes(
             player_list_bytes[1:coords_size + 1]
         ).to_int_tuple()
@@ -98,7 +103,8 @@ def ping_server_coop(sock: socket.socket, addr: Tuple[str, int],
                 (len(player_list_bytes) - offset_2) // coords_size
             )
         }
-    except (socket.timeout, OSError):
+    except Exception as e:
+        print(e)
         return None
 
 
@@ -120,7 +126,8 @@ def join_server(sock: socket.socket, addr: Tuple[str, int], name: str
         return (
             received_bytes[:32], received_bytes[32], bool(received_bytes[33])
         )
-    except (socket.timeout, OSError):
+    except Exception as e:
+        print(e)
         return None
 
 
@@ -140,8 +147,12 @@ def fire_gun(sock: socket.socket, addr: Tuple[str, int], player_key: bytes,
         server.FIRE.to_bytes(1, "big") + player_key + coords_b + facing_b, addr
     )
     try:
-        return sock.recvfrom(1)[0][0]
-    except (socket.timeout, OSError):
+        received_bytes = sock.recvfrom(1)[0]
+        if len(received_bytes) != 1:
+            raise Exception("Invalid packet for gunfire. Ignoring.")
+        return received_bytes[0]
+    except Exception as e:
+        print(e)
         return None
 
 
