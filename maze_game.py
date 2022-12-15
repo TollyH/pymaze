@@ -658,7 +658,9 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                 selected_sprite = resources.jumpscare_monster_texture
             else:
                 selected_sprite = resources.player_textures[last_killer_skin]
-            screen_drawing.draw_kill_screen(screen, cfg, selected_sprite)
+            screen_drawing.draw_kill_screen(
+                screen, cfg, selected_sprite, is_multi, is_coop
+            )
         # Currently playing
         elif not is_reset_prompt_shown:
             if (not resources.audio_error_occurred

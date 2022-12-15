@@ -146,7 +146,8 @@ def draw_victory_screen(screen: pygame.Surface, cfg: Config,
 
 
 def draw_kill_screen(screen: pygame.Surface, cfg: Config,
-                     jumpscare_monster_texture: pygame.Surface) -> None:
+                     jumpscare_monster_texture: pygame.Surface,
+                     multi: bool, coop: bool) -> None:
     """
     Draw the red kill screen with the monster fullscreen.
     Also used in multiplayer to display the player's killer.
@@ -158,6 +159,18 @@ def draw_kill_screen(screen: pygame.Surface, cfg: Config,
     screen.blit(jumpscare_monster_texture, (
         0, 0, cfg.viewport_width, cfg.viewport_height
     ))
+    if not coop:
+        reset_hint = FONT.render(
+            "Press any key to respawn"
+            if multi else "Press R to reset the level", True, WHITE
+        )
+        screen.blit(
+            reset_hint,
+            (
+                cfg.viewport_width // 2 - reset_hint.get_width() // 2,
+                cfg.viewport_height - 45
+            )
+        )
 
 
 def draw_escape_screen(screen: pygame.Surface, cfg: Config,
