@@ -53,7 +53,7 @@ decoration_textures["placeholder"] = placeholder_texture
 
 player_textures: List[pygame.Surface] = [
     pygame.image.load(x).convert_alpha()
-    for x in glob(os.path.join("textures", "player", "*.png"))
+    for x in glob(os.path.join("textures", "sprite", "player", "*.png"))
 ]
 
 # {degradation_stage: (light_texture, dark_texture)}

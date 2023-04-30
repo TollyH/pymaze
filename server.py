@@ -45,7 +45,9 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
     # This prevents issues with required files not being found.
     os.chdir(os.path.dirname(__file__))
     levels = maze_levels.load_level_json(level_json_path)
-    skin_count = len(glob(os.path.join("textures", "player", "*.png")))
+    skin_count = len(
+        glob(os.path.join("textures", "sprite", "player", "*.png"))
+    )
     current_level = levels[level]
     if coop:
         # Monster starts immediately in co-op matches
