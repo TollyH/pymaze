@@ -344,9 +344,12 @@ def draw_sprite(screen: pygame.Surface, cfg: Config,
         # Sprite is fully off screen - don't render it
         return
     sprite_size = (
-        abs(filled_screen_width // transformation[1]),
-        abs(cfg.viewport_height // transformation[1])
+        filled_screen_width // transformation[1],
+        cfg.viewport_height // transformation[1]
     )
+    if sprite_size[0] <= 0 or sprite_size[1] <= 0:
+        # Sprite is behind player - don't render it
+        return
     if (sprite_size[0] > cfg.sprite_scale_limit
             or sprite_size[1] > cfg.sprite_scale_limit):
         return
