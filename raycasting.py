@@ -274,10 +274,9 @@ def get_columns_sprites(display_columns: int, current_level: level.Level,
                         ) -> Tuple[List[WallCollision], List[SpriteCollision]]:
     """
     Get a list of the intersection positions and distances of each column's ray
-    for a particular wall map by utilising raycasting. Tuples are in format
-    (coordinate, tile, distance, euclidean_squared, side). Also gets a
-    list of visible sprites as tuples (coordinate, type, distance) where type
-    is one of the constants defined in this file.
+    for a particular wall map by utilising raycasting. Each rays' collision
+    with a wall is represented by an instance WallCollision. Also gets a
+    list of visible sprites as SpriteCollision instances.
     """
     columns: List[WallCollision] = []
     sprites: List[SpriteCollision] = []
