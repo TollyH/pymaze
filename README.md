@@ -4,6 +4,7 @@ A pseudo-3D, grid-based maze game written in Python with PyGame using a DDA
 algorithm for raycasting.
 
 - [PyMaze](#pymaze)
+  - [Versions of the Game](#versions-of-the-game)
   - [Installation](#installation)
   - [Controls](#controls)
   - [Cheat Map Controls](#cheat-map-controls)
@@ -19,6 +20,16 @@ algorithm for raycasting.
   - [Command Line Arguments (Optional)](#command-line-arguments-optional)
     - [Client](#client)
     - [Server](#server)
+
+## Versions of the Game
+
+PyMaze is the original version of the game, starting as a proof of concept for a game made with just Python and its standard library, plus PyGame. Due to being written in pure Python, the hardware requirements for PyMaze are somewhat high.
+
+[CSMaze](https://github.com/TollyH/CSMaze) is a nearly perfect recreation of PyMaze that, due to being programmed in C#, is much more performant than the original. It still uses an entirely original physics and rendering engine which should behave identically to PyMaze.
+
+[UnityMaze](https://github.com/TollyH/UnityMaze) is a remake of the game in Unity. It adds some new features such as controller support and a Virtual Reality mode, however, due to being made with the Unity engine instead of having an originally programmed engine, it may differ in some regards to PyMaze and CSMaze.
+
+All three versions are cross-compatible with multiplayer.
 
 ## Installation
 
