@@ -256,6 +256,10 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                     )
                     continue
                 LOG.debug("Admin ping from %s", addr)
+                ping_bytes = level.to_bytes(1, "big") + coop.to_bytes(1, "big")
+                for plr in players.values():
+                    ping_bytes += bytes(plr)
+                sock.sendto(ping_bytes, addr)
             elif rq_type == ADMIN_KICK:
                 if player_key != admin_key:
                     LOG.warning(
