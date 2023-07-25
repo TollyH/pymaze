@@ -99,6 +99,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
     last_killer_skin = 0  # This will be updated later
     kills = 0
     deaths = 0
+    failed_pings = 0
 
     # Minimum window resolution is 500×500
     screen = pygame.display.set_mode((
@@ -227,6 +228,7 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                         levels[current_level].player_coords
                     )
                     if ping_response is not None:
+                        failed_pings = 0
                         previous_hits = hits_remaining
                         (
                             hits_remaining, last_killer_skin, kills, deaths,
@@ -244,12 +246,15 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                             # We were dead, but server has processed our
                             # respawn.
                             levels[current_level].killed = False
+                    else:
+                        failed_pings += 1
                 else:
                     ping_response_coop = netcode.ping_server_coop(
                         sock, addr, player_key,
                         levels[current_level].player_coords
                     )
                     if ping_response_coop is not None:
+                        failed_pings = 0
                         lvl = levels[current_level]
                         (
                             lvl.killed, lvl.monster_coords, other_players,
@@ -259,6 +264,15 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
                         lvl.exit_keys &= item_coords
                         lvl.key_sensors &= item_coords
                         lvl.guns &= item_coords
+                    else:
+                        failed_pings += 1
+        if failed_pings > 100:
+            pygame.quit()
+            tkinter.messagebox.showerror(
+                "Connection Error",
+                "Disconnected from server."
+            )
+            sys.exit(1)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 if is_multi:
