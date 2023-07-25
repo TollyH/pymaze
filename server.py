@@ -8,7 +8,7 @@ import socket
 import sys
 import time
 from glob import glob
-from typing import Any, Dict
+from typing import Any, Dict, Set
 
 import maze_levels
 import net_data
@@ -24,6 +24,7 @@ ADMIN_PING = 5
 ADMIN_KICK = 6
 ADMIN_BAN_IP = 7
 ADMIN_RESET = 8
+ADMIN_UNBAN_IP = 9
 
 # Shot responses
 SHOT_DENIED = 0
@@ -60,6 +61,7 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
     last_monster_move = time.time()
     players: Dict[bytes, net_data.PrivatePlayer] = {}
     last_fire_time: Dict[bytes, float] = {}
+    banned_ips: Set[str] = set()
 
     admin_key = os.urandom(32)
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -69,6 +71,9 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
     while True:
         try:
             data, addr = sock.recvfrom(4096)
+            if addr[0] in banned_ips:
+                LOG.warning("Banned IP address %s tried to connect", addr)
+                continue
             rq_type = data[0]
             player_key = data[1:33]
             if (player_key != admin_key and player_key not in players
@@ -278,6 +283,11 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                     )
                     continue
                 LOG.debug("Admin IP ban from %s", addr)
+                new_ban = data[33:].decode()
+                LOG.info(
+                    "Admin from %s banned IP address %s", addr, new_ban
+                )
+                banned_ips.add(new_ban)
             elif rq_type == ADMIN_RESET:
                 if player_key != admin_key:
                     LOG.warning(
@@ -286,6 +296,25 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                     )
                     continue
                 LOG.debug("Admin server reset from %s", addr)
+            elif rq_type == ADMIN_UNBAN_IP:
+                if player_key != admin_key:
+                    LOG.warning(
+                        "Attempted admin IP unban from %s, "
+                        "but invalid key was provided", addr
+                    )
+                    continue
+                LOG.debug("Admin IP unban from %s", addr)
+                to_unban = data[33:].decode()
+                if to_unban in banned_ips:
+                    LOG.info(
+                        "Admin from %s unbanned IP address %s", addr, to_unban
+                    )
+                    banned_ips.remove(to_unban)
+                else:
+                    LOG.warning(
+                        "Admin from %s tried to unban IP address %s, "
+                        "but it isn't currently banned", addr, to_unban
+                    )
             else:
                 LOG.warning("Invalid request type from %s", addr)
         except Exception as e:
