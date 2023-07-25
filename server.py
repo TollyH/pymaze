@@ -296,6 +296,20 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                     )
                     continue
                 LOG.debug("Admin server reset from %s", addr)
+                players.clear()
+                last_fire_time.clear()
+                current_level.reset()
+                level = data[33]
+                current_level = levels[level]
+                coop = bool(data[34])
+                if coop:
+                    # Monster starts immediately in co-op matches
+                    current_level.move_monster(True)
+                LOG.info(
+                    "Admin from %s reset server, "
+                    "setting level to %s and co-op to %s",
+                    addr, level, coop
+                )
             elif rq_type == ADMIN_UNBAN_IP:
                 if player_key != admin_key:
                     LOG.warning(
