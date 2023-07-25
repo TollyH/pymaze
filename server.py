@@ -259,6 +259,17 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                     )
                     continue
                 LOG.debug("Admin kick from %s", addr)
+                player_key_to_kick = data[33:65]
+                if player_key_to_kick in players:
+                    LOG.info(
+                        "Admin from %s kicked player with name %s",
+                        addr, players[player_key_to_kick].name
+                    )
+                    del players[player_key_to_kick]
+                else:
+                    LOG.warning(
+                        "Admin from %s tried to kick invalid player", addr
+                    )
             elif rq_type == ADMIN_BAN_IP:
                 if player_key != admin_key:
                     LOG.warning(
