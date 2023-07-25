@@ -1,6 +1,7 @@
 """
 Receives and gives multiplayer packets to all connected players.
 """
+import base64
 import logging
 import os
 import socket
@@ -60,18 +61,27 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
     players: Dict[bytes, net_data.PrivatePlayer] = {}
     last_fire_time: Dict[bytes, float] = {}
 
+    admin_key = os.urandom(32)
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.bind(('0.0.0.0', port))
     LOG.info("Listening on UDP port %s", port)
+    LOG.info("Admin key is %s", base64.b64encode(admin_key).decode())
     while True:
         try:
             data, addr = sock.recvfrom(4096)
             rq_type = data[0]
             player_key = data[1:33]
-            if player_key not in players and rq_type != JOIN:
+            if (player_key != admin_key and player_key not in players
+                    and rq_type != JOIN):
                 LOG.warning("Invalid player key from %s", addr)
                 continue
             if rq_type == PING:
+                if player_key == admin_key:
+                    LOG.warning(
+                        "Admin key was used to ping as a player, "
+                        "which is invalid"
+                    )
+                    continue
                 LOG.debug("Player pinged from %s", addr)
                 if (coop and time.time() - last_monster_move
                         >= MONSTER_MOVEMENT_WAIT):
@@ -143,6 +153,12 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                         "Rejected player join from %s as server is full", addr
                     )
             elif rq_type == FIRE:
+                if player_key == admin_key:
+                    LOG.warning(
+                        "Admin key was used to fire gun as a player, "
+                        "which is invalid"
+                    )
+                    continue
                 LOG.debug("Player fired gun from %s", addr)
                 now = time.time()
                 if (now - last_fire_time.get(player_key, 0) < SHOT_TIMEOUT
@@ -205,6 +221,12 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                     if not hit:
                         sock.sendto(SHOT_MISSED.to_bytes(1, "big"), addr)
             elif rq_type == RESPAWN:
+                if player_key == admin_key:
+                    LOG.warning(
+                        "Admin key was used to respawn as a player, "
+                        "which is invalid"
+                    )
+                    continue
                 LOG.debug("Player respawned from %s", addr)
                 if players[player_key].hits_remaining <= 0:
                     players[player_key].hits_remaining = SHOTS_UNTIL_DEAD
@@ -213,8 +235,46 @@ def maze_server(*, level_json_path: str = "maze_levels.json",
                         "Will not respawn from %s as player isn't dead", addr
                     )
             elif rq_type == LEAVE:
+                if player_key == admin_key:
+                    LOG.warning(
+                        "Admin key was used to leave as a player, "
+                        "which is invalid"
+                    )
+                    continue
                 LOG.info("Player left from %s", addr)
                 del players[player_key]
+            elif rq_type == ADMIN_PING:
+                if player_key != admin_key:
+                    LOG.warning(
+                        "Attempted admin ping from %s, "
+                        "but invalid key was provided", addr
+                    )
+                    continue
+                LOG.debug("Admin ping from %s", addr)
+            elif rq_type == ADMIN_KICK:
+                if player_key != admin_key:
+                    LOG.warning(
+                        "Attempted admin kick from %s, "
+                        "but invalid key was provided", addr
+                    )
+                    continue
+                LOG.debug("Admin kick from %s", addr)
+            elif rq_type == ADMIN_BAN_IP:
+                if player_key != admin_key:
+                    LOG.warning(
+                        "Attempted admin IP ban from %s, "
+                        "but invalid key was provided", addr
+                    )
+                    continue
+                LOG.debug("Admin IP ban from %s", addr)
+            elif rq_type == ADMIN_RESET:
+                if player_key != admin_key:
+                    LOG.warning(
+                        "Attempted admin server reset from %s, "
+                        "but invalid key was provided", addr
+                    )
+                    continue
+                LOG.debug("Admin server reset from %s", addr)
             else:
                 LOG.warning("Invalid request type from %s", addr)
         except Exception as e:
