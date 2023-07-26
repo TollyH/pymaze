@@ -172,3 +172,77 @@ def leave_server(sock: socket.socket, addr: Tuple[str, int], player_key: bytes
     immediately unusable after this.
     """
     sock.sendto(server.LEAVE.to_bytes(1, "big") + player_key, addr)
+
+
+def admin_ping(sock: socket.socket, addr: Tuple[str, int], admin_key: bytes
+               ) -> Optional[Tuple[int, bool, List[net_data.PrivatePlayer]]]:
+    """
+    Get the current level, co-op status, and list of players from the server.
+    Requires a server's admin key, a regular player key will not work.
+    """
+    sock.sendto(server.ADMIN_PING.to_bytes(1, "big") + admin_key, addr)
+    try:
+        received_bytes = sock.recvfrom(16384)[0]
+        if len(received_bytes) < 2:
+            raise Exception("Invalid packet for admin ping. Ignoring.")
+        player_size = net_data.PrivatePlayer.byte_size
+        return received_bytes[0], bool(received_bytes[1]), [
+            net_data.PrivatePlayer.from_bytes(received_bytes[
+                i * player_size + 2:(i + 1) * player_size + 2
+            ]) for i in range((len(received_bytes) - 2) // player_size)
+        ]
+    except Exception as e:
+        print(e)
+        return None
+
+
+def admin_kick(sock: socket.socket, addr: Tuple[str, int], admin_key: bytes,
+               player_key: bytes) -> None:
+    """
+    Removes a player from the server with the given player key.
+    Also requires a server's admin key, a regular player key will not work.
+    """
+    sock.sendto(
+        server.ADMIN_KICK.to_bytes(1, "big") + admin_key + player_key, addr
+    )
+
+
+def admin_ban_ip(sock: socket.socket, addr: Tuple[str, int], admin_key: bytes,
+                 ip_addr: str) -> None:
+    """
+    Forbid a given IP address from interacting with the server.
+    Requires a server's admin key, a regular player key will not work.
+    IMPORTANT: If you ban your own IP, you will not be able to interact
+    yourself until the server restarts! Bans are not permanent, they will reset
+    if the server process is restarted.
+    """
+    sock.sendto(
+        server.ADMIN_BAN_IP.to_bytes(1, "big") + admin_key + ip_addr.encode(),
+        addr
+    )
+
+
+def admin_reset(sock: socket.socket, addr: Tuple[str, int], admin_key: bytes,
+                new_level: int, coop: bool) -> None:
+    """
+    Reset the server, setting a new level and setting either coop or deathmatch
+    mode.
+    Requires a server's admin key, a regular player key will not work.
+    WARNING: This will kick all players from the server!
+    """
+    sock.sendto(
+        server.ADMIN_RESET.to_bytes(1, "big") + admin_key
+        + new_level.to_bytes(1, "big") + coop.to_bytes(1, "big"), addr
+    )
+
+
+def admin_unban_ip(sock: socket.socket, addr: Tuple[str, int],
+                   admin_key: bytes, ip_addr: str) -> None:
+    """
+    Remove a given IP address from the server's ban list.
+    Requires a server's admin key, a regular player key will not work.
+    """
+    sock.sendto(
+        server.ADMIN_UNBAN_IP.to_bytes(1, "big") + admin_key
+        + ip_addr.encode(), addr
+    )
