@@ -35,6 +35,67 @@ class ServerGuiApp:
             os.path.join("window_icons", "server_gui_discon.ico")
         )
 
+        self.gui_map_frame = tkinter.Frame(self.window)
+        self.gui_map_frame.pack(
+            side=tkinter.LEFT, fill=tkinter.Y, padx=5, pady=5
+        )
+        self.gui_operation_frame = tkinter.Frame(self.window)
+        self.gui_operation_frame.pack(
+            side=tkinter.LEFT, fill=tkinter.BOTH, expand=True, padx=5, pady=5
+        )
+
+        self.gui_map_canvas = tkinter.Canvas(
+            self.gui_map_frame, width=500, height=500
+        )
+        self.gui_map_canvas.pack(side=tkinter.LEFT)
+
+        self.gui_server_input = tkinter.Entry(self.gui_operation_frame)
+        self.gui_server_input.insert(0, "address:port")
+        self.gui_server_input.grid(
+            column=0, columnspan=3, row=0, padx=2, pady=2, sticky='NSEW'
+        )
+
+        self.gui_connect_button = tkinter.Button(
+            self.gui_operation_frame, text="Connect"
+        )
+        self.gui_connect_button.grid(
+            column=3, row=0, padx=2, pady=2, sticky='NSEW'
+        )
+
+        self.gui_player_select = tkinter.Listbox(
+            self.gui_operation_frame, exportselection=False
+        )
+        self.gui_player_select.grid(
+            column=0, row=1, columnspan=4, padx=2, pady=2, sticky='NSEW'
+        )
+        self.gui_operation_frame.grid_rowconfigure(1, weight=1)
+
+        self.gui_ban_ip_input = tkinter.Entry(self.gui_operation_frame)
+        self.gui_ban_ip_input.insert(0, "IP to ban")
+        self.gui_ban_ip_input.grid(
+            column=0, columnspan=2, row=2, padx=2, pady=2, sticky='NSEW'
+        )
+
+        self.gui_connect_button = tkinter.Button(
+            self.gui_operation_frame, text="Ban IP"
+        )
+        self.gui_connect_button.grid(
+            column=2, row=2, padx=2, pady=2, sticky='NSEW'
+        )
+
+        self.gui_player_kick = tkinter.Button(
+            self.gui_operation_frame, text="Kick"
+        )
+        self.gui_player_kick.grid(
+            column=3, row=2, padx=2, pady=2, sticky='NSEW'
+        )
+
+        # Ensure applicable columns are the same width
+        for i in range(4):
+            self.gui_operation_frame.grid_columnconfigure(
+                i, uniform="true", weight=1
+            )
+
         self.window.wait_window()
 
     def change_connected_status(self, new_status: bool) -> None:
