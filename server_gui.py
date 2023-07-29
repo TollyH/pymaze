@@ -62,32 +62,38 @@ class ServerGuiApp:
             column=3, row=0, padx=2, pady=2, sticky='NSEW'
         )
 
+        self.gui_key_input = tkinter.Entry(self.gui_operation_frame)
+        self.gui_key_input.insert(0, "Server key")
+        self.gui_key_input.grid(
+            column=0, columnspan=4, row=1, padx=2, pady=2, sticky='NSEW'
+        )
+
         self.gui_player_select = tkinter.Listbox(
             self.gui_operation_frame, exportselection=False
         )
         self.gui_player_select.grid(
-            column=0, row=1, columnspan=4, padx=2, pady=2, sticky='NSEW'
+            column=0, row=2, columnspan=4, padx=2, pady=2, sticky='NSEW'
         )
         self.gui_operation_frame.grid_rowconfigure(1, weight=1)
 
         self.gui_ban_ip_input = tkinter.Entry(self.gui_operation_frame)
         self.gui_ban_ip_input.insert(0, "IP to ban")
         self.gui_ban_ip_input.grid(
-            column=0, columnspan=2, row=2, padx=2, pady=2, sticky='NSEW'
+            column=0, columnspan=2, row=3, padx=2, pady=2, sticky='NSEW'
         )
 
         self.gui_connect_button = tkinter.Button(
             self.gui_operation_frame, text="Ban IP"
         )
         self.gui_connect_button.grid(
-            column=2, row=2, padx=2, pady=2, sticky='NSEW'
+            column=2, row=3, padx=2, pady=2, sticky='NSEW'
         )
 
         self.gui_player_kick = tkinter.Button(
             self.gui_operation_frame, text="Kick"
         )
         self.gui_player_kick.grid(
-            column=3, row=2, padx=2, pady=2, sticky='NSEW'
+            column=3, row=3, padx=2, pady=2, sticky='NSEW'
         )
 
         # Ensure applicable columns are the same width
@@ -95,6 +101,18 @@ class ServerGuiApp:
             self.gui_operation_frame.grid_columnconfigure(
                 i, uniform="true", weight=1
             )
+        self.gui_operation_frame.grid_rowconfigure(
+            0, uniform="true", weight=1
+        )
+        self.gui_operation_frame.grid_rowconfigure(
+            1, uniform="true", weight=1
+        )
+        self.gui_operation_frame.grid_rowconfigure(
+            2, weight=100
+        )
+        self.gui_operation_frame.grid_rowconfigure(
+            3, uniform="true", weight=1
+        )
 
         self.window.wait_window()
 
