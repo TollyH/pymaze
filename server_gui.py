@@ -2,6 +2,7 @@
 Contains the definition for ServerGuiApp, a GUI for managing running PyMaze
 server instances.
 """
+import base64
 import os
 import tkinter
 from typing import List, Optional, Tuple
@@ -56,7 +57,8 @@ class ServerGuiApp:
         )
 
         self.gui_connect_button = tkinter.Button(
-            self.gui_operation_frame, text="Connect"
+            self.gui_operation_frame, text="Connect",
+            command=self.change_server_details
         )
         self.gui_connect_button.grid(
             column=3, row=0, padx=2, pady=2, sticky='NSEW'
@@ -114,6 +116,7 @@ class ServerGuiApp:
             3, uniform="true", weight=1
         )
 
+        self.ping_update()
         self.window.wait_window()
 
     def change_connected_status(self, new_status: bool) -> None:
@@ -141,31 +144,52 @@ class ServerGuiApp:
         Sends a ping request to the current server, updating the GUI with new
         information.
         """
-        if self.current_server is None or self.current_key is None:
-            self.change_connected_status(False)
-            return
-        retries = 0
-        ping_response = netcode.admin_ping(
-            self.sock, self.current_server, self.current_key
-        )
-        # If currently marked as connected and over 100 consecutive pings fail,
-        # mark as disconnected. If already marked as disconnected, looping
-        # isn't required, and we should just wait for the next scheduled ping.
-        while retries < 100 and self.connected:
+        try:
+            if self.current_server is None or self.current_key is None:
+                self.change_connected_status(False)
+                return
+            retries = 0
             ping_response = netcode.admin_ping(
                 self.sock, self.current_server, self.current_key
             )
+            # If currently marked as connected and over 10 consecutive pings
+            # fail, mark as disconnected. If already marked as disconnected,
+            # looping isn't required, and we should just wait for the next
+            # scheduled ping.
+            while retries < 10 and self.connected:
+                ping_response = netcode.admin_ping(
+                    self.sock, self.current_server, self.current_key
+                )
+                if ping_response is None:
+                    retries += 1
+                else:
+                    break
             if ping_response is None:
-                retries += 1
+                self.change_connected_status(False)
             else:
-                break
-        if ping_response is None:
-            self.change_connected_status(False)
-        else:
-            self.change_connected_status(True)
-            self.current_level, self.coop, self.players = ping_response
-        # Run this method again after 100ms
-        self.window.after(100, self.ping_update)
+                self.change_connected_status(True)
+                self.current_level, self.coop, self.players = ping_response
+        finally:
+            # Run this method again after 100ms if connected, 1000ms otherwise
+            self.window.after(
+                100 if self.connected else 1000, self.ping_update
+            )
+
+    def change_server_details(self) -> None:
+        """
+        Change the details of the server to connect to.
+        """
+        try:
+            self.current_server = netcode.get_host_port(
+                self.gui_server_input.get().strip()
+            )
+            self.current_key = base64.b64decode(
+                self.gui_key_input.get().strip()
+            )
+        except Exception as e:
+            print(e)
+            self.current_server = None
+            self.current_key = None
 
 
 if __name__ == "__main__":
