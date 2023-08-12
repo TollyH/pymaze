@@ -93,7 +93,7 @@ class ServerGuiApp:
         )
 
         self.gui_player_kick = tkinter.Button(
-            self.gui_operation_frame, text="Kick"
+            self.gui_operation_frame, text="Kick", command=self.kick_player
         )
         self.gui_player_kick.grid(
             column=3, row=3, padx=2, pady=2, sticky='NSEW'
@@ -194,10 +194,12 @@ class ServerGuiApp:
             self.current_server = None
             self.current_key = None
 
-    def update_gui(self):
+    def update_gui(self) -> None:
         """
         Update the GUI to reflect the current state of the class variables.
         """
+        # Get current selection before clearing so it can be restored
+        selection = self.gui_player_select.curselection()
         self.gui_player_select.delete(0, tkinter.END)
         for player in self.players:
             self.gui_player_select.insert(
@@ -205,6 +207,25 @@ class ServerGuiApp:
                 f"{player.name} - ({player.pos.x_pos:.2f}, "
                 f"{player.pos.y_pos:.2f}) - {player.kills}K {player.deaths}D"
             )
+        if len(selection) >= 1:
+            self.gui_player_select.select_set(selection)
+
+    def kick_player(self) -> None:
+        """
+        Kick the currently selected player from the server.
+        """
+        if self.current_server is None or self.current_key is None:
+            return
+        selection = self.gui_player_select.curselection()
+        if len(selection) <= 0:
+            return
+        if selection[0] < 0 or selection[0] >= len(self.player_keys):
+            return
+        selected_player_key = self.player_keys[selection[0]]
+        netcode.admin_kick(
+            self.sock, self.current_server, self.current_key,
+            selected_player_key
+        )
 
 
 if __name__ == "__main__":
