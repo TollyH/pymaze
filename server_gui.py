@@ -169,6 +169,7 @@ class ServerGuiApp:
             else:
                 self.change_connected_status(True)
                 self.current_level, self.coop, self.players = ping_response
+                self.update_gui()
         finally:
             # Run this method again after 100ms if connected, 1000ms otherwise
             self.window.after(
@@ -190,6 +191,18 @@ class ServerGuiApp:
             print(e)
             self.current_server = None
             self.current_key = None
+
+    def update_gui(self):
+        """
+        Update the GUI to reflect the current state of the class variables.
+        """
+        self.gui_player_select.delete(0, tkinter.END)
+        for player in self.players:
+            self.gui_player_select.insert(
+                tkinter.END,
+                f"{player.name} - ({player.pos.x_pos:.2f}, "
+                f"{player.pos.y_pos:.2f}) - {player.kills}K {player.deaths}D"
+            )
 
 
 if __name__ == "__main__":
