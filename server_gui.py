@@ -128,11 +128,13 @@ class ServerGuiApp:
             self.window.wm_iconbitmap(
                 os.path.join("window_icons", "server_gui_con.ico")
             )
+            self.window.wm_title("Server Management GUI - Connected")
         else:
             self.connected = False
             self.window.wm_iconbitmap(
                 os.path.join("window_icons", "server_gui_discon.ico")
             )
+            self.window.wm_title("Server Management GUI - Not Connected")
 
     def ping_update(self) -> None:
         """
