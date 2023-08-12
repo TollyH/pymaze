@@ -175,9 +175,12 @@ def leave_server(sock: socket.socket, addr: Tuple[str, int], player_key: bytes
 
 
 def admin_ping(sock: socket.socket, addr: Tuple[str, int], admin_key: bytes
-               ) -> Optional[Tuple[int, bool, List[net_data.PrivatePlayer]]]:
+               ) -> Optional[Tuple[
+                        int, bool, List[net_data.PrivatePlayer], List[bytes]
+                    ]]:
     """
-    Get the current level, co-op status, and list of players from the server.
+    Get the current level, co-op status, list of players, and list of player
+    keys from the server.
     Requires a server's admin key, a regular player key will not work.
     """
     sock.sendto(server.ADMIN_PING.to_bytes(1, "big") + admin_key, addr)
@@ -186,11 +189,19 @@ def admin_ping(sock: socket.socket, addr: Tuple[str, int], admin_key: bytes
         if len(received_bytes) < 2:
             raise Exception("Invalid packet for admin ping. Ignoring.")
         player_size = net_data.PrivatePlayer.byte_size
-        return received_bytes[0], bool(received_bytes[1]), [
+        player_and_key_size = player_size + 32
+        players = [
             net_data.PrivatePlayer.from_bytes(received_bytes[
-                i * player_size + 2:(i + 1) * player_size + 2
-            ]) for i in range((len(received_bytes) - 2) // player_size)
+                i * player_and_key_size + 2:(i + 1) * player_and_key_size + 2
+            ]) for i in range((len(received_bytes) - 2) // player_and_key_size)
         ]
+        player_keys = [
+            received_bytes[
+                i * player_and_key_size + player_size + 2:
+                (i + 1) * player_and_key_size + 2
+            ] for i in range((len(received_bytes) - 2) // player_and_key_size)
+        ]
+        return received_bytes[0], bool(received_bytes[1]), players, player_keys
     except Exception as e:
         print(e)
         return None

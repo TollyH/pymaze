@@ -29,6 +29,7 @@ class ServerGuiApp:
         self.current_level = 0
         self.coop = False
         self.players: List[net_data.PrivatePlayer] = []
+        self.player_keys: List[bytes] = []
 
         self.window = tkinter.Toplevel(root)
         self.window.wm_title("Server Management GUI - Not Connected")
@@ -168,7 +169,8 @@ class ServerGuiApp:
                 self.change_connected_status(False)
             else:
                 self.change_connected_status(True)
-                self.current_level, self.coop, self.players = ping_response
+                (self.current_level, self.coop,
+                 self.players, self.player_keys) = ping_response
                 self.update_gui()
         finally:
             # Run this method again after 100ms if connected, 1000ms otherwise
