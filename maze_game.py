@@ -530,38 +530,42 @@ def maze_game(*, level_json_path: str = "maze_levels.json",
             )
             # A set of events that occurred due to player movement
             events: Set[int] = set()
-            if pressed_keys[pygame.K_w] or pressed_keys[pygame.K_UP]:
-                if (not levels[current_level].won
-                        and not levels[current_level].killed):
-                    events.update(levels[current_level].move_player((
-                        facing_directions[current_level][0] * move_speed_mod,
-                        facing_directions[current_level][1] * move_speed_mod
-                    ), has_gun[current_level], True, cfg.enable_collision))
-                    has_started_level[current_level] = True
-            if pressed_keys[pygame.K_s] or pressed_keys[pygame.K_DOWN]:
-                if (not levels[current_level].won
-                        and not levels[current_level].killed):
-                    events.update(levels[current_level].move_player((
-                        -facing_directions[current_level][0] * move_speed_mod,
-                        -facing_directions[current_level][1] * move_speed_mod
-                    ), has_gun[current_level], True, cfg.enable_collision))
-                    has_started_level[current_level] = True
-            if pressed_keys[pygame.K_a]:
-                if (not levels[current_level].won
-                        and not levels[current_level].killed):
-                    events.update(levels[current_level].move_player((
-                        facing_directions[current_level][1] * move_speed_mod,
-                        -facing_directions[current_level][0] * move_speed_mod
-                    ), has_gun[current_level], True, cfg.enable_collision))
-                    has_started_level[current_level] = True
-            if pressed_keys[pygame.K_d]:
-                if (not levels[current_level].won
-                        and not levels[current_level].killed):
-                    events.update(levels[current_level].move_player((
-                        -facing_directions[current_level][1] * move_speed_mod,
-                        facing_directions[current_level][0] * move_speed_mod
-                    ), has_gun[current_level], True, cfg.enable_collision))
-                    has_started_level[current_level] = True
+            if (not levels[current_level].won
+                    and not levels[current_level].killed):
+                movement_vector = [0.0, 0.0]
+                if pressed_keys[pygame.K_w] or pressed_keys[pygame.K_UP]:
+                    movement_vector[0] += 1
+                if pressed_keys[pygame.K_s] or pressed_keys[pygame.K_DOWN]:
+                    movement_vector[0] -= 1
+                if pressed_keys[pygame.K_a]:
+                    movement_vector[1] -= 1
+                if pressed_keys[pygame.K_d]:
+                    movement_vector[1] += 1
+                movement_vector_length = math.sqrt(
+                    movement_vector[0] ** 2 + movement_vector[1] ** 2
+                )
+                if movement_vector_length != 0:
+                    # Normalize movement vector
+                    movement_vector[0] /= movement_vector_length
+                    movement_vector[1] /= movement_vector_length
+                facing_angle = math.atan2(
+                    facing_directions[current_level][1],
+                    facing_directions[current_level][0]
+                )
+                # Rotate movement vector
+                movement_vector = [
+                    movement_vector[0] * math.cos(facing_angle)
+                    - movement_vector[1] * math.sin(facing_angle),
+                    movement_vector[0] * math.sin(facing_angle)
+                    + movement_vector[1] * math.cos(facing_angle)
+                ]
+                movement_vector[0] *= move_speed_mod
+                movement_vector[1] *= move_speed_mod
+                events.update(levels[current_level].move_player(
+                    (movement_vector[0], movement_vector[1]),
+                    has_gun[current_level], True, cfg.enable_collision
+                ))
+                has_started_level[current_level] = True
             if pressed_keys[pygame.K_RIGHT]:
                 old_direction = facing_directions[current_level]
                 facing_directions[current_level] = (
