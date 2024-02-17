@@ -86,8 +86,8 @@ def get_first_collision(current_level: level.Level,
         direction = (1e-30, direction[1])
     if direction[1] == 0:
         direction = (direction[0], 1e-30)
-    # When traversing one unit in a direction, what will the coordinate of the
-    # other direction increase by?
+    # When traversing one unit in a direction,
+    # what will the length of the dimension's ray increase by?
     step_size = (abs(1 / direction[0]), abs(1 / direction[1]))
     current_tile = current_level.player_grid_coords
     # The current length of the X and Y rays respectively
@@ -131,8 +131,9 @@ def get_first_collision(current_level: level.Level,
     sprites: List[SpriteCollision] = []
     first_check = True
     while not tile_found:
-        # Move along ray, unless this is the first check in which case we want
-        # to check our current square.
+        # Move along whichever dimension's ray is shorter to enter the next
+        # intersected grid tile, unless this is the first check in which case
+        # we want to check our current square.
         if not first_check:
             if dimension_ray_length[0] < dimension_ray_length[1]:
                 current_tile = (current_tile[0] + step[0], current_tile[1])
